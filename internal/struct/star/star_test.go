@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/Galdoba/utils"
 )
 
 func TestInterpolation(t *testing.T) {
@@ -18,19 +20,17 @@ func TestInterpolation(t *testing.T) {
 		dif := 5
 		if ind == len(pairs)-1 && strings.Contains(tags[c], "M") {
 			div = 4.0
-
 		}
-
 		for i := 0; i < dif; i++ {
-
 			res := interpalation(pairs[ind-1], pairs[ind], float64(i), div)
 			if res != -999.9 {
 				marker := ""
 				//t.Errorf("Interpolation ERROR: \nhave %v ", res)
+				res = utils.RoundFloat64(res, 2)
 				if strings.Contains(tags[c], "0") || strings.Contains(tags[c], "5") {
 					marker = " //check " + fmt.Sprintf("%v", pairs[ind-1])
 				}
-				fmt.Printf("MassMap[%v VI] = %v%v\n", tags[c], res, marker)
+				fmt.Printf("lumaMap[%v VI] = %v%v\r", tags[c], res, marker)
 			}
 			c++
 		}
@@ -44,37 +44,45 @@ func pairs() []float64 {
 	//return []float64{25, 15, 12, 9, 8, 5, 2.5, 3.2, 4, 5, 6.3, 7.4, 9.2} // III
 	//return []float64{20, 10, 6, 4, 2.5, 2, 1.75, 2, 2.3} // IV
 	//return []float64{18, 6.5, 3.2, 2.1, 1.7, 1.3, 1.04, 0.94, 0.825, 0.570, 0.489, 0.331, 0.215} // V
-	return []float64{0.8, 0.6, 0.528, 0.43, 0.33, 0.154, 0.104, 0.058} // VI
+	//return []float64{0.8, 0.6, 0.528, 0.43, 0.33, 0.154, 0.104, 0.058} // VI
+	//LUMA
+	//return []float64{27.36, 21.25, 18.09, 16.87, 15.72, 15.03, 16.09, 17.27, 17.65, 18.09, 18.49, 18.95, 19.38} // Ia
+	//return []float64{22.80, 14.70, 11.07, 10.40, 9.27, 8.45, 8.84, 9.49, 10.40, 11.95, 14.65, 17.27, 18.49} // Ib
+	//return []float64{20.31, 11.68, 6.85, 5.40, 4.95, 4.75, 4.86, 5.22, 5.46, 7.04, 8.24, 11.05, 11.28} // II
+	//return []float64{18.09, 9.05, 4.09, 3.08, 2.70, 2.56, 2.66, 2.94, 3.12, 4.23, 4.66, 6.91, 7.20} // III
+	//return []float64{16.87, 6.69, 3.53, 2.47, 2.09, 1.86, 1.60, 1.49, 1.47} // IV
+	//return []float64{15.38, 6.12, 3.08, 2.00, 1.69, 1.37, 1.05, 0.90, 0.81, 0.53, 0.45, 0.29, 0.18} // V
+	return []float64{0.99, 0.75, 0.66, 0.58, 0.40, 0.32, 0.21, 0.09} // VI
 
 }
 
 func strs() []string {
 	return []string{
-		// "B0",
-		// "B1",
-		// "B2",
-		// "B3",
-		// "B4",
-		// "B5",
-		// "B6",
-		// "B7",
-		// "B8",
-		// "B9",
-		// "A0",
-		// "A1",
-		// "A2",
-		// "A3",
-		// "A4",
-		// "A5",
-		// "A6",
-		// "A7",
-		// "A8",
-		// "A9",
-		// "F0",
-		// "F1",
-		// "F2",
-		// "F3",
-		// "F4",
+		//"B0",
+		//"B1",
+		//"B2",
+		//"B3",
+		//"B4",
+		//"B5",
+		//"B6",
+		//"B7",
+		//"B8",
+		//"B9",
+		//"A0",
+		//"A1",
+		//"A2",
+		//"A3",
+		//"A4",
+		//"A5",
+		//"A6",
+		//"A7",
+		//"A8",
+		//"A9",
+		//"F0",
+		//"F1",
+		//"F2",
+		//"F3",
+		//"F4",
 		"F5",
 		"F6",
 		"F7",
@@ -418,6 +426,10 @@ func codeValid(code string) bool {
 	checkmap["G8 IV"] = true
 	checkmap["G9 IV"] = true
 	checkmap["K0 IV"] = true
+	checkmap["K1 IV"] = true
+	checkmap["K2 IV"] = true
+	checkmap["K3 IV"] = true
+	checkmap["K4 IV"] = true
 	checkmap["B0 V"] = true
 	checkmap["B1 V"] = true
 	checkmap["B2 V"] = true
@@ -549,10 +561,10 @@ func codeErrorExpected(code string) bool {
 	errMap["F2 VI"] = true
 	errMap["F3 VI"] = true
 	errMap["F4 VI"] = true
-	errMap["K1 IV"] = true
-	errMap["K2 IV"] = true
-	errMap["K3 IV"] = true
-	errMap["K4 IV"] = true
+	//errMap["K1 IV"] = true
+	//errMap["K2 IV"] = true
+	//errMap["K3 IV"] = true
+	//errMap["K4 IV"] = true
 	errMap["K5 IV"] = true
 	errMap["K6 IV"] = true
 	errMap["K7 IV"] = true
