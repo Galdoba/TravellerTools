@@ -2,40 +2,87 @@ package star
 
 import (
 	"fmt"
-	"strings"
 	"testing"
-
-	"github.com/Galdoba/utils"
 )
 
 func TestInterpolation(t *testing.T) {
-	c := 0
-	tags := strs()
-	pairs := pairs()
-	for ind := range pairs {
-		if ind == 0 {
-			continue
+	// c := 0
+	// tags := strs()
+	// pairs := pairs()
+	// for ind := range pairs {
+	// 	if ind == 0 {
+	// 		continue
+	// 	}
+	// 	div := 5.0
+	// 	dif := 5
+	// 	if ind == len(pairs)-1 && strings.Contains(tags[c], "M") {
+	// 		div = 4.0
+	// 	}
+	// 	for i := 0; i < dif; i++ {
+	// 		res := interpalation(pairs[ind-1], pairs[ind], float64(i), div)
+	// 		if res != -999.9 {
+	// 			marker := ""
+	// 			//t.Errorf("Interpolation ERROR: \nhave %v ", res)
+	// 			res = utils.RoundFloat64(res, 2)
+	// 			if strings.Contains(tags[c], "0") || strings.Contains(tags[c], "5") {
+	// 				marker = " //check " + fmt.Sprintf("%v", pairs[ind-1])
+	// 			}
+	// 			fmt.Printf("lumaMap[%v VI] = %v%v\r", tags[c], res, marker)
+	// 		}
+	// 		c++
+	// 	}
+	// }
+	for _, code := range allCodes() {
+		l := baseStellarLuminocity(code)
+		m := baseStellarMass(code)
+		if l == 0 || m == 0 {
+			t.Errorf("code '%v': luma/mass is not expected to be %v/%v", code, l, m)
 		}
-		div := 5.0
-		dif := 5
-		if ind == len(pairs)-1 && strings.Contains(tags[c], "M") {
-			div = 4.0
-		}
-		for i := 0; i < dif; i++ {
-			res := interpalation(pairs[ind-1], pairs[ind], float64(i), div)
-			if res != -999.9 {
-				marker := ""
-				//t.Errorf("Interpolation ERROR: \nhave %v ", res)
-				res = utils.RoundFloat64(res, 2)
-				if strings.Contains(tags[c], "0") || strings.Contains(tags[c], "5") {
-					marker = " //check " + fmt.Sprintf("%v", pairs[ind-1])
-				}
-				fmt.Printf("lumaMap[%v VI] = %v%v\r", tags[c], res, marker)
-			}
-			c++
-		}
+
 	}
 	fmt.Println("////////////////")
+}
+
+func TestStar(t *testing.T) {
+	st, err := New("Test star", "", Category_Primary)
+	fmt.Println(st)
+	if err != nil {
+		t.Errorf("error encountered: %v", err.Error())
+	}
+
+}
+
+func TestStellarEncode(t *testing.T) {
+	spectrals := []string{"O", "B", "A", "F", "G", "K", "M", "BD"}
+	decimals := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+	sizes := []string{"Ia", "Ib", "II", "III", "IV", "V", "VI", "D"}
+	for _, spec := range spectrals {
+		for _, sz := range sizes {
+			for _, dec := range decimals {
+				code := encodeStellar(spec, dec, sz)
+				if code == "error" {
+					t.Errorf("encoding failed with input '%v' '%v' '%v'\n", spec, dec, sz)
+				}
+				//fmt.Printf("encoded stellar = '%v' with input '%v' '%v' '%v'\n", code, spec, dec, sz)
+			}
+		}
+	}
+}
+
+func allCodes() []string {
+	spectrals := []string{"O", "B", "A", "F", "G", "K", "M", "BD"}
+	decimals := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+	sizes := []string{"Ia", "Ib", "II", "III", "IV", "V", "VI", "D"}
+	allCodes := []string{}
+	for _, spec := range spectrals {
+		for _, sz := range sizes {
+			for _, dec := range decimals {
+				allCodes = append(allCodes, encodeStellar(spec, dec, sz))
+
+			}
+		}
+	}
+	return allCodes
 }
 
 func pairs() []float64 {

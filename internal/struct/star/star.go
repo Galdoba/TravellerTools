@@ -1,5 +1,10 @@
 package star
 
+import (
+	"fmt"
+	"strings"
+)
+
 const (
 	UNDEFINED = iota
 	Category_Primary
@@ -15,24 +20,97 @@ const (
 type Star struct {
 	name       string
 	size       string
-	decimal    int
+	decimal    string
 	spectral   string
 	mass       float64
 	luminocity float64
 	orbit      int
 	category   int
+	code       string
 }
 
-func New(name string) Star {
+func New(name, code string, category int) (Star, error) {
+	err := fmt.Errorf("NewRandom func is not implemented")
 	s := Star{}
-	s.name = name
-	return s
+	s.name = strings.TrimSuffix(name+" "+categoryString(category), " ")
+
+	s.category = category
+	s.orbit = -2
+	//dp := dice.New().SetSeed(name)
+	switch s.category {
+	default:
+		return s, fmt.Errorf("star category undefined")
+	case Category_Primary:
+
+	case Category_PrimaryCompanion, Category_Close, Category_CloseCompanion, Category_Near, Category_NearCompanion, Category_Far, Category_FarCompanion:
+
+	}
+	s.code = code
+	s.luminocity = baseStellarLuminocity(code)
+	s.mass = baseStellarMass(code)
+	err = s.checkStruct()
+	return s, err
+}
+
+func categoryString(category int) string {
+	switch category {
+	case Category_Primary:
+		return "Primary"
+	case Category_PrimaryCompanion:
+		return "Primary Companion"
+	case Category_Close:
+		return "Close"
+	case Category_CloseCompanion:
+		return "Close Companion"
+	case Category_Near:
+		return "Near"
+	case Category_NearCompanion:
+		return "Near Companion"
+	case Category_Far:
+		return "Far"
+	case Category_FarCompanion:
+		return "Far Companion"
+	}
+	return ""
+}
+
+func (s *Star) checkStruct() error {
+	switch {
+	case s.code == "":
+		return fmt.Errorf("code undefined")
+	case s.size == "":
+		return fmt.Errorf("size undefined")
+	case s.spectral == "":
+		return fmt.Errorf("spectral undefined")
+	case s.mass == 0:
+		return fmt.Errorf("mass undefined")
+	case s.luminocity == 0:
+		return fmt.Errorf("luminocity undefined")
+	case s.orbit == -2:
+		return fmt.Errorf("orbit undefined")
+	case s.category == UNDEFINED:
+		return fmt.Errorf("category undefined")
+	}
+	return nil
 }
 
 func interpalation(a, b float64, dif, div float64) float64 {
 	res := a - ((a - b) * dif / div)
 
 	return res
+}
+
+func encodeStellar(spectral, dec, size string) string {
+	switch {
+	case spectral == "BD":
+		return "BD"
+	case size == "D":
+		return size + spectral
+	case dec == "0" || dec == "1" || dec == "2" || dec == "3" || dec == "4" || dec == "5" || dec == "6" || dec == "7" || dec == "8" || dec == "9":
+		return spectral + dec + " " + size
+	default:
+		return "error"
+	}
 }
 
 func baseStellarMass(class string) float64 {
@@ -424,12 +502,13 @@ func baseStellarMass(class string) float64 {
 	massMap["M8 VI"] = 0.0695
 	massMap["M9 VI"] = 0.058
 	////////////////
-	massMap["BD"] = 0.26
-	massMap["AD"] = 0.36
-	massMap["FD"] = 0.42
-	massMap["GD"] = 0.63
-	massMap["KD"] = 0.83
-	massMap["MD"] = 1.11
+	massMap["DO"] = 0.21
+	massMap["DB"] = 0.26
+	massMap["DA"] = 0.36
+	massMap["DF"] = 0.42
+	massMap["DG"] = 0.63
+	massMap["DK"] = 0.83
+	massMap["DM"] = 1.11
 	return massMap[class]
 }
 
@@ -822,37 +901,11 @@ func baseStellarLuminocity(class string) float64 {
 	lumaMap["M8 VI"] = 0.12
 	lumaMap["M9 VI"] = 0.09
 	////////////////
-	lumaMap["BD"] = 0.46
-	lumaMap["AD"] = 0.27
-	lumaMap["FD"] = 0.13
-	lumaMap["GD"] = 0.09
-	lumaMap["KD"] = 0.08
-	lumaMap["MD"] = 0.07
+	lumaMap["DB"] = 0.46
+	lumaMap["DA"] = 0.27
+	lumaMap["DF"] = 0.13
+	lumaMap["DG"] = 0.09
+	lumaMap["DK"] = 0.08
+	lumaMap["DM"] = 0.07
 	return lumaMap[class]
 }
-
-/*
-Ванади является компетентным хотя и малоопытным офицером Флота. Полгода на Откровении показали, что она явно не довольна ни своим положением на корабле, ни миссией вообще.
-Судя по всему в ней играет гонор высшего сословия: привыкшая командовать и ожидавшая получить людей под свое начало, она явно оказалась не готова оказаться на одной из низших должностей в своем подразделении.
-Однако не смотря на её амбициозность, её лояльность империи не вызывает никакого сомнения. Это помогло ей быстро завоевать авторитет среди тех членов экипажа, что разделяют ее взгляды. Став неформальным лидером фракции Лоялистов, ее мнение может иметь вес среди огромного числа людей. Появление же в качестве экипажа Не-Граждан Империи было воспринято ей крайне негативно.
-Она готова подчинаться приказу старшего позванию, но лишь до тех пор пока уверена что этот приказ не будет вредить Империи в целом и Откровению (как территории Империи вне её границ) в частности.
-
-Акраника, бежал по знакомым корридорам в сторону биолабораторий крича что-то на своем щелкающем языке. Переводчик закрепленный у него на груди едва справлялся с потоком незнакомых слов. Позже в отделе СБ отсматривая записи произошедшего будут зафиксированы слова "Невозможно", "Обман" и "Противно Достойному".
-В одной из лаборатории ничего не подозревающий о происходящем Джейми Меркуз, переходил к решающей части вскрытия. Он как раз закончил разрезать мягкий хитин одного из мертвых бридеров. С этим образцом работать было одно удовольствие, не то что с предыдущим, хитин которого пришлось резать механической болгаркой, лежащей не подалеку, для избежания влияния излишнего перегрева огранов лазером. Ассистент приспособил зажимы и голова насекомоко раскрылась. Джейме могрузил свои руки в полость образца чтобы аккуратно обхватить и извлечь мозг трупа. Приготовить сосуд, вынимаю - сказал он и потянул орган вверх...
-В этот момент двери операционной раскрылись и Джейми услышал скрежитание и клекот наполненные эмоциями. За ними пришли крики "Его надо остановить!", "Он вырвал мою карту доступа!", "Туда нельзя!", "Зовите охрану!". Но это уже не имеело значение. Джейми понял, что сейчас произошло что-то, что будет иметь огромные последствия для корабля и всей миссии, пускай он и не был этому виной, но он понял, что если сейчас отпустить Акранику, уже успевшим стать ему другом, последствия будут еще хуже. Акраника же почувствовал растущие в нем ярость и отчаяние, первая взяла верх и он набросился на ненавистных ему пришельцев так надругавшихся над самым ценным для Аликай - бридером.
-несколько слобых, но когтистых пальцев обхватили его шею, вонзившись в её плоть. Глаза начала застилать пелена, а из под когтей пришельца брызнула кровь и Джейме успел только выдохнуть свои последние слова: "Убейте его! Он... не... дол..". Ассистент стоявший возле болгарки растерянно смотрел как жизнь его начальника обрывается и не решался ничего сделать. Одна из задних конечностей жука вонзилась и пробила грудь другово его коллеги. И он решился...
-Когда Акраника в слепой ярости повернулся к третьему убице, забившейся от него в угол и умолявшей его прекратить, он почувствовал как мир начал стремительно темнеть и крутиться под невообразимо неправильным углом. Только сейчас он понял: тот звук, принадлежал человеческому инструменту... его называли циргулярной пилой... он использовался для распила твердых поверхностей... например для брони войнов и рабочих народа Аликай... его бывший друг Мыслитель Джейми Меркуз показывал ему его...
-Ошарашенный Ассистент, Майек Эстави, смотрел как голова чудовища только что изуродовавшего двоих падала на пол. Мертвые руки жука, все еще держали части гортани из разорваной шеи Профессора Меркуза, который в свою очередь лежал на полу и все еще держал мозг мертвого бридера... В углу в истерике от ужаса выла техник Шандра Вледден.
-
-Итог:
-Погибло:
-именной непись Акраника
-именной непись Джейми Меркуз
-безвестный и безымянный непись из отдела миссии
-2 непися получили Имена (и могут стать моими агентами влияния на корабле)
-персонажи Екатерина Троцкая и Сигрид Ордо ОБЯЗАНЫ сделать по проверке Advocate (SOC) 12 - их эффекты пойдут бонусом/штрафом к большой проверке морали по кораблю и броскам на понижение влияние со всеми дивизионами.
-
-Получено достижение экипажа Откровения: Вивисекторы
-
-
-*/

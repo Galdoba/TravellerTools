@@ -7,5 +7,5 @@ type stellarCode struct {
 }
 
 func test() {
-	star.New("tat")
+	star.New("tat", "M2 III", star.Category_Primary)
 }

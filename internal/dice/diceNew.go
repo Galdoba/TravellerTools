@@ -44,6 +44,9 @@ func (dp *Dicepool) SetSeed(key interface{}) *Dicepool {
 		s = key.(int64)
 	case string:
 		s = seedFromString(key.(string))
+		if key.(string) == "" {
+			s = time.Now().UnixNano()
+		}
 	}
 	dp.seed = s
 	dp.randomSeed = false
