@@ -3,6 +3,8 @@ package star
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Galdoba/TravellerTools/internal/dice"
 )
 
 const (
@@ -32,18 +34,31 @@ type Star struct {
 func New(name, code string, category int) (Star, error) {
 	err := fmt.Errorf("NewRandom func is not implemented")
 	s := Star{}
+	if !codeValid(code) {
+		return s, fmt.Errorf("input code invalid (%v)", code)
+	}
+	s.spectral, s.decimal, s.size, err = decodeStellar(code)
+	if err != nil {
+		return s, fmt.Errorf("%v", err.Error())
+	}
+	s.orbit = -2
+	s.category = category
 	s.name = strings.TrimSuffix(name+" "+categoryString(category), " ")
 
-	s.category = category
-	s.orbit = -2
-	//dp := dice.New().SetSeed(name)
+	dp := dice.New().SetSeed(name)
 	switch s.category {
 	default:
-		return s, fmt.Errorf("star category undefined")
+		return s, fmt.Errorf("star category invalid")
 	case Category_Primary:
-
-	case Category_PrimaryCompanion, Category_Close, Category_CloseCompanion, Category_Near, Category_NearCompanion, Category_Far, Category_FarCompanion:
-
+		s.orbit = -1
+	case Category_PrimaryCompanion, Category_CloseCompanion, Category_NearCompanion, Category_FarCompanion:
+		s.orbit = 0
+	case Category_Close:
+		s.orbit = dp.Roll("1d6").Sum() - 1
+	case Category_Near:
+		s.orbit = dp.Roll("1d6").Sum() + 5
+	case Category_Far:
+		s.orbit = dp.Roll("1d6").Sum() + 10
 	}
 	s.code = code
 	s.luminocity = baseStellarLuminocity(code)
@@ -94,12 +109,6 @@ func (s *Star) checkStruct() error {
 	return nil
 }
 
-func interpalation(a, b float64, dif, div float64) float64 {
-	res := a - ((a - b) * dif / div)
-
-	return res
-}
-
 func encodeStellar(spectral, dec, size string) string {
 	switch {
 	case spectral == "BD":
@@ -113,7 +122,37 @@ func encodeStellar(spectral, dec, size string) string {
 	}
 }
 
+func decodeStellar(code string) (spec string, dec string, size string, err error) {
+	codeSep := strings.Split(code, "")
+	switch {
+	default:
+		return spec, dec, size, fmt.Errorf("code not decoded (%v)", code)
+	case len(code) < 2 || len(code) > 6:
+		return spec, dec, size, fmt.Errorf("code lenght incorrect (%v)", code)
+	case code == "BD":
+		return "BD", dec, "BD", nil
+	case codeSep[1] == "0" || codeSep[1] == "1" || codeSep[1] == "2" || codeSep[1] == "3" || codeSep[1] == "4" || codeSep[1] == "5" || codeSep[1] == "6" || codeSep[1] == "7" || codeSep[1] == "8" || codeSep[1] == "9":
+		spec = codeSep[0]
+		dec = codeSep[1]
+		dt := strings.Split(code, " ")
+		if len(dt) != 2 {
+			return "", "", "", fmt.Errorf("code lenght incorrect (%v)", code)
+		}
+		size = dt[1]
+		return spec, dec, size, nil
+	case code == "DO" || code == "DB" || code == "DA" || code == "DF" || code == "DG" || code == "DK" || code == "DM":
+		spec = codeSep[1]
+		size = codeSep[0]
+		return spec, dec, size, nil
+	}
+
+}
+
 func baseStellarMass(class string) float64 {
+	if !codeValid(class) {
+		return -1
+	}
+	class = strings.ReplaceAll(class, "O", "B")
 	massMap := make(map[string]float64)
 	massMap["B0 Ia"] = 60
 	massMap["B1 Ia"] = 54
@@ -502,17 +541,21 @@ func baseStellarMass(class string) float64 {
 	massMap["M8 VI"] = 0.0695
 	massMap["M9 VI"] = 0.058
 	////////////////
-	massMap["DO"] = 0.21
 	massMap["DB"] = 0.26
 	massMap["DA"] = 0.36
 	massMap["DF"] = 0.42
 	massMap["DG"] = 0.63
 	massMap["DK"] = 0.83
 	massMap["DM"] = 1.11
+	massMap["BD"] = 0.01
 	return massMap[class]
 }
 
 func baseStellarLuminocity(class string) float64 {
+	if !codeValid(class) {
+		return -1
+	}
+	class = strings.ReplaceAll(class, "O", "B")
 	lumaMap := make(map[string]float64)
 	lumaMap["B0 Ia"] = 27.36 //check 27.36
 	lumaMap["B1 Ia"] = 26.14
@@ -907,5 +950,465 @@ func baseStellarLuminocity(class string) float64 {
 	lumaMap["DG"] = 0.09
 	lumaMap["DK"] = 0.08
 	lumaMap["DM"] = 0.07
+	lumaMap["BD"] = 0.00001
 	return lumaMap[class]
+}
+
+func codeValid(code string) bool {
+	checkmap := make(map[string]bool)
+	checkmap["BD"] = true
+	checkmap["O0 Ia"] = true
+	checkmap["O1 Ia"] = true
+	checkmap["O2 Ia"] = true
+	checkmap["O3 Ia"] = true
+	checkmap["O4 Ia"] = true
+	checkmap["O5 Ia"] = true
+	checkmap["O6 Ia"] = true
+	checkmap["O7 Ia"] = true
+	checkmap["O8 Ia"] = true
+	checkmap["O9 Ia"] = true
+	checkmap["B0 Ia"] = true
+	checkmap["B1 Ia"] = true
+	checkmap["B2 Ia"] = true
+	checkmap["B3 Ia"] = true
+	checkmap["B4 Ia"] = true
+	checkmap["B5 Ia"] = true
+	checkmap["B6 Ia"] = true
+	checkmap["B7 Ia"] = true
+	checkmap["B8 Ia"] = true
+	checkmap["B9 Ia"] = true
+	checkmap["A0 Ia"] = true
+	checkmap["A1 Ia"] = true
+	checkmap["A2 Ia"] = true
+	checkmap["A3 Ia"] = true
+	checkmap["A4 Ia"] = true
+	checkmap["A5 Ia"] = true
+	checkmap["A6 Ia"] = true
+	checkmap["A7 Ia"] = true
+	checkmap["A8 Ia"] = true
+	checkmap["A9 Ia"] = true
+	checkmap["F0 Ia"] = true
+	checkmap["F1 Ia"] = true
+	checkmap["F2 Ia"] = true
+	checkmap["F3 Ia"] = true
+	checkmap["F4 Ia"] = true
+	checkmap["F5 Ia"] = true
+	checkmap["F6 Ia"] = true
+	checkmap["F7 Ia"] = true
+	checkmap["F8 Ia"] = true
+	checkmap["F9 Ia"] = true
+	checkmap["G0 Ia"] = true
+	checkmap["G1 Ia"] = true
+	checkmap["G2 Ia"] = true
+	checkmap["G3 Ia"] = true
+	checkmap["G4 Ia"] = true
+	checkmap["G5 Ia"] = true
+	checkmap["G6 Ia"] = true
+	checkmap["G7 Ia"] = true
+	checkmap["G8 Ia"] = true
+	checkmap["G9 Ia"] = true
+	checkmap["K0 Ia"] = true
+	checkmap["K1 Ia"] = true
+	checkmap["K2 Ia"] = true
+	checkmap["K3 Ia"] = true
+	checkmap["K4 Ia"] = true
+	checkmap["K5 Ia"] = true
+	checkmap["K6 Ia"] = true
+	checkmap["K7 Ia"] = true
+	checkmap["K8 Ia"] = true
+	checkmap["K9 Ia"] = true
+	checkmap["M0 Ia"] = true
+	checkmap["M1 Ia"] = true
+	checkmap["M2 Ia"] = true
+	checkmap["M3 Ia"] = true
+	checkmap["M4 Ia"] = true
+	checkmap["M5 Ia"] = true
+	checkmap["M6 Ia"] = true
+	checkmap["M7 Ia"] = true
+	checkmap["M8 Ia"] = true
+	checkmap["M9 Ia"] = true
+	checkmap["O0 Ib"] = true
+	checkmap["O1 Ib"] = true
+	checkmap["O2 Ib"] = true
+	checkmap["O3 Ib"] = true
+	checkmap["O4 Ib"] = true
+	checkmap["O5 Ib"] = true
+	checkmap["O6 Ib"] = true
+	checkmap["O7 Ib"] = true
+	checkmap["O8 Ib"] = true
+	checkmap["O9 Ib"] = true
+	checkmap["B0 Ib"] = true
+	checkmap["B1 Ib"] = true
+	checkmap["B2 Ib"] = true
+	checkmap["B3 Ib"] = true
+	checkmap["B4 Ib"] = true
+	checkmap["B5 Ib"] = true
+	checkmap["B6 Ib"] = true
+	checkmap["B7 Ib"] = true
+	checkmap["B8 Ib"] = true
+	checkmap["B9 Ib"] = true
+	checkmap["A0 Ib"] = true
+	checkmap["A1 Ib"] = true
+	checkmap["A2 Ib"] = true
+	checkmap["A3 Ib"] = true
+	checkmap["A4 Ib"] = true
+	checkmap["A5 Ib"] = true
+	checkmap["A6 Ib"] = true
+	checkmap["A7 Ib"] = true
+	checkmap["A8 Ib"] = true
+	checkmap["A9 Ib"] = true
+	checkmap["F0 Ib"] = true
+	checkmap["F1 Ib"] = true
+	checkmap["F2 Ib"] = true
+	checkmap["F3 Ib"] = true
+	checkmap["F4 Ib"] = true
+	checkmap["F5 Ib"] = true
+	checkmap["F6 Ib"] = true
+	checkmap["F7 Ib"] = true
+	checkmap["F8 Ib"] = true
+	checkmap["F9 Ib"] = true
+	checkmap["G0 Ib"] = true
+	checkmap["G1 Ib"] = true
+	checkmap["G2 Ib"] = true
+	checkmap["G3 Ib"] = true
+	checkmap["G4 Ib"] = true
+	checkmap["G5 Ib"] = true
+	checkmap["G6 Ib"] = true
+	checkmap["G7 Ib"] = true
+	checkmap["G8 Ib"] = true
+	checkmap["G9 Ib"] = true
+	checkmap["K0 Ib"] = true
+	checkmap["K1 Ib"] = true
+	checkmap["K2 Ib"] = true
+	checkmap["K3 Ib"] = true
+	checkmap["K4 Ib"] = true
+	checkmap["K5 Ib"] = true
+	checkmap["K6 Ib"] = true
+	checkmap["K7 Ib"] = true
+	checkmap["K8 Ib"] = true
+	checkmap["K9 Ib"] = true
+	checkmap["M0 Ib"] = true
+	checkmap["M1 Ib"] = true
+	checkmap["M2 Ib"] = true
+	checkmap["M3 Ib"] = true
+	checkmap["M4 Ib"] = true
+	checkmap["M5 Ib"] = true
+	checkmap["M6 Ib"] = true
+	checkmap["M7 Ib"] = true
+	checkmap["M8 Ib"] = true
+	checkmap["M9 Ib"] = true
+	checkmap["O0 II"] = true
+	checkmap["O1 II"] = true
+	checkmap["O2 II"] = true
+	checkmap["O3 II"] = true
+	checkmap["O4 II"] = true
+	checkmap["O5 II"] = true
+	checkmap["O6 II"] = true
+	checkmap["O7 II"] = true
+	checkmap["O8 II"] = true
+	checkmap["O9 II"] = true
+	checkmap["B0 II"] = true
+	checkmap["B1 II"] = true
+	checkmap["B2 II"] = true
+	checkmap["B3 II"] = true
+	checkmap["B4 II"] = true
+	checkmap["B5 II"] = true
+	checkmap["B6 II"] = true
+	checkmap["B7 II"] = true
+	checkmap["B8 II"] = true
+	checkmap["B9 II"] = true
+	checkmap["A0 II"] = true
+	checkmap["A1 II"] = true
+	checkmap["A2 II"] = true
+	checkmap["A3 II"] = true
+	checkmap["A4 II"] = true
+	checkmap["A5 II"] = true
+	checkmap["A6 II"] = true
+	checkmap["A7 II"] = true
+	checkmap["A8 II"] = true
+	checkmap["A9 II"] = true
+	checkmap["F0 II"] = true
+	checkmap["F1 II"] = true
+	checkmap["F2 II"] = true
+	checkmap["F3 II"] = true
+	checkmap["F4 II"] = true
+	checkmap["F5 II"] = true
+	checkmap["F6 II"] = true
+	checkmap["F7 II"] = true
+	checkmap["F8 II"] = true
+	checkmap["F9 II"] = true
+	checkmap["G0 II"] = true
+	checkmap["G1 II"] = true
+	checkmap["G2 II"] = true
+	checkmap["G3 II"] = true
+	checkmap["G4 II"] = true
+	checkmap["G5 II"] = true
+	checkmap["G6 II"] = true
+	checkmap["G7 II"] = true
+	checkmap["G8 II"] = true
+	checkmap["G9 II"] = true
+	checkmap["K0 II"] = true
+	checkmap["K1 II"] = true
+	checkmap["K2 II"] = true
+	checkmap["K3 II"] = true
+	checkmap["K4 II"] = true
+	checkmap["K5 II"] = true
+	checkmap["K6 II"] = true
+	checkmap["K7 II"] = true
+	checkmap["K8 II"] = true
+	checkmap["K9 II"] = true
+	checkmap["M0 II"] = true
+	checkmap["M1 II"] = true
+	checkmap["M2 II"] = true
+	checkmap["M3 II"] = true
+	checkmap["M4 II"] = true
+	checkmap["M5 II"] = true
+	checkmap["M6 II"] = true
+	checkmap["M7 II"] = true
+	checkmap["M8 II"] = true
+	checkmap["M9 II"] = true
+	checkmap["O0 III"] = true
+	checkmap["O1 III"] = true
+	checkmap["O2 III"] = true
+	checkmap["O3 III"] = true
+	checkmap["O4 III"] = true
+	checkmap["O5 III"] = true
+	checkmap["O6 III"] = true
+	checkmap["O7 III"] = true
+	checkmap["O8 III"] = true
+	checkmap["O9 III"] = true
+	checkmap["B0 III"] = true
+	checkmap["B1 III"] = true
+	checkmap["B2 III"] = true
+	checkmap["B3 III"] = true
+	checkmap["B4 III"] = true
+	checkmap["B5 III"] = true
+	checkmap["B6 III"] = true
+	checkmap["B7 III"] = true
+	checkmap["B8 III"] = true
+	checkmap["B9 III"] = true
+	checkmap["A0 III"] = true
+	checkmap["A1 III"] = true
+	checkmap["A2 III"] = true
+	checkmap["A3 III"] = true
+	checkmap["A4 III"] = true
+	checkmap["A5 III"] = true
+	checkmap["A6 III"] = true
+	checkmap["A7 III"] = true
+	checkmap["A8 III"] = true
+	checkmap["A9 III"] = true
+	checkmap["F0 III"] = true
+	checkmap["F1 III"] = true
+	checkmap["F2 III"] = true
+	checkmap["F3 III"] = true
+	checkmap["F4 III"] = true
+	checkmap["F5 III"] = true
+	checkmap["F6 III"] = true
+	checkmap["F7 III"] = true
+	checkmap["F8 III"] = true
+	checkmap["F9 III"] = true
+	checkmap["G0 III"] = true
+	checkmap["G1 III"] = true
+	checkmap["G2 III"] = true
+	checkmap["G3 III"] = true
+	checkmap["G4 III"] = true
+	checkmap["G5 III"] = true
+	checkmap["G6 III"] = true
+	checkmap["G7 III"] = true
+	checkmap["G8 III"] = true
+	checkmap["G9 III"] = true
+	checkmap["K0 III"] = true
+	checkmap["K1 III"] = true
+	checkmap["K2 III"] = true
+	checkmap["K3 III"] = true
+	checkmap["K4 III"] = true
+	checkmap["K5 III"] = true
+	checkmap["K6 III"] = true
+	checkmap["K7 III"] = true
+	checkmap["K8 III"] = true
+	checkmap["K9 III"] = true
+	checkmap["M0 III"] = true
+	checkmap["M1 III"] = true
+	checkmap["M2 III"] = true
+	checkmap["M3 III"] = true
+	checkmap["M4 III"] = true
+	checkmap["M5 III"] = true
+	checkmap["M6 III"] = true
+	checkmap["M7 III"] = true
+	checkmap["M8 III"] = true
+	checkmap["M9 III"] = true
+	checkmap["O0 IV"] = true
+	checkmap["O1 IV"] = true
+	checkmap["O2 IV"] = true
+	checkmap["O3 IV"] = true
+	checkmap["O4 IV"] = true
+	checkmap["O5 IV"] = true
+	checkmap["O6 IV"] = true
+	checkmap["O7 IV"] = true
+	checkmap["O8 IV"] = true
+	checkmap["O9 IV"] = true
+	checkmap["B0 IV"] = true
+	checkmap["B1 IV"] = true
+	checkmap["B2 IV"] = true
+	checkmap["B3 IV"] = true
+	checkmap["B4 IV"] = true
+	checkmap["B5 IV"] = true
+	checkmap["B6 IV"] = true
+	checkmap["B7 IV"] = true
+	checkmap["B8 IV"] = true
+	checkmap["B9 IV"] = true
+	checkmap["A0 IV"] = true
+	checkmap["A1 IV"] = true
+	checkmap["A2 IV"] = true
+	checkmap["A3 IV"] = true
+	checkmap["A4 IV"] = true
+	checkmap["A5 IV"] = true
+	checkmap["A6 IV"] = true
+	checkmap["A7 IV"] = true
+	checkmap["A8 IV"] = true
+	checkmap["A9 IV"] = true
+	checkmap["F0 IV"] = true
+	checkmap["F1 IV"] = true
+	checkmap["F2 IV"] = true
+	checkmap["F3 IV"] = true
+	checkmap["F4 IV"] = true
+	checkmap["F5 IV"] = true
+	checkmap["F6 IV"] = true
+	checkmap["F7 IV"] = true
+	checkmap["F8 IV"] = true
+	checkmap["F9 IV"] = true
+	checkmap["G0 IV"] = true
+	checkmap["G1 IV"] = true
+	checkmap["G2 IV"] = true
+	checkmap["G3 IV"] = true
+	checkmap["G4 IV"] = true
+	checkmap["G5 IV"] = true
+	checkmap["G6 IV"] = true
+	checkmap["G7 IV"] = true
+	checkmap["G8 IV"] = true
+	checkmap["G9 IV"] = true
+	checkmap["K0 IV"] = true
+	checkmap["K1 IV"] = true
+	checkmap["K2 IV"] = true
+	checkmap["K3 IV"] = true
+	checkmap["K4 IV"] = true
+	checkmap["O0 V"] = true
+	checkmap["O1 V"] = true
+	checkmap["O2 V"] = true
+	checkmap["O3 V"] = true
+	checkmap["O4 V"] = true
+	checkmap["O5 V"] = true
+	checkmap["O6 V"] = true
+	checkmap["O7 V"] = true
+	checkmap["O8 V"] = true
+	checkmap["O9 V"] = true
+	checkmap["B0 V"] = true
+	checkmap["B1 V"] = true
+	checkmap["B2 V"] = true
+	checkmap["B3 V"] = true
+	checkmap["B4 V"] = true
+	checkmap["B5 V"] = true
+	checkmap["B6 V"] = true
+	checkmap["B7 V"] = true
+	checkmap["B8 V"] = true
+	checkmap["B9 V"] = true
+	checkmap["A0 V"] = true
+	checkmap["A1 V"] = true
+	checkmap["A2 V"] = true
+	checkmap["A3 V"] = true
+	checkmap["A4 V"] = true
+	checkmap["A5 V"] = true
+	checkmap["A6 V"] = true
+	checkmap["A7 V"] = true
+	checkmap["A8 V"] = true
+	checkmap["A9 V"] = true
+	checkmap["F0 V"] = true
+	checkmap["F1 V"] = true
+	checkmap["F2 V"] = true
+	checkmap["F3 V"] = true
+	checkmap["F4 V"] = true
+	checkmap["F5 V"] = true
+	checkmap["F6 V"] = true
+	checkmap["F7 V"] = true
+	checkmap["F8 V"] = true
+	checkmap["F9 V"] = true
+	checkmap["G0 V"] = true
+	checkmap["G1 V"] = true
+	checkmap["G2 V"] = true
+	checkmap["G3 V"] = true
+	checkmap["G4 V"] = true
+	checkmap["G5 V"] = true
+	checkmap["G6 V"] = true
+	checkmap["G7 V"] = true
+	checkmap["G8 V"] = true
+	checkmap["G9 V"] = true
+	checkmap["K0 V"] = true
+	checkmap["K1 V"] = true
+	checkmap["K2 V"] = true
+	checkmap["K3 V"] = true
+	checkmap["K4 V"] = true
+	checkmap["K5 V"] = true
+	checkmap["K6 V"] = true
+	checkmap["K7 V"] = true
+	checkmap["K8 V"] = true
+	checkmap["K9 V"] = true
+	checkmap["M0 V"] = true
+	checkmap["M1 V"] = true
+	checkmap["M2 V"] = true
+	checkmap["M3 V"] = true
+	checkmap["M4 V"] = true
+	checkmap["M5 V"] = true
+	checkmap["M6 V"] = true
+	checkmap["M7 V"] = true
+	checkmap["M8 V"] = true
+	checkmap["M9 V"] = true
+	checkmap["F5 VI"] = true
+	checkmap["F6 VI"] = true
+	checkmap["F7 VI"] = true
+	checkmap["F8 VI"] = true
+	checkmap["F9 VI"] = true
+	checkmap["G0 VI"] = true
+	checkmap["G1 VI"] = true
+	checkmap["G2 VI"] = true
+	checkmap["G3 VI"] = true
+	checkmap["G4 VI"] = true
+	checkmap["G5 VI"] = true
+	checkmap["G6 VI"] = true
+	checkmap["G7 VI"] = true
+	checkmap["G8 VI"] = true
+	checkmap["G9 VI"] = true
+	checkmap["K0 VI"] = true
+	checkmap["K1 VI"] = true
+	checkmap["K2 VI"] = true
+	checkmap["K3 VI"] = true
+	checkmap["K4 VI"] = true
+	checkmap["K5 VI"] = true
+	checkmap["K6 VI"] = true
+	checkmap["K7 VI"] = true
+	checkmap["K8 VI"] = true
+	checkmap["K9 VI"] = true
+	checkmap["M0 VI"] = true
+	checkmap["M1 VI"] = true
+	checkmap["M2 VI"] = true
+	checkmap["M3 VI"] = true
+	checkmap["M4 VI"] = true
+	checkmap["M5 VI"] = true
+	checkmap["M6 VI"] = true
+	checkmap["M7 VI"] = true
+	checkmap["M8 VI"] = true
+	checkmap["M9 VI"] = true
+	checkmap["DO"] = true
+	checkmap["DB"] = true
+	checkmap["DA"] = true
+	checkmap["DF"] = true
+	checkmap["DG"] = true
+	checkmap["DK"] = true
+	checkmap["DM"] = true
+	return checkmap[code]
+}
+
+func ParseStellar(str string) ([]string, error) {
+	err := fmt.Errorf("Initial Error")
+	res := []string{}
+	return res, err
 }
