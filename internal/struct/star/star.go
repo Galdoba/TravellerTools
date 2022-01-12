@@ -27,6 +27,8 @@ type Star struct {
 	mass       float64
 	luminocity float64
 	orbit      int
+	hz         int
+	maxPlanets int
 	category   int
 	code       string
 }
@@ -44,7 +46,7 @@ func New(name, code string, category int) (Star, error) {
 	s.orbit = -2
 	s.category = category
 	s.name = strings.TrimSuffix(name+" "+categoryString(category), " ")
-
+	s.hz = baseHZ(s.spectral, s.size)
 	dp := dice.New().SetSeed(name)
 	switch s.category {
 	default:
@@ -63,8 +65,28 @@ func New(name, code string, category int) (Star, error) {
 	s.code = code
 	s.luminocity = baseStellarLuminocity(code)
 	s.mass = baseStellarMass(code)
+	s.maxPlanets = 18
+	if s.category != Category_Primary {
+		s.maxPlanets = s.orbit - 3
+		if s.maxPlanets < 0 {
+			s.maxPlanets = 0
+		}
+	}
+
 	err = s.checkStruct()
 	return s, err
+}
+
+func (s Star) String() string {
+	str := fmt.Sprintf("\nStar: %v", s.code)
+	str += fmt.Sprintf("\nName: %v", s.name)
+	str += fmt.Sprintf("\nMass: %v", s.mass)
+	str += fmt.Sprintf("\nLuma: %v", s.luminocity)
+	str += fmt.Sprintf("\n Orb: %v", s.orbit)
+	str += fmt.Sprintf("\n  HZ: %v", s.hz)
+	str += fmt.Sprintf("\nPlanets sustained: %v", s.maxPlanets)
+	str += fmt.Sprintf("\n---\n")
+	return str
 }
 
 func categoryString(category int) string {
@@ -126,7 +148,11 @@ func decodeStellar(code string) (spec string, dec string, size string, err error
 	codeSep := strings.Split(code, "")
 	switch {
 	default:
-		return spec, dec, size, fmt.Errorf("code not decoded (%v)", code)
+		testCode := encodeStellar(spec, dec, size)
+		if !codeValid(testCode) {
+			return spec, dec, size, fmt.Errorf("code input incorrect (%v)", code)
+		}
+		return spec, dec, size, fmt.Errorf("code not decoded (%v) - unknown reason", code)
 	case len(code) < 2 || len(code) > 6:
 		return spec, dec, size, fmt.Errorf("code lenght incorrect (%v)", code)
 	case code == "BD":
@@ -954,6 +980,67 @@ func baseStellarLuminocity(class string) float64 {
 	return lumaMap[class]
 }
 
+func baseHZ(spectral, size string) int {
+	class := spectral + size
+	mapHZ := make(map[string]int)
+	mapHZ["OIa"] = 15
+	mapHZ["OIb"] = 15
+	mapHZ["OII"] = 14
+	mapHZ["OIII"] = 13
+	mapHZ["OIV"] = 12
+	mapHZ["OV"] = 11
+	mapHZ["OD"] = 1
+	mapHZ["BIa"] = 13
+	mapHZ["BIb"] = 13
+	mapHZ["BII"] = 12
+	mapHZ["BIII"] = 11
+	mapHZ["BIV"] = 10
+	mapHZ["BV"] = 9
+	mapHZ["BD"] = 0
+	mapHZ["AIa"] = 12
+	mapHZ["AIb"] = 11
+	mapHZ["AII"] = 9
+	mapHZ["AIII"] = 7
+	mapHZ["AIV"] = 7
+	mapHZ["AV"] = 7
+	mapHZ["AD"] = 0
+	mapHZ["FIa"] = 11
+	mapHZ["FIb"] = 10
+	mapHZ["FII"] = 9
+	mapHZ["FIII"] = 6
+	mapHZ["FIV"] = 6
+	mapHZ["FV"] = 4
+	mapHZ["FVI"] = 3
+	mapHZ["FD"] = 0
+	mapHZ["GIa"] = 12
+	mapHZ["GIb"] = 10
+	mapHZ["GII"] = 9
+	mapHZ["GIII"] = 7
+	mapHZ["GIV"] = 5
+	mapHZ["GV"] = 3
+	mapHZ["GVI"] = 2
+	mapHZ["GD"] = 0
+	mapHZ["KIa"] = 12
+	mapHZ["KIb"] = 10
+	mapHZ["KII"] = 9
+	mapHZ["KIII"] = 8
+	mapHZ["KIV"] = 5
+	mapHZ["KV"] = 2
+	mapHZ["KVI"] = 1
+	mapHZ["KD"] = 0
+	mapHZ["MIa"] = 12
+	mapHZ["MIb"] = 11
+	mapHZ["MII"] = 10
+	mapHZ["MIII"] = 9
+	mapHZ["MV"] = 0
+	mapHZ["MVI"] = 0
+	mapHZ["MD"] = 0
+	if v, ok := mapHZ[class]; ok {
+		return v
+	}
+	return -1
+}
+
 func codeValid(code string) bool {
 	checkmap := make(map[string]bool)
 	checkmap["BD"] = true
@@ -1410,5 +1497,80 @@ func codeValid(code string) bool {
 func ParseStellar(str string) ([]string, error) {
 	err := fmt.Errorf("Initial Error")
 	res := []string{}
+	parts := strings.Fields(str)
+	parts = append(parts, "")
+	clean := parts
+	for i := range parts {
+		if codeValid(parts[i]) {
+			clean = remove(clean, parts[i], 1)
+			res = append(res, parts[i])
+		}
+		if i == 0 {
+			continue
+		}
+		if codeValid(parts[i-1] + " " + parts[i]) {
+			clean = remove(clean, parts[i-1], 1)
+			clean = remove(clean, parts[i], 1)
+			res = append(res, parts[i-1]+" "+parts[i])
+		}
+	}
+	clean = remove(clean, "", 50)
+	switch {
+	default:
+		err = fmt.Errorf("segment not parsed (%v/%v)", clean, str)
+	case len(clean) == 0:
+		err = nil
+	}
 	return res, err
+}
+
+func remove(sl []string, s string, max int) []string {
+	res := []string{}
+	r := 0
+	for _, v := range sl {
+		if r >= max {
+			res = append(res, v)
+			continue
+		}
+		if v == s {
+			r++
+			continue
+		}
+		res = append(res, v)
+	}
+	return res
+}
+
+func rollSystemComposition(systemName string, totalStars int) []int {
+	if totalStars < 1 || totalStars > 8 {
+		return []int{}
+	}
+	dp := dice.New().SetSeed(systemName)
+	try := 0
+	res := []int{}
+	for len(res) != totalStars {
+		try++
+		res = []int{}
+		res = append(res, Category_Primary)
+		if dp.Flux() > 2 {
+			res = append(res, Category_Close)
+		}
+		if dp.Flux() > 2 {
+			res = append(res, Category_Near)
+		}
+		if dp.Flux() > 2 {
+			res = append(res, Category_Far)
+		}
+		strs := res
+		for _, st := range strs {
+			switch st {
+			case Category_Primary, Category_Close, Category_Near, Category_Far:
+				if dp.Flux() > 2 {
+					res = append(res, st+1)
+				}
+			}
+		}
+		fmt.Printf("Try: %v/Res: %v (%v)\r", try, len(res), res)
+	}
+	return res
 }

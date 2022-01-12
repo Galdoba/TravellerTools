@@ -2,89 +2,106 @@ package star
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
-func TestInterpolation(t *testing.T) {
-	// c := 0
-	// tags := strs()
-	// pairs := pairs()
-	// for ind := range pairs {
-	// 	if ind == 0 {
-	// 		continue
-	// 	}
-	// 	div := 5.0
-	// 	dif := 5
-	// 	if ind == len(pairs)-1 && strings.Contains(tags[c], "M") {
-	// 		div = 4.0
-	// 	}
-	// 	for i := 0; i < dif; i++ {
-	// 		res := interpalation(pairs[ind-1], pairs[ind], float64(i), div)
-	// 		if res != -999.9 {
-	// 			marker := ""
-	// 			//t.Errorf("Interpolation ERROR: \nhave %v ", res)
-	// 			res = utils.RoundFloat64(res, 2)
-	// 			if strings.Contains(tags[c], "0") || strings.Contains(tags[c], "5") {
-	// 				marker = " //check " + fmt.Sprintf("%v", pairs[ind-1])
-	// 			}
-	// 			fmt.Printf("lumaMap[%v VI] = %v%v\r", tags[c], res, marker)
-	// 		}
-	// 		c++
-	// 	}
-	// }
-
+func TestMassAndLuma(t *testing.T) {
+	tot := 0
+	cinv := 0
 	for _, code := range allCodes() {
-
+		tot++
 		l := baseStellarLuminocity(code)
 		m := baseStellarMass(code)
-
-		if l == 0 || m == 0 {
-			fmt.Printf("Try code: =%v=%v/%v\n", code, l, m)
-			t.Errorf("code '%v': luma/mass is not expected to be %v/%v", code, l, m)
+		switch {
+		case !codeValid(code):
+			cinv++
+			continue
+		case l == 0:
+			t.Errorf("code '%v': luma is not expected to be %v", code, l)
+		case m == 0:
+			t.Errorf("code '%v': mass is not expected to be %v", code, m)
 		}
-
 	}
-	fmt.Println("////////////////")
+	fmt.Printf("Total Tests: %v\nInput Code Invalid: %v\n \n", tot, cinv)
 }
 
 func TestStar(t *testing.T) {
 	codes := allCodes()
-	codes = append(codes, "Fus")
-	categ := []int{Category_Primary, Category_PrimaryCompanion, Category_Close, Category_CloseCompanion, Category_Near, Category_NearCompanion, Category_Far, Category_FarCompanion}
+	codes = append(codes, "Fus", "")
+	categ := []int{Category_Primary, Category_PrimaryCompanion, Category_Close, Category_CloseCompanion, Category_Near, Category_NearCompanion, Category_Far, Category_FarCompanion, 11, UNDEFINED}
 	tst := 0
+	vld := 0
+	ice := 0
+	sce := 0
 	for _, code := range codes {
 		for _, cat := range categ {
 			tst++
 			_, err := New("Kimeria", code, cat)
-			if err != nil {
-				fmt.Printf("test %v:\n", tst)
-				t.Errorf("error encountered: %v", err.Error())
-			} else {
-				//fmt.Printf("Test %v: %v\n", tst, st)
+			switch {
+			default:
+				t.Errorf("unknown error: test %v (%v,%v)", tst, code, categ)
+			case err == nil:
+				vld++
+				continue
+			case strings.Contains(err.Error(), "input code invalid"):
+				ice++
+				continue
+			case strings.Contains(err.Error(), "star category invalid"):
+				sce++
 				continue
 			}
-			fmt.Printf("  \n")
 		}
 	}
+	fmt.Printf("Total tests: %v\nValid: %v\nCodeError: %v\nCategoryError %v\n \n", tst, vld, ice, sce)
 }
 
 func TestStellarEncode(t *testing.T) {
-	spectrals := []string{"O", "B", "A", "F", "G", "K", "M", "BD"}
-	decimals := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
-	sizes := []string{"Ia", "Ib", "II", "III", "IV", "V", "VI", "D"}
+	spectrals := []string{"O", "B", "A", "F", "G", "K", "M", "BD", "", "f"}
+	decimals := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "", "f"}
+	sizes := []string{"Ia", "Ib", "II", "III", "IV", "V", "VI", "D", "", "f"}
+	tot := 0
+	err := 0
 	for _, spec := range spectrals {
 		for _, sz := range sizes {
 			for _, dec := range decimals {
-
+				tot++
 				code := encodeStellar(spec, dec, sz)
-
 				if code == "error" {
+					err++
+					continue
 					t.Errorf("encoding failed with input '%v' '%v' '%v'\n", spec, dec, sz)
 				}
-				//fmt.Printf("encoded stellar = '%v' with input '%v' '%v' '%v'\n", code, spec, dec, sz)
 			}
 		}
 	}
+	fmt.Printf("Total Tests: %v\nErrors: %v\n \n", tot, err)
+}
+
+func TestStellarDecode(t *testing.T) {
+	codes := allCodes()
+	codes = append(codes, " ")
+	codes = append(codes, "sdgf")
+	codes = append(codes, "12345678")
+	codes = append(codes, "G2 V ")
+	tot := 0
+	errNum := 0
+	correct := 0
+	for _, code := range codes {
+		tot++
+		_, _, _, err := decodeStellar(code)
+		switch {
+		default:
+			t.Errorf("unhandled err: %v", err.Error())
+		case err == nil:
+			correct++
+		case strings.Contains(err.Error(), "code lenght incorrect"):
+			errNum++
+		case strings.Contains(err.Error(), "code input incorrect"):
+			errNum++
+		}
+	}
+	fmt.Printf("Total Tests: %v\nValid: %v\nErrors: %v\n \n", tot, correct, errNum)
 }
 
 func allCodes() []string {
@@ -262,4 +279,31 @@ func codeErrorExpected(code string) bool {
 	errMap["M8 IV"] = true
 	errMap["M9 IV"] = true
 	return errMap[code]
+}
+
+func TestParse(t *testing.T) {
+	for i, tl := range parcingLines() {
+		stCodes, err := ParseStellar(tl)
+		switch {
+		default:
+			t.Errorf("Test %v: input %v - err: %v", i, tl, err)
+		case err == nil:
+			fmt.Println("Tst ==", tl)
+			comp := rollSystemComposition("Test Name", len(stCodes))
+			for i, code := range stCodes {
+				st, _ := New("Test Name", code, comp[i])
+				fmt.Println(st)
+			}
+		}
+	}
+}
+
+func parcingLines() []string {
+	return []string{
+		//"F1 V M9 II M7 V",
+		//"G2   V ",
+		//"G2 V",
+		"G3 V G8 V K1 V M3 VI M3 V G8 VI B2 Ia DK",
+		//"M0 V M0 V",
+	}
 }
