@@ -1514,7 +1514,7 @@ func ParseStellar(str string) ([]string, error) {
 			res = append(res, parts[i-1]+" "+parts[i])
 		}
 	}
-	clean = remove(clean, "", 50)
+	clean = remove(clean, "", len(clean))
 	switch {
 	default:
 		err = fmt.Errorf("segment not parsed (%v/%v)", clean, str)
