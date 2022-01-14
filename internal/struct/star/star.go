@@ -1574,3 +1574,15 @@ func rollSystemComposition(systemName string, totalStars int) []int {
 	}
 	return res
 }
+
+func (s *Star) Name() string {
+	return s.name
+}
+
+func (s *Star) Orbit() int {
+	return s.orbit
+}
+
+func (s *Star) Mass() float64 {
+	return s.mass
+}
