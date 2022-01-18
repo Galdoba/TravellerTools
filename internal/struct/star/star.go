@@ -36,16 +36,16 @@ type Star struct {
 func New(name, code string, category int) (Star, error) {
 	err := fmt.Errorf("NewRandom func is not implemented")
 	s := Star{}
-	if !codeValid(code) {
+	if !CodeValid(code) {
 		return s, fmt.Errorf("input code invalid (%v)", code)
 	}
-	s.spectral, s.decimal, s.size, err = decodeStellar(code)
+	s.spectral, s.decimal, s.size, err = DecodeStellar(code)
 	if err != nil {
 		return s, fmt.Errorf("%v", err.Error())
 	}
 	s.orbit = -2
 	s.category = category
-	s.name = strings.TrimSuffix(name+" "+categoryString(category), " ")
+	s.name = strings.TrimSuffix(name+" "+CategoryStr(category), " ")
 	s.hz = baseHZ(s.spectral, s.size)
 	dp := dice.New().SetSeed(name)
 	switch s.category {
@@ -89,7 +89,7 @@ func (s Star) String() string {
 	return str
 }
 
-func categoryString(category int) string {
+func CategoryStr(category int) string {
 	switch category {
 	case Category_Primary:
 		return "Primary"
@@ -131,7 +131,7 @@ func (s *Star) checkStruct() error {
 	return nil
 }
 
-func encodeStellar(spectral, dec, size string) string {
+func EncodeStellar(spectral, dec, size string) string {
 	switch {
 	case spectral == "BD":
 		return "BD"
@@ -144,12 +144,12 @@ func encodeStellar(spectral, dec, size string) string {
 	}
 }
 
-func decodeStellar(code string) (spec string, dec string, size string, err error) {
+func DecodeStellar(code string) (spec string, dec string, size string, err error) {
 	codeSep := strings.Split(code, "")
 	switch {
 	default:
-		testCode := encodeStellar(spec, dec, size)
-		if !codeValid(testCode) {
+		testCode := EncodeStellar(spec, dec, size)
+		if !CodeValid(testCode) {
 			return spec, dec, size, fmt.Errorf("code input incorrect (%v)", code)
 		}
 		return spec, dec, size, fmt.Errorf("code not decoded (%v) - unknown reason", code)
@@ -175,7 +175,7 @@ func decodeStellar(code string) (spec string, dec string, size string, err error
 }
 
 func baseStellarMass(class string) float64 {
-	if !codeValid(class) {
+	if !CodeValid(class) {
 		return -1
 	}
 	class = strings.ReplaceAll(class, "O", "B")
@@ -578,7 +578,7 @@ func baseStellarMass(class string) float64 {
 }
 
 func baseStellarLuminocity(class string) float64 {
-	if !codeValid(class) {
+	if !CodeValid(class) {
 		return -1
 	}
 	class = strings.ReplaceAll(class, "O", "B")
@@ -1041,7 +1041,7 @@ func baseHZ(spectral, size string) int {
 	return -1
 }
 
-func codeValid(code string) bool {
+func CodeValid(code string) bool {
 	checkmap := make(map[string]bool)
 	checkmap["BD"] = true
 	checkmap["O0 Ia"] = true
@@ -1501,14 +1501,14 @@ func ParseStellar(str string) ([]string, error) {
 	parts = append(parts, "")
 	clean := parts
 	for i := range parts {
-		if codeValid(parts[i]) {
+		if CodeValid(parts[i]) {
 			clean = remove(clean, parts[i], 1)
 			res = append(res, parts[i])
 		}
 		if i == 0 {
 			continue
 		}
-		if codeValid(parts[i-1] + " " + parts[i]) {
+		if CodeValid(parts[i-1] + " " + parts[i]) {
 			clean = remove(clean, parts[i-1], 1)
 			clean = remove(clean, parts[i], 1)
 			res = append(res, parts[i-1]+" "+parts[i])
@@ -1541,39 +1541,39 @@ func remove(sl []string, s string, max int) []string {
 	return res
 }
 
-func rollSystemComposition(systemName string, totalStars int) []int {
-	if totalStars < 1 || totalStars > 8 {
-		return []int{}
-	}
-	dp := dice.New().SetSeed(systemName)
-	try := 0
-	res := []int{}
-	for len(res) != totalStars {
-		try++
-		res = []int{}
-		res = append(res, Category_Primary)
-		if dp.Flux() > 2 {
-			res = append(res, Category_Close)
-		}
-		if dp.Flux() > 2 {
-			res = append(res, Category_Near)
-		}
-		if dp.Flux() > 2 {
-			res = append(res, Category_Far)
-		}
-		strs := res
-		for _, st := range strs {
-			switch st {
-			case Category_Primary, Category_Close, Category_Near, Category_Far:
-				if dp.Flux() > 2 {
-					res = append(res, st+1)
-				}
-			}
-		}
-		fmt.Printf("Try: %v/Res: %v (%v)\r", try, len(res), res)
-	}
-	return res
-}
+// func calculateSystemComposition(systemName string, totalStars int) []int {
+// 	if totalStars < 1 || totalStars > 8 {
+// 		return []int{}
+// 	}
+// 	dp := dice.New().SetSeed(systemName)
+// 	try := 0
+// 	res := []int{}
+// 	for len(res) != totalStars {
+// 		try++
+// 		res = []int{}
+// 		res = append(res, Category_Primary)
+// 		if dp.Flux() > 2 {
+// 			res = append(res, Category_Close)
+// 		}
+// 		if dp.Flux() > 2 {
+// 			res = append(res, Category_Near)
+// 		}
+// 		if dp.Flux() > 2 {
+// 			res = append(res, Category_Far)
+// 		}
+// 		strs := res
+// 		for _, st := range strs {
+// 			switch st {
+// 			case Category_Primary, Category_Close, Category_Near, Category_Far:
+// 				if dp.Flux() > 2 {
+// 					res = append(res, st+1)
+// 				}
+// 			}
+// 		}
+// 		fmt.Printf("Try: %v/Res: %v (%v)\r", try, len(res), res)
+// 	}
+// 	return res
+// }
 
 func (s *Star) Name() string {
 	return s.name
