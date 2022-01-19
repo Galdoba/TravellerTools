@@ -33,35 +33,21 @@ type Star struct {
 	code       string
 }
 
-func New(name, code string, category int) (Star, error) {
+func New(name, code string, category int) (*Star, error) {
 	err := fmt.Errorf("NewRandom func is not implemented")
 	s := Star{}
 	if !CodeValid(code) {
-		return s, fmt.Errorf("input code invalid (%v)", code)
+		return &s, fmt.Errorf("input code invalid (%v)", code)
 	}
 	s.spectral, s.decimal, s.size, err = DecodeStellar(code)
 	if err != nil {
-		return s, fmt.Errorf("%v", err.Error())
+		return &s, fmt.Errorf("%v", err.Error())
 	}
 	s.orbit = -2
 	s.category = category
 	s.name = strings.TrimSuffix(name+" "+CategoryStr(category), " ")
 	s.hz = baseHZ(s.spectral, s.size)
-	dp := dice.New().SetSeed(name)
-	switch s.category {
-	default:
-		return s, fmt.Errorf("star category invalid")
-	case Category_Primary:
-		s.orbit = -1
-	case Category_PrimaryCompanion, Category_CloseCompanion, Category_NearCompanion, Category_FarCompanion:
-		s.orbit = 0
-	case Category_Close:
-		s.orbit = dp.Roll("1d6").Sum() - 1
-	case Category_Near:
-		s.orbit = dp.Roll("1d6").Sum() + 5
-	case Category_Far:
-		s.orbit = dp.Roll("1d6").Sum() + 10
-	}
+	s.SetOrbit()
 	s.code = code
 	s.luminocity = baseStellarLuminocity(code)
 	s.mass = baseStellarMass(code)
@@ -74,10 +60,28 @@ func New(name, code string, category int) (Star, error) {
 	}
 
 	err = s.checkStruct()
-	return s, err
+	return &s, err
 }
 
-func (s Star) String() string {
+func (s *Star) SetOrbit() {
+	dp := dice.New().SetSeed(s.name + "Orbit")
+	switch s.category {
+	default:
+		s.orbit = -3
+	case Category_Primary:
+		s.orbit = -1
+	case Category_PrimaryCompanion, Category_CloseCompanion, Category_NearCompanion, Category_FarCompanion:
+		s.orbit = 0
+	case Category_Close:
+		s.orbit = dp.Roll("1d6").Sum() - 1
+	case Category_Near:
+		s.orbit = dp.Roll("1d6").Sum() + 5
+	case Category_Far:
+		s.orbit = dp.Roll("1d6").Sum() + 10
+	}
+}
+
+func (s *Star) String() string {
 	str := fmt.Sprintf("\nStar: %v", s.code)
 	str += fmt.Sprintf("\nName: %v", s.name)
 	str += fmt.Sprintf("\nMass: %v", s.mass)
@@ -1492,6 +1496,40 @@ func CodeValid(code string) bool {
 	checkmap["DK"] = true
 	checkmap["DM"] = true
 	return checkmap[code]
+}
+
+func FixCode(code string) string {
+	if CodeValid(code) {
+		return code
+	}
+	spectral, decimal, size, err := DecodeStellar(code)
+	if err != nil {
+		panic("unexpected: " + err.Error())
+	}
+	switch size {
+	case "IV":
+		if spectral == "K" {
+			switch decimal {
+			case "5", "6", "7", "8", "9":
+				size = "V"
+			}
+		}
+		if spectral == "M" {
+			size = "V"
+		}
+	case "VI":
+		if spectral == "F" {
+			switch decimal {
+			case "0", "1", "2", "3", "4":
+				size = "V"
+			}
+		}
+		if spectral == "A" {
+			size = "V"
+		}
+	}
+	code = EncodeStellar(spectral, decimal, size)
+	return code
 }
 
 func ParseStellar(str string) ([]string, error) {
