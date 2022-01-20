@@ -9,10 +9,80 @@ import (
 	"github.com/Galdoba/TravellerTools/internal/struct/star"
 )
 
+type StarNexus struct {
+	StarSystems []*StarSystem
+}
+
 type StarSystem struct {
-	Sun       star.Star
-	Companion star.Star
+	Sun       *star.Star
+	Companion *star.Star
 	Body      []PlanetaryBody
+}
+
+func NewNexus(name, stellar, pbg string, w int) (*StarNexus, error) {
+	sn := StarNexus{}
+	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
+	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
+	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
+	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
+	err := fmt.Errorf("initial error was not adressed")
+	if stellar == "" {
+		stellar = GenerateNewStellar(name)
+	}
+	starCodes, err := star.ParseStellar(stellar)
+	compos, err := SystemComposition(name, stellar)
+	separated := separateBySystems(compos)
+	codePosition := 0
+	for stsys, s := range separated {
+		for pos, categ := range s {
+			//fmt.Println(stsys, s, pos, categ, "---", name, stellar)
+			st, _ := star.New(name+" "+greekLetter(codePosition+1), starCodes[codePosition], categ)
+			st.SetOrbit()
+			switch pos {
+			case 0:
+				sn.StarSystems[stsys].Sun = st
+			case 1:
+				sn.StarSystems[stsys].Companion = st
+			}
+			codePosition++
+		}
+	}
+
+	return &sn, err
+}
+
+func (n *StarNexus) Print() {
+	fmt.Println(len(n.StarSystems))
+	for i := range n.StarSystems {
+		if n.StarSystems[i].Sun != nil {
+			n.StarSystems[i].Sun.Print()
+		}
+		if n.StarSystems[i].Companion != nil {
+			n.StarSystems[i].Companion.Print()
+		}
+	}
+}
+
+func greekLetter(i int) string {
+	switch i {
+	case star.Category_Primary:
+		return "Alpha"
+	case star.Category_PrimaryCompanion:
+		return "Beta"
+	case star.Category_Close:
+		return "Gamma"
+	case star.Category_CloseCompanion:
+		return "Delta"
+	case star.Category_Near:
+		return "Epsilon"
+	case star.Category_NearCompanion:
+		return "Zeta"
+	case star.Category_Far:
+		return "Eta"
+	case star.Category_FarCompanion:
+		return "Theta"
+	}
+	return "???"
 }
 
 type PlanetaryBody interface {
@@ -23,10 +93,6 @@ type PlanetaryBody interface {
 
 func separateBySystems(composition []int) [4][]int {
 	sys := [4][]int{}
-	// sys = append(sys, []int{})
-	// sys = append(sys, []int{})
-	// sys = append(sys, []int{})
-	// sys = append(sys, []int{})
 	for _, v := range composition {
 		switch v {
 		case 1, 3, 5, 7:

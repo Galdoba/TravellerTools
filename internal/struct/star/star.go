@@ -45,7 +45,7 @@ func New(name, code string, category int) (*Star, error) {
 	}
 	s.orbit = -2
 	s.category = category
-	s.name = strings.TrimSuffix(name+" "+CategoryStr(category), " ")
+	s.name = strings.TrimSuffix(name, " ")
 	s.hz = baseHZ(s.spectral, s.size)
 	s.SetOrbit()
 	s.code = code
@@ -91,6 +91,12 @@ func (s *Star) String() string {
 	str += fmt.Sprintf("\nPlanets sustained: %v", s.maxPlanets)
 	str += fmt.Sprintf("\n---\n")
 	return str
+}
+
+func (s *Star) Print() {
+	line := ""
+	line += fmt.Sprintf("%v - %v - %v (%v)", s.name, s.code, CategoryStr(s.category), s.orbit)
+	fmt.Println(line)
 }
 
 func CategoryStr(category int) string {
