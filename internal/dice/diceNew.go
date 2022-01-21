@@ -98,6 +98,12 @@ func (dp *Dicepool) Roll(code string) *Dicepool {
 	return dp
 }
 
+//DM - добавляет число к общей сумме результата
+func (dp *Dicepool) DM(dm int) *Dicepool {
+	dp.modTotal = dp.modTotal + dm
+	return dp
+}
+
 //Flux - Дает Flux
 func (dp *Dicepool) Flux() int {
 	d1 := dp.Roll("1d6").Sum()
