@@ -1,11 +1,35 @@
 package calculations
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 )
+
+func Decode(pbg string) (int, int, int, error) {
+	data := strings.Split(pbg, "")
+	err := fmt.Errorf("initial Error")
+	if len(data) != 3 {
+		return 0, 0, 0, fmt.Errorf("invalid PBG data format")
+	}
+	p, b, g := 0, 0, 0
+	for i, d := range data {
+		switch i {
+		case 0:
+			p, err = strconv.Atoi(d)
+		case 1:
+			b, err = strconv.Atoi(d)
+		case 3:
+			g, err = strconv.Atoi(d)
+		}
+		if err != nil {
+			return p, b, g, fmt.Errorf("invalid data")
+		}
+	}
+	return p, b, g, nil
+}
 
 func PBGvalid(pbg string, uwp string) bool {
 	hex := strings.Split(pbg, "")

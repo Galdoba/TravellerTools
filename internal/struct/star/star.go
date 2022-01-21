@@ -1504,6 +1504,10 @@ func CodeValid(code string) bool {
 	return checkmap[code]
 }
 
+func (s *Star) HZ() int {
+	return s.hz
+}
+
 func FixCode(code string) string {
 	if CodeValid(code) {
 		return code

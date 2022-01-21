@@ -75,6 +75,8 @@ func FixUWP(uwp string, seed string) string {
 		uwp = "A6??997-D"
 	case "XXXXXXX-X":
 		uwp = "???????-?"
+	case "":
+		uwp = "???????-?"
 	}
 	hex := strings.Split(uwp, "")
 	if !starportValid(ehex.New().Set(hex[0])) {

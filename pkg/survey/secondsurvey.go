@@ -52,6 +52,9 @@ func Parse(input string) *SecondSurveyData {
 	for i := range data {
 		data[i] = strings.TrimSpace(data[i])
 	}
+	for len(data) < 30 {
+		data = append(data, "")
+	}
 	ssd.mw_Name = data[1]
 	ssd.hex = data[2]
 	ssd.mw_UWP = data[3]

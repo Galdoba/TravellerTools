@@ -2,10 +2,11 @@ package stellar
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
+	"github.com/Galdoba/TravellerTools/internal/helper"
 	"github.com/Galdoba/TravellerTools/internal/struct/star"
-
 	"github.com/Galdoba/TravellerTools/pkg/survey/calculations"
 )
 
@@ -51,23 +52,66 @@ type SurveyReporter interface {
 
 func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	sn := StarNexus{}
-	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
-	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
-	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
-	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
 	err := fmt.Errorf("initial error was not adressed")
 	name := ssd.NameByConvention()
 	stellar := ssd.Stellar()
 	if stellar == "" {
 		stellar = calculations.GenerateNewStellar(name)
 	}
+	//////////////
+	err = sn.placeStars(name, stellar)
+	if err != nil {
+		return &sn, err
+	}
+	/////////////Place MW
+	_, belts, ggs, err := calculations.Decode(ssd.PBG())
+	if err != nil {
+		return &sn, err
+	}
+	remarks := ssd.MW_Remarks()
+	if helper.SliceStrContains(strings.Split(remarks, " "), "Sa") && ggs < 1 {
+		return &sn, fmt.Errorf("inconsistent PBG/GG data")
+	}
+	for i := range sn.StarSystems {
+		sn.StarSystems[i].SetOrbits()
+	}
+	habitZone := sn.StarSystems[0].Sun.HZ()
+	sn.StarSystems[0].Body[habitZone] = MainWorldTo(habitZone)
+	/////////////Place GG
+	/////////////Place Belts
+	fmt.Println(belts)
+	/////////////Place Other
+	/////////////Place Satelites
+	return &sn, err
+}
+
+func (stsys *StarSystem) SetOrbits() {
+	maxOrb := 17
+	if stsys.Sun.Orbit() > 0 {
+		maxOrb = stsys.Sun.Orbit()
+		if maxOrb < 0 {
+			maxOrb = 0
+		}
+	}
+	for i := 0; i <= maxOrb; i++ {
+		stsys.Body = append(stsys.Body, EmptyOrbit(i))
+	}
+}
+
+func (sn *StarNexus) placeStars(name, stellar string) error {
+	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
+	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
+	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
+	sn.StarSystems = append(sn.StarSystems, &StarSystem{})
 	starCodes, err := star.ParseStellar(stellar)
+	if err != nil {
+		return err
+	}
 	compos, err := SystemComposition(name, stellar)
 	separated := separateBySystems(compos)
 	codePosition := 0
 	for stsys, s := range separated {
 		for pos, categ := range s {
-			//fmt.Println(stsys, s, pos, categ, "---", name, stellar)
 			st, _ := star.New(name+" "+greekLetter(codePosition+1), starCodes[codePosition], categ)
 			st.SetOrbit()
 			switch pos {
@@ -79,8 +123,7 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 			codePosition++
 		}
 	}
-
-	return &sn, err
+	return nil
 }
 
 func (n *StarNexus) Print() {
@@ -121,6 +164,28 @@ type PlanetaryBody interface {
 	Orbit() int //скорее всего да
 	Name() string
 	//Distance() float64 //скорее всего нет
+}
+
+type planetaryBody struct {
+	orbit  int
+	name   string
+	pbType string
+}
+
+func (pb *planetaryBody) Orbit() int {
+	return pb.orbit
+}
+
+func (pb *planetaryBody) Name() string {
+	return pb.name
+}
+
+func EmptyOrbit(o int) *planetaryBody {
+	return &planetaryBody{o, fmt.Sprintf("Orbit %v", o), "EMPTY"}
+}
+
+func MainWorldTo(o int) *planetaryBody {
+	return &planetaryBody{o, "Mainworld Name", "MW"}
 }
 
 func separateBySystems(composition []int) [4][]int {
