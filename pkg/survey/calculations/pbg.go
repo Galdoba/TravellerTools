@@ -21,7 +21,7 @@ func Decode(pbg string) (int, int, int, error) {
 			p, err = strconv.Atoi(d)
 		case 1:
 			b, err = strconv.Atoi(d)
-		case 3:
+		case 2:
 			g, err = strconv.Atoi(d)
 		}
 		if err != nil {

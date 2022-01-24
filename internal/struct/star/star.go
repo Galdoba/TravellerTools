@@ -73,7 +73,9 @@ func (s *Star) SetOrbit() {
 	case Category_PrimaryCompanion, Category_CloseCompanion, Category_NearCompanion, Category_FarCompanion:
 		s.orbit = 0
 	case Category_Close:
-		s.orbit = dp.Roll("1d6").Sum() - 1
+		for s.orbit < 1 {
+			s.orbit = dp.Roll("1d6").Sum() - 1
+		}
 	case Category_Near:
 		s.orbit = dp.Roll("1d6").Sum() + 5
 	case Category_Far:
@@ -1633,4 +1635,8 @@ func (s *Star) Orbit() int {
 
 func (s *Star) Mass() float64 {
 	return s.mass
+}
+
+func (s *Star) Code() string {
+	return s.code
 }

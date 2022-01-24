@@ -2,9 +2,11 @@ package stellar
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
+	"github.com/Galdoba/TravellerTools/internal/ehex"
 	"github.com/Galdoba/TravellerTools/internal/helper"
 	"github.com/Galdoba/TravellerTools/internal/struct/star"
 	"github.com/Galdoba/TravellerTools/pkg/survey/calculations"
@@ -17,7 +19,7 @@ type StarNexus struct {
 type StarSystem struct {
 	Sun       *star.Star
 	Companion *star.Star
-	Body      []PlanetaryBody
+	Body      []*planetaryBody
 }
 
 type SurveyReporter interface {
@@ -63,37 +65,121 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	if err != nil {
 		return &sn, err
 	}
-	/////////////Place MW
-	_, belts, ggs, err := calculations.Decode(ssd.PBG())
-	if err != nil {
-		return &sn, err
-	}
-	remarks := ssd.MW_Remarks()
-	if helper.SliceStrContains(strings.Split(remarks, " "), "Sa") && ggs < 1 {
-		return &sn, fmt.Errorf("inconsistent PBG/GG data")
-	}
 	for i := range sn.StarSystems {
 		sn.StarSystems[i].SetOrbits()
 	}
-	habitZone := sn.StarSystems[0].Sun.HZ()
-	sn.StarSystems[0].Body[habitZone] = MainWorldTo(habitZone)
+	/////////////Place MW
+	sn.PlaceMainWorld(ssd)
 	/////////////Place GG
+	sn.PlaceGasGigants(ssd)
 	/////////////Place Belts
-	fmt.Println(belts)
+
 	/////////////Place Other
 	/////////////Place Satelites
 	return &sn, err
 }
+func (sn *StarNexus) PlaceMainWorld(ssd SurveyReporter) error {
+	_, _, gg, err := calculations.Decode(ssd.PBG())
+	if err != nil {
+		return err
+	}
+	habitZone := sn.StarSystems[0].Sun.HZ()
+	remarks := ssd.MW_Remarks()
+	//Place if NOT Satellite
+	if !helper.SliceStrContains(strings.Split(remarks, " "), "Sa") {
+		sn.StarSystems[0].Body[habitZone] = placeWorldTo("MainWorld", "MW", habitZone)
+		return nil
+	}
+	//Place if IS Satellite
+	switch {
+	default:
+		sn.StarSystems[0].Body[habitZone] = placeWorldTo("Gas Gigant w", "GG", habitZone)
+	case gg < 1:
+		sn.StarSystems[0].Body[habitZone] = placeWorldTo("BigWorld w", "BW", habitZone)
+	}
+	sn.StarSystems[0].Body[habitZone].satelites = append(sn.StarSystems[0].Body[habitZone].satelites, placeWorldTo("Mainworld", "MW_Sat", 0))
+	sn.StarSystems[0].Body[habitZone].setSatteliteOrbits(-4)
+	return nil
+}
+
+func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
+	_, _, gg, err := calculations.Decode(ssd.PBG())
+	if err != nil {
+		return err
+	}
+	ggArray := []string{} //"Hex: Type Size SatNumber"
+	for i := 0; i < gg; i++ {
+		ggArray = append(ggArray, newGasGigant(ssd.NameByConvention()+"GG"+strconv.Itoa(i)))
+	}
+	concluded := false
+	for !concluded {
+		filled := 0
+		for _, strs := range sn.StarSystems {
+			if strs.haveUnfilledOrbits() {
+
+			}
+		}
+	}
+
+}
+
+func newGasGigant(seed string) string {
+	dp := dice.New().SetSeed(seed)
+	s := dp.Roll("2d6").DM(19).Sum()
+	t := "L"
+	if s < 23 {
+		t = "S"
+	}
+	return ehex.New().Set(s).Code() + t
+}
+
+func (pb *planetaryBody) setSatteliteOrbits(zoneDM int) {
+	dp := dice.New().SetSeed(pb.name + "_sat")
+	concluded := false
+	for !concluded {
+		s := dp.Roll("1d6").DM(zoneDM).Sum()
+		if s == 0 {
+			pb.satelites = append(pb.satelites, placeWorldTo("Ring", "R", 0))
+			continue
+		}
+		for i := 0; i < s; i++ {
+			pb.satelites = append(pb.satelites, placeWorldTo("Sattelite", "S", 0))
+		}
+		concluded = true
+	}
+}
+
+func (n *StarNexus) String() string {
+	str := ""
+	for _, st := range n.StarSystems {
+		if st.Sun != nil {
+			str += fmt.Sprintf("Sun: %v - %v\n", st.Sun.Name(), st.Sun.Code())
+		}
+		if st.Companion != nil {
+			str += fmt.Sprintf("Companion: %v - %v\n", st.Companion.Name(), st.Companion.Code())
+		}
+		for i, b := range st.Body {
+			str += fmt.Sprintf("    Body: %v - %v\n", b.Name(), b.Orbit())
+			for _, s := range st.Body[i].satelites {
+				str += fmt.Sprintf("        Sat: %v - %v\n", s.Name(), s.Orbit())
+			}
+		}
+	}
+	return str
+}
 
 func (stsys *StarSystem) SetOrbits() {
 	maxOrb := 17
+	if stsys.Sun == nil {
+		return
+	}
 	if stsys.Sun.Orbit() > 0 {
-		maxOrb = stsys.Sun.Orbit()
+		maxOrb = stsys.Sun.Orbit() - 3
 		if maxOrb < 0 {
 			maxOrb = 0
 		}
 	}
-	for i := 0; i <= maxOrb; i++ {
+	for i := 0; i < maxOrb; i++ {
 		stsys.Body = append(stsys.Body, EmptyOrbit(i))
 	}
 }
@@ -114,6 +200,7 @@ func (sn *StarNexus) placeStars(name, stellar string) error {
 		for pos, categ := range s {
 			st, _ := star.New(name+" "+greekLetter(codePosition+1), starCodes[codePosition], categ)
 			st.SetOrbit()
+			fmt.Println("orbit:", st.Name(), st.Orbit())
 			switch pos {
 			case 0:
 				sn.StarSystems[stsys].Sun = st
@@ -167,9 +254,10 @@ type PlanetaryBody interface {
 }
 
 type planetaryBody struct {
-	orbit  int
-	name   string
-	pbType string
+	orbit     int
+	name      string
+	pbType    string
+	satelites []*planetaryBody
 }
 
 func (pb *planetaryBody) Orbit() int {
@@ -180,12 +268,12 @@ func (pb *planetaryBody) Name() string {
 	return pb.name
 }
 
-func EmptyOrbit(o int) *planetaryBody {
-	return &planetaryBody{o, fmt.Sprintf("Orbit %v", o), "EMPTY"}
+func placeWorldTo(wName, wType string, orbit int) *planetaryBody {
+	return &planetaryBody{orbit, wName, wType, nil}
 }
 
-func MainWorldTo(o int) *planetaryBody {
-	return &planetaryBody{o, "Mainworld Name", "MW"}
+func EmptyOrbit(o int) *planetaryBody {
+	return &planetaryBody{o, fmt.Sprintf("Orbit %v", o), "EMPTY", nil}
 }
 
 func separateBySystems(composition []int) [4][]int {
@@ -311,4 +399,13 @@ stellar.PlanetaryPosition(Star (Mass), Body (Distance), Date.Day())
 
 func PlanetaryPosition(mass float64, bodyDistance float64, time int64) (float64, int) {
 	return 0, 0
+}
+
+func (stsys *StarSystem) haveUnfilledOrbits() bool {
+	for _, orb := range stsys.Body {
+		if orb.pbType == "EMPTY" {
+			return true
+		}
+	}
+	return false
 }
