@@ -2,7 +2,6 @@ package stellar
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
@@ -103,24 +102,28 @@ func (sn *StarNexus) PlaceMainWorld(ssd SurveyReporter) error {
 }
 
 func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
+	dp := dice.New().SetSeed(ssd.NameByConvention() + "Place GG")
 	_, _, gg, err := calculations.Decode(ssd.PBG())
 	if err != nil {
 		return err
 	}
-	ggArray := []string{} //"Hex: Type Size SatNumber"
-	for i := 0; i < gg; i++ {
-		ggArray = append(ggArray, newGasGigant(ssd.NameByConvention()+"GG"+strconv.Itoa(i)))
+	if gg < 1 {
+		return nil
 	}
-	concluded := false
-	for !concluded {
-		filled := 0
-		for _, strs := range sn.StarSystems {
-			if strs.haveUnfilledOrbits() {
+	for g := 0; g < gg; g++ {
 
-			}
+	}
+
+	return fmt.Errorf("Not Implemented")
+}
+
+func (sn *StarNexus) hasAnyUnfilled() bool {
+	for _, ss := range sn.StarSystems {
+		if ss.haveUnfilledOrbits() {
+			return true
 		}
 	}
-
+	return false
 }
 
 func newGasGigant(seed string) string {
