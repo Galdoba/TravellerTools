@@ -59,6 +59,7 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	if stellar == "" {
 		stellar = calculations.GenerateNewStellar(name)
 	}
+	fmt.Println(ssd)
 	//////////////
 	err = sn.placeStars(name, stellar)
 	if err != nil {
@@ -72,8 +73,9 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	/////////////Place GG
 	sn.PlaceGasGigants(ssd)
 	/////////////Place Belts
-
+	sn.PlaceBelts(ssd)
 	/////////////Place Other
+	sn.PlaceOther(ssd)
 	/////////////Place Satelites
 	return &sn, err
 }
@@ -92,18 +94,21 @@ func (sn *StarNexus) PlaceMainWorld(ssd SurveyReporter) error {
 	//Place if IS Satellite
 	switch {
 	default:
-		sn.StarSystems[0].Body[habitZone] = placeWorldTo("Gas Gigant w", "GG", habitZone)
+		ggSize, ggType := newGasGigantData(ssd.NameByConvention() + "MW_GG")
+		sn.StarSystems[0].Body[habitZone] = placeWorldTo(fmt.Sprintf("Gas Gigant mw (%v-%v)", ggSize, ggType), "GG", habitZone)
+		//sn.StarSystems[0].Body[habitZone] = placeWorldTo("Gas Gigant w", "GG", habitZone)
 	case gg < 1:
 		sn.StarSystems[0].Body[habitZone] = placeWorldTo("BigWorld w", "BW", habitZone)
 	}
 	sn.StarSystems[0].Body[habitZone].satelites = append(sn.StarSystems[0].Body[habitZone].satelites, placeWorldTo("Mainworld", "MW_Sat", 0))
-	sn.StarSystems[0].Body[habitZone].setSatteliteOrbits(-4)
+
 	return nil
 }
 
 func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
 	dp := dice.New().SetSeed(ssd.NameByConvention() + "Place GG")
 	_, _, gg, err := calculations.Decode(ssd.PBG())
+	gg = gg - sn.ggPlaced()
 	if err != nil {
 		return err
 	}
@@ -111,10 +116,154 @@ func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
 		return nil
 	}
 	for g := 0; g < gg; g++ {
+		ggSize, ggType := newGasGigantData(ssd.NameByConvention() + fmt.Sprintf("_gas gigant %v", g))
+		placed := false
+		for !placed {
+			i := dp.Roll("1d" + fmt.Sprintf("%v", len(sn.StarSystems))).DM(-1).Sum()
+			if !sn.StarSystems[i].haveUnfilledOrbits() {
+				continue
+			}
+			tryOrbit := -1
+			switch ggType {
+			case "LGG":
+				tryOrbit = rollLGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
+			case "SGG":
+				tryOrbit = rollSGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
+			}
+			if tryOrbit < 0 {
+				continue
+			}
+			if len(sn.StarSystems[i].Body)-1 < tryOrbit {
+				continue
+			}
+			if sn.StarSystems[i].Body[tryOrbit].pbType != "EMPTY" {
+				continue
+			}
+			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Gas Gigant %v (%v-%v)", g, ggSize, ggType), "GG", tryOrbit)
+			placed = true
+		}
+	}
+	return fmt.Errorf("Not Implemented")
+}
 
+func (sn *StarNexus) PlaceBelts(ssd SurveyReporter) error {
+	dp := dice.New().SetSeed(ssd.NameByConvention() + "Place GG")
+	_, belts, _, err := calculations.Decode(ssd.PBG())
+	if err != nil {
+		return err
+	}
+	if belts < 1 {
+		return nil
+	}
+	for belt := 0; belt < belts; belt++ {
+		//ggSize, ggType := newGasGigantData(ssd.NameByConvention() + fmt.Sprintf("_Belt %v", belt))
+		placed := false
+		for !placed {
+			i := dp.Roll("1d" + fmt.Sprintf("%v", len(sn.StarSystems))).DM(-1).Sum()
+			if !sn.StarSystems[i].haveUnfilledOrbits() {
+				continue
+			}
+			tryOrbit := -1
+			tryOrbit = rollBeltsPlacement(dp) + sn.StarSystems[i].Sun.HZ()
+			if tryOrbit < 0 {
+				continue
+			}
+			if len(sn.StarSystems[i].Body)-1 < tryOrbit {
+				continue
+			}
+			if sn.StarSystems[i].Body[tryOrbit].pbType != "EMPTY" {
+				continue
+			}
+			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Belt %v", belt), "Belt", tryOrbit)
+			placed = true
+		}
 	}
 
 	return fmt.Errorf("Not Implemented")
+}
+
+func (sn *StarNexus) PlaceOther(ssd SurveyReporter) error {
+	dp := dice.New().SetSeed(ssd.NameByConvention() + "Other")
+	_, b, g, _ := calculations.Decode(ssd.PBG())
+	worlds := ssd.Worlds() - b - g - 1
+	if worlds < 1 {
+		return nil
+	}
+	for w := 0; w < worlds; w++ {
+		//ggSize, ggType := newGasGigantData(ssd.NameByConvention() + fmt.Sprintf("_Belt %v", belt))
+		placed := false
+		tr := 0
+		for !placed {
+			tr++
+			i := dp.Roll("1d" + fmt.Sprintf("%v", len(sn.StarSystems))).DM(-1).Sum()
+			if !sn.StarSystems[i].haveUnfilledOrbits() {
+				continue
+			}
+			tryOrbit := -1
+			switch {
+			default:
+				tryOrbit = rollOtherPlacement(dp) + tr/100
+			case w+1 == worlds:
+				tryOrbit = rollOther2Placement(dp)
+			}
+			if tryOrbit < 0 {
+				//fmt.Println("err low orbit", tryOrbit, w, worlds)
+				continue
+			}
+			if len(sn.StarSystems[i].Body)-1 < tryOrbit {
+				//fmt.Println("err High orbit", tryOrbit, w, worlds)
+				continue
+			}
+			if sn.StarSystems[i].Body[tryOrbit].pbType != "EMPTY" {
+				//fmt.Println("err filled orbit", tryOrbit, w, worlds)
+				continue
+			}
+
+			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Other %v", w), "Planet", tryOrbit)
+			placed = true
+		}
+	}
+
+	return fmt.Errorf("Not Implemented")
+}
+
+func (sn *StarNexus) ggPlaced() int {
+	ggp := 0
+	for _, stm := range sn.StarSystems {
+		for _, b := range stm.Body {
+			if b.pbType == "GG" {
+				ggp++
+			}
+		}
+	}
+	return ggp
+}
+
+func rollLGGplacement(dp *dice.Dicepool) int {
+	r := dp.Roll("2d6").Sum()
+	return r - 5
+}
+
+func rollSGGplacement(dp *dice.Dicepool) int {
+	r := dp.Roll("2d6").Sum()
+	return r - 4
+}
+
+func rollBeltsPlacement(dp *dice.Dicepool) int {
+	r := dp.Roll("2d6").Sum()
+	return r - 4
+}
+
+func rollOtherPlacement(dp *dice.Dicepool) int {
+	r := dp.Roll("2d6").Sum()
+	orb := []int{10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9}
+	return orb[r-2]
+}
+
+func rollOther2Placement(dp *dice.Dicepool) int {
+	r := dp.Roll("2d6").Sum()
+	orb := []int{17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7}
+	return orb[r-2]
 }
 
 func (sn *StarNexus) hasAnyUnfilled() bool {
@@ -126,14 +275,15 @@ func (sn *StarNexus) hasAnyUnfilled() bool {
 	return false
 }
 
-func newGasGigant(seed string) string {
+func newGasGigantData(seed string) (string, string) {
 	dp := dice.New().SetSeed(seed)
 	s := dp.Roll("2d6").DM(19).Sum()
-	t := "L"
+	t := "LGG"
 	if s < 23 {
-		t = "S"
+		t = "SGG"
 	}
-	return ehex.New().Set(s).Code() + t
+
+	return ehex.New().Set(s).Code(), t
 }
 
 func (pb *planetaryBody) setSatteliteOrbits(zoneDM int) {
