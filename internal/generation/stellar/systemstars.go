@@ -59,7 +59,6 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	if stellar == "" {
 		stellar = calculations.GenerateNewStellar(name)
 	}
-	fmt.Println(ssd)
 	//////////////
 	err = sn.placeStars(name, stellar)
 	if err != nil {
@@ -77,6 +76,7 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	/////////////Place Other
 	sn.PlaceOther(ssd)
 	/////////////Place Satelites
+
 	return &sn, err
 }
 func (sn *StarNexus) PlaceMainWorld(ssd SurveyReporter) error {
@@ -128,7 +128,15 @@ func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
 			case "LGG":
 				tryOrbit = rollLGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
 			case "SGG":
-				tryOrbit = rollSGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
+				r := dp.Roll("1d2").Sum()
+				switch r {
+				case 1:
+					tryOrbit = rollSGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
+				case 2:
+					ggType = "IG"
+					tryOrbit = rollIGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
+				}
+
 			}
 			if tryOrbit < 0 {
 				continue
@@ -249,6 +257,11 @@ func rollSGGplacement(dp *dice.Dicepool) int {
 	return r - 4
 }
 
+func rollIGGplacement(dp *dice.Dicepool) int {
+	r := dp.Roll("2d6").Sum()
+	return r - 11
+}
+
 func rollBeltsPlacement(dp *dice.Dicepool) int {
 	r := dp.Roll("2d6").Sum()
 	return r - 4
@@ -286,33 +299,17 @@ func newGasGigantData(seed string) (string, string) {
 	return ehex.New().Set(s).Code(), t
 }
 
-func (pb *planetaryBody) setSatteliteOrbits(zoneDM int) {
-	dp := dice.New().SetSeed(pb.name + "_sat")
-	concluded := false
-	for !concluded {
-		s := dp.Roll("1d6").DM(zoneDM).Sum()
-		if s == 0 {
-			pb.satelites = append(pb.satelites, placeWorldTo("Ring", "R", 0))
-			continue
-		}
-		for i := 0; i < s; i++ {
-			pb.satelites = append(pb.satelites, placeWorldTo("Sattelite", "S", 0))
-		}
-		concluded = true
-	}
-}
-
 func (n *StarNexus) String() string {
 	str := ""
-	for _, st := range n.StarSystems {
+	for i, st := range n.StarSystems {
 		if st.Sun != nil {
 			str += fmt.Sprintf("Sun: %v - %v\n", st.Sun.Name(), st.Sun.Code())
 		}
 		if st.Companion != nil {
 			str += fmt.Sprintf("Companion: %v - %v\n", st.Companion.Name(), st.Companion.Code())
 		}
-		for i, b := range st.Body {
-			str += fmt.Sprintf("    Body: %v - %v\n", b.Name(), b.Orbit())
+		for k, b := range st.Body {
+			str += fmt.Sprintf("    Body: %v - %v (%v)\n", b.Name(), b.Orbit(), n.StarSystems[i].Body[k].pbType)
 			for _, s := range st.Body[i].satelites {
 				str += fmt.Sprintf("        Sat: %v - %v\n", s.Name(), s.Orbit())
 			}
@@ -535,20 +532,6 @@ func SystemComposition(systemName, stellarCode string) ([]int, error) {
 	//fmt.Println("tried", try, "times for", len(res), "stars")
 	return res, err
 }
-
-/*
-Планетарным телом может быть:
-
--тело
---звезда-компаньён
---Газовый Гигант
---Обычная
---Астеройдный Пояс
-
-stellar.PlanetaryPosition(Star (Mass), Body (Distance), Date.Day())
-
-
-*/
 
 func PlanetaryPosition(mass float64, bodyDistance float64, time int64) (float64, int) {
 	return 0, 0
