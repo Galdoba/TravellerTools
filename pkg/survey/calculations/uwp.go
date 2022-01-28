@@ -10,6 +10,9 @@ import (
 func UWPvalid(uwp string) bool {
 
 	hex := strings.Split(uwp, "")
+	for len(hex) < 9 {
+		hex = append(hex, "")
+	}
 	if !starportValid(ehex.New().Set(hex[0])) {
 		return false
 	}

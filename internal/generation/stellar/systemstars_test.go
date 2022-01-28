@@ -30,15 +30,16 @@ func testLines() []string {
 		"|Iroioah|2227|B530113-C|823|||AsMw|M3 V M4 V|K|{ +1 }|1|(801-2)|[1229]|B|12|0|10|5|-107|-13|De Lo Po||Trojan Reach|Tlaiowaha|Troj|Aslan Hierate, single multiple-world clan dominates",
 		"|Regina|1910|A788899-C|703||NS|ImDd|F7 V BD M3 V|C|{ +4 }|4|(D7E+5)|[9C6D]|BcCeF|8|6370|2|1|-110|-70|Ri Pa Ph An Cp (Amindii)2 Varg0 Asla0 Sa|A|Spinward Marches|Regina|Spin|Third Imperium, Domain of Deneb",
 		"|Rushu|0215|E766674-4|903|||CsZh|G0 V M3 V|E|{ -1 }|-1|(853-3)|[4532]|BC|8|-360|4|0|-127|-65|Ag Ni Ga Ri VargW||Spinward Marches|Querion|Spin|Client state, Zhodani Consulate",
+		"",
 	}
 }
 
 func TestStarNexus(t *testing.T) {
 	for _, input := range testLines() {
 		ssd := survey.Parse(input)
-		fmt.Println(ssd.MW_Name())
-		nx, err := NewNexus(ssd)
-		fmt.Println(err)
+		//fmt.Println(ssd.MW_Name())
+		nx, _ := NewNexus(ssd)
+		//fmt.Println(err)
 		fmt.Println(nx)
 	}
 }
