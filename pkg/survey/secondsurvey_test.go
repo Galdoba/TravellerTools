@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseClean(t *testing.T) {
-	//	return
+	return
 	lines := utils.LinesFromTXT("c:\\Users\\Public\\TrvData\\cleanedData.txt")
 	//tab := []*SecondSurveyData{}
 	uwpMap := make(map[string]int)

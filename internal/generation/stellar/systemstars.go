@@ -49,6 +49,7 @@ type SurveyReporter interface {
 	SectorAbb() string
 	SubSectorName() string
 	AllegianceExt() string
+	GenerationSeed() string
 	NameByConvention() string
 }
 
@@ -103,7 +104,7 @@ func Clean(sn StarNexus) *StarNexus {
 }
 
 func (sn *StarNexus) PlaceSatellites(ssd SurveyReporter) {
-	dp := dice.New().SetSeed(ssd.NameByConvention() + "Satelites")
+	dp := dice.New().SetSeed(ssd.GenerationSeed() + "Satelites")
 	for s, sts := range sn.StarSystems {
 
 		sun := sn.StarSystems[s].Sun
@@ -202,7 +203,7 @@ func (sn *StarNexus) PlaceMainWorld() error {
 	//Place if IS Satellite
 	switch {
 	default:
-		ggSize, ggType := newGasGigantData(sn.ssd.NameByConvention() + "MW_GG")
+		ggSize, ggType := newGasGigantData(sn.ssd.GenerationSeed() + "MW_GG")
 		sn.StarSystems[0].Body[habitZone] = placeWorldTo(fmt.Sprintf("Gas Gigant 0 (%v-%v)", ggSize, ggType), "GG", habitZone)
 	case gg < 1:
 		sn.StarSystems[0].Body[habitZone] = placeWorldTo("BigWorld w", "BW", habitZone)
@@ -213,7 +214,7 @@ func (sn *StarNexus) PlaceMainWorld() error {
 }
 
 func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
-	dp := dice.New().SetSeed(ssd.NameByConvention() + "Place GG")
+	dp := dice.New().SetSeed(ssd.GenerationSeed() + "Place GG")
 	_, _, gg, err := calculations.Decode(ssd.PBG())
 	gg = gg - sn.ggPlaced()
 	if err != nil {
@@ -223,7 +224,7 @@ func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
 		return nil
 	}
 	for g := 0; g < gg; g++ {
-		ggSize, ggType := newGasGigantData(ssd.NameByConvention() + fmt.Sprintf("_gas gigant %v", g))
+		ggSize, ggType := newGasGigantData(ssd.GenerationSeed() + fmt.Sprintf("_gas gigant %v", g))
 		placed := false
 		for !placed {
 			i := dp.Roll("1d" + fmt.Sprintf("%v", len(sn.StarSystems))).DM(-1).Sum()
@@ -262,7 +263,7 @@ func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
 }
 
 func (sn *StarNexus) PlaceBelts(ssd SurveyReporter) error {
-	dp := dice.New().SetSeed(ssd.NameByConvention() + "Place GG")
+	dp := dice.New().SetSeed(ssd.GenerationSeed() + "Place GG")
 	_, belts, _, err := calculations.Decode(ssd.PBG())
 	if err != nil {
 		return err
@@ -271,7 +272,7 @@ func (sn *StarNexus) PlaceBelts(ssd SurveyReporter) error {
 		return nil
 	}
 	for belt := 0; belt < belts; belt++ {
-		//ggSize, ggType := newGasGigantData(ssd.NameByConvention() + fmt.Sprintf("_Belt %v", belt))
+		//ggSize, ggType := newGasGigantData(ssd.GenerationSeed() + fmt.Sprintf("_Belt %v", belt))
 		placed := false
 		for !placed {
 			i := dp.Roll("1d" + fmt.Sprintf("%v", len(sn.StarSystems))).DM(-1).Sum()
@@ -298,14 +299,14 @@ func (sn *StarNexus) PlaceBelts(ssd SurveyReporter) error {
 }
 
 func (sn *StarNexus) PlaceOther(ssd SurveyReporter) error {
-	dp := dice.New().SetSeed(ssd.NameByConvention() + "Other")
+	dp := dice.New().SetSeed(ssd.GenerationSeed() + "Other")
 	_, b, g, _ := calculations.Decode(ssd.PBG())
 	worlds := ssd.Worlds() - b - g - 1
 	if worlds < 1 {
 		return nil
 	}
 	for w := 0; w < worlds; w++ {
-		//ggSize, ggType := newGasGigantData(ssd.NameByConvention() + fmt.Sprintf("_Belt %v", belt))
+		//ggSize, ggType := newGasGigantData(ssd.GenerationSeed() + fmt.Sprintf("_Belt %v", belt))
 		placed := false
 		tr := 0
 		for !placed {

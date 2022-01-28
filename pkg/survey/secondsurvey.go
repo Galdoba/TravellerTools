@@ -11,6 +11,35 @@ import (
 )
 
 const (
+	reserved = iota
+	MW_Name
+	Hex
+	MW_UWP
+	PBG
+	TravelZone
+	Bases
+	Allegiance
+	Stellar
+	SubSector
+	MW_Importance
+	MW_ImportanceInt
+	MW_Economic
+	MW_Cultural
+	MW_Nobility
+	Worlds
+	RU
+	SubSectorInt
+	Quadrant
+	CoordX
+	CoordY
+	MW_Remarks
+	BasesOld
+	Sector
+	SubSectorName
+	SectorAbb
+	AllegianceExt
+	Seed
+	END_OF_SURVEY_DATA
 	cleanedDataPath = "c:\\Users\\Public\\TrvData\\cleanedData.txt"
 )
 
@@ -42,6 +71,7 @@ type SecondSurveyData struct {
 	sectorAbb        string
 	subSectorName    string
 	allegianceExt    string
+	seed             string
 	errors           []error
 }
 
@@ -52,7 +82,7 @@ func Parse(input string) *SecondSurveyData {
 	for i := range data {
 		data[i] = strings.TrimSpace(data[i])
 	}
-	for len(data) < 30 {
+	for len(data) < END_OF_SURVEY_DATA+1 {
 		data = append(data, "")
 	}
 	ssd.mw_Name = data[1]
@@ -109,6 +139,7 @@ func Parse(input string) *SecondSurveyData {
 	ssd.subSectorName = data[24]
 	ssd.sectorAbb = data[25]
 	ssd.allegianceExt = data[26]
+	ssd.seed = data[27]
 	ssd.verify()
 	return &ssd
 }
@@ -159,13 +190,13 @@ func (ssd *SecondSurveyData) verify() {
 		ssd.mw_Name = ssd.NameByConvention()
 	}
 	if ssd.stellar == "" {
-		ssd.stellar = calculations.GenerateNewStellar(ssd.NameByConvention())
+		ssd.stellar = calculations.GenerateNewStellar(ssd.GenerationSeed())
 	}
 	if !calculations.UWPvalid(ssd.mw_UWP) {
-		ssd.mw_UWP = calculations.FixUWP(ssd.mw_UWP, ssd.NameByConvention())
+		ssd.mw_UWP = calculations.FixUWP(ssd.mw_UWP, ssd.GenerationSeed())
 	}
 	if !calculations.PBGvalid(ssd.pbg, ssd.mw_UWP) {
-		ssd.pbg = calculations.FixPBG(ssd.pbg, ssd.mw_UWP, ssd.NameByConvention())
+		ssd.pbg = calculations.FixPBG(ssd.pbg, ssd.mw_UWP, ssd.GenerationSeed())
 	}
 	if ssd.mw_Importance == "{+?}" {
 		ssd.mw_Importance = importanceToString(ssd.mw_ImportanceInt)
@@ -179,16 +210,16 @@ func (ssd *SecondSurveyData) verify() {
 		ssd.mw_Importance = importanceToString(ssd.mw_ImportanceInt)
 	}
 	if !calculations.ExValid(ssd.mw_Economic) {
-		ssd.mw_Economic = calculations.FixEconomicExtention(ssd.mw_Economic, ssd.mw_UWP, ssd.pbg, ssd.NameByConvention(), ssd.mw_ImportanceInt)
+		ssd.mw_Economic = calculations.FixEconomicExtention(ssd.mw_Economic, ssd.mw_UWP, ssd.pbg, ssd.GenerationSeed(), ssd.mw_ImportanceInt)
 	}
 	if calculations.RU(ssd.mw_Economic) != ssd.ru {
 		ssd.ru = calculations.RU(ssd.mw_Economic)
 	}
 	if !calculations.CxValid(ssd.mw_Cultural, ssd.mw_UWP) {
-		ssd.mw_Cultural = calculations.Cultural(ssd.mw_UWP, ssd.NameByConvention(), ssd.mw_ImportanceInt)
+		ssd.mw_Cultural = calculations.Cultural(ssd.mw_UWP, ssd.GenerationSeed(), ssd.mw_ImportanceInt)
 	}
 	if !calculations.WorldsValid(ssd.worlds, ssd.pbg) {
-		ssd.worlds = calculations.FixWorlds(ssd.pbg, ssd.NameByConvention())
+		ssd.worlds = calculations.FixWorlds(ssd.pbg, ssd.GenerationSeed())
 	}
 	if len(calculations.NobilityErrors(ssd.mw_Nobility, strings.Fields(ssd.mw_Remarks), ssd.mw_ImportanceInt)) != 0 {
 		ssd.mw_Nobility = calculations.FixNobility(strings.Fields(ssd.mw_Remarks), ssd.mw_ImportanceInt)
@@ -250,6 +281,22 @@ func (ssd *SecondSurveyData) NameByConvention() string {
 		pY = "C"
 	}
 	return fmt.Sprintf("%v %v/%v%v-%v%v", ssd.sector, ssd.hex, pX, x, pY, y)
+}
+
+func (ssd *SecondSurveyData) GenerationSeed() string {
+	x := ssd.coordX
+	pX := "S"
+	if x < 0 {
+		x = x * -1
+		pX = "T"
+	}
+	y := ssd.coordY
+	pY := "R"
+	if y < 0 {
+		y = y * -1
+		pY = "C"
+	}
+	return fmt.Sprintf("%v%v%v%v%v%v%v%v", ssd.sector, ssd.hex, pX, x, pY, y, ssd.mw_Name, ssd.seed)
 }
 
 func importanceToInt(str string) int {

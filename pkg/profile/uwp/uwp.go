@@ -2,6 +2,7 @@ package uwp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
@@ -28,6 +29,59 @@ func New() *uwp {
 	u.aspect = profile.New(Port, Size, Atmo, Hydr, Pops, Govr, Laws, TL)
 	u.descr = "UWP describes World Characteristics"
 	return &u
+}
+
+func (u *uwp) SetString(str string) error {
+	s := strings.Split(str, "")
+	if len(s) != 9 {
+		return fmt.Errorf("invalid uwp string (%v)", str)
+	}
+	for i, hex := range s {
+
+		switch i {
+		case 0:
+			err := u.Set(Port, ehex.New().Set(hex).Value())
+			if err != nil {
+				return err
+			}
+		case 1:
+			err := u.Set(Size, ehex.New().Set(hex).Value())
+			if err != nil {
+				return err
+			}
+		case 2:
+			err := u.Set(Atmo, ehex.New().Set(hex).Value())
+			if err != nil {
+				return err
+			}
+		case 3:
+			err := u.Set(Hydr, ehex.New().Set(hex).Value())
+			if err != nil {
+				return err
+			}
+		case 4:
+			err := u.Set(Pops, ehex.New().Set(hex).Value())
+			if err != nil {
+				return err
+			}
+		case 5:
+			err := u.Set(Govr, ehex.New().Set(hex).Value())
+			if err != nil {
+				return err
+			}
+		case 6:
+			err := u.Set(Laws, ehex.New().Set(hex).Value())
+			if err != nil {
+				return err
+			}
+		case 8:
+			err := u.Set(TL, ehex.New().Set(hex).Value())
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (u *uwp) Set(aspect string, val int) error {
@@ -121,11 +175,11 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 		case "5":
 			hex.Encode("Thin")
 		case "6":
-			hex.Encode("Standard ")
+			hex.Encode("Standard")
 		case "7":
 			hex.Encode("Standard Tainted")
 		case "8":
-			hex.Encode("Dense ")
+			hex.Encode("Dense")
 		case "9":
 			hex.Encode("Dense Tainted")
 		case "A":
@@ -169,7 +223,7 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 	case Pops:
 		switch ehex.New().Set(val).Code() {
 		case "0":
-			hex.Encode("Unpopulated ")
+			hex.Encode("Unpopulated")
 		case "1":
 			hex.Encode("Tens")
 		case "2":
@@ -243,7 +297,7 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 		case "1":
 			hex.Encode("Low Law: Prohibition of WMD, Psi weapons")
 		case "2":
-			hex.Encode("Low Law: Prohibition of “Portable” Weapons. ")
+			hex.Encode("Low Law: Prohibition of “Portable” Weapons")
 		case "3":
 			hex.Encode("Low Law: Prohibition of Acid, Fire, Gas")
 		case "4":

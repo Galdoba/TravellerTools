@@ -6,6 +6,7 @@ import (
 )
 
 func TestSetUWP(t *testing.T) {
+	return
 	testAspects := []string{Port, Size, Atmo, Hydr, Pops, "wrongAspect", Govr, Laws, TL}
 	testVals := []int{}
 	for i := -1; i < 35; i++ {
@@ -37,6 +38,7 @@ func TestSetUWP(t *testing.T) {
 }
 
 func TestUWPcall(t *testing.T) {
+	return
 	uwpS := New()
 	uwpS.Set(Port, 10)
 	uwpS.Set(Size, 2)
@@ -60,4 +62,11 @@ func TestUWPcall(t *testing.T) {
 	fmt.Println(uwpS.Govr())
 	fmt.Println(uwpS.Laws())
 	fmt.Println(uwpS.TL())
+}
+
+func TestUWPinput(t *testing.T) {
+	uwpS := New()
+	err := uwpS.SetString("X620000-0")
+	fmt.Println(err)
+	fmt.Println(uwpS.Describe("All"))
 }
