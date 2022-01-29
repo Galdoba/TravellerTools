@@ -460,3 +460,14 @@ package dice
 // -Хорошо. Всему экипажу. Приготовиться. Мы будем прыгать!
 
 // */
+
+/*
+examples:
+1d6			die=1 edges=6 dm=0
+2d6+7		die=2 edges=6 dm=7
+2d6-7		die=2 edges=6 dm=-7
+6DD
+2d+3
+Roll("2D+8")
+
+*/

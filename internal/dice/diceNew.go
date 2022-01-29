@@ -10,17 +10,19 @@ import (
 
 //Dicepool -
 type Dicepool struct {
-	dice       int
-	edges      int
-	modPerDie  int
-	modTotal   int
-	seed       int64
-	result     []int
-	randomSeed bool
-	boon       bool
-	bane       bool
-	src        rand.Source
-	rand       rand.Rand
+	dice        int
+	edges       int
+	modPerDie   int
+	modTotal    int
+	seed        int64
+	result      []int
+	randomSeed  bool
+	boon        bool
+	bane        bool
+	destructive bool
+	src         rand.Source
+	rand        rand.Rand
+	err         error
 }
 
 //New - Creates Dicepool object with seed from current time
@@ -89,13 +91,26 @@ func seedFromString(key string) int64 {
 //Roll - Делает бросок
 func (dp *Dicepool) Roll(code string) *Dicepool {
 	dp.result = nil
-	dp.dice, dp.edges = decodeDiceCode(code)
 	dp.modPerDie = 0
 	dp.modTotal = 0
+	dp.destructive = false
+	if dp.err = dp.decodeDiceCode(code); dp.err != nil {
+		return dp
+	}
 	for d := 0; d < dp.dice; d++ {
 		dp.result = append(dp.result, dp.rand.Intn(dp.edges)+1)
 	}
 	return dp
+}
+
+//DrawData - возвращает количество дайсов и их грани
+func (dp *Dicepool) DrawData() (int, int) {
+	return dp.dice, dp.edges
+}
+
+//ModTotal - возвращает общий модификатор
+func (dp *Dicepool) ModTotal() int {
+	return dp.modTotal
 }
 
 //DM - добавляет число к общей сумме результата
@@ -118,6 +133,9 @@ func (dp *Dicepool) Sum() int {
 		sum = sum + (dp.result[i] + dp.modPerDie)
 	}
 	sum = sum + dp.modTotal
+	if dp.destructive {
+		sum = sum * 10
+	}
 	return sum
 }
 
@@ -126,23 +144,79 @@ func (dp *Dicepool) SumStr() string {
 	return strconv.Itoa(dp.Sum())
 }
 
-func decodeDiceCode(code string) (int, int) {
+func (dp *Dicepool) decodeDiceCode(code string) error {
 	code = strings.ToUpper(code)
-	data := strings.Split(code, "D")
-	var dice int
-	dice, _ = strconv.Atoi(data[0])
-	if data[0] == "" {
-		dice = 1
+	dest := strings.TrimSuffix(code, "DD")
+	switch {
+	case code != dest:
+		return dp.decodeDestructive(dest)
+	case code == dest:
+		return dp.decodeNormal(code)
 	}
-	edges, err := strconv.Atoi(data[1])
+	return fmt.Errorf("decoding failed due to unknown reason")
+}
+
+func (dp *Dicepool) decodeDestructive(code string) error {
+	diceNum, err := strconv.Atoi(code)
 	if err != nil {
-		switch {
-		case strings.Contains(data[1], "+"):
-			fmt.Println("-------")
-		}
-		return 0, 0
+		return fmt.Errorf("cannot parse dice code '%v'", code)
 	}
-	return dice, edges
+	dp.dice = diceNum
+	dp.edges = 6
+	dp.destructive = true
+	return nil
+}
+
+func (dp *Dicepool) decodeNormal(code string) error {
+	p1 := strings.Split(code, "D")
+	if len(p1) != 2 {
+		return fmt.Errorf("cannot parse dice code '%v'", code)
+	}
+	d, err := strconv.Atoi(p1[0])
+	if err != nil {
+		return fmt.Errorf("cannot parse dice code '%v'", code)
+	}
+	dp.dice = d
+	switch {
+	///////////////////no mod
+	case !strings.Contains(p1[1], "+") && !strings.Contains(p1[1], "-"):
+		edges, err := strconv.Atoi(p1[1])
+		if err != nil {
+			return err
+		}
+		dp.edges = edges
+		///////////////////positive mod
+	case strings.Contains(p1[1], "+"):
+		p2 := strings.Split(p1[1], "+")
+		for i, v := range p2 {
+			n, err := strconv.Atoi(v)
+			if err != nil {
+				return fmt.Errorf("cannot parse dice code '%v'", code)
+			}
+			switch i {
+			case 0:
+				dp.edges = n
+			case 1:
+				dp.modTotal = dp.modTotal + n
+			}
+		}
+		///////////////////negative mod
+	case strings.Contains(p1[1], "-"):
+		p2 := strings.Split(p1[1], "-")
+		for i, v := range p2 {
+			n, err := strconv.Atoi(v)
+			if err != nil {
+				return fmt.Errorf("cannot parse dice code '%v'", code)
+			}
+			switch i {
+			case 0:
+				dp.edges = n
+			case 1:
+				dp.modTotal = dp.modTotal - n
+			}
+		}
+	}
+	return nil
 }
 
 func (d *Dicepool) TreatAasB(a, b int) {
