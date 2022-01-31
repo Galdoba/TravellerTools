@@ -20,90 +20,104 @@ const (
 )
 
 type uwp struct {
-	aspect *profile.ProfileData
-	descr  string
+	dataType map[string]ehex.Ehex
+	descr    string
+}
+
+type UWP interface {
+	profile.Profile
+	Starport() string
+	Size() int
+	Atmo() int
+	Hydr() int
+	Pops() int
+	Govr() int
+	Laws() int
+	TL() int
 }
 
 func New() *uwp {
 	u := uwp{}
-	u.aspect = profile.New(Port, Size, Atmo, Hydr, Pops, Govr, Laws, TL)
+	u.dataType = make(map[string]ehex.Ehex)
 	u.descr = "UWP describes World Characteristics"
 	return &u
 }
 
-func (u *uwp) SetString(str string) error {
-	s := strings.Split(str, "")
+func FromString(uwpString string) (*uwp, error) {
+	u := New()
+	s := strings.Split(uwpString, "")
 	if len(s) != 9 {
-		return fmt.Errorf("invalid uwp string (%v)", str)
+		return nil, fmt.Errorf("invalid uwp string (%v)", uwpString)
 	}
-	for i, hex := range s {
 
+	for i, hex := range s {
+		val := ehex.New().Set(hex)
 		switch i {
 		case 0:
-			err := u.Set(Port, ehex.New().Set(hex).Value())
+			err := u.Encode(Port, val)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case 1:
-			err := u.Set(Size, ehex.New().Set(hex).Value())
+			err := u.Encode(Size, ehex.New().Set(hex))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case 2:
-			err := u.Set(Atmo, ehex.New().Set(hex).Value())
+			err := u.Encode(Atmo, ehex.New().Set(hex))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case 3:
-			err := u.Set(Hydr, ehex.New().Set(hex).Value())
+			err := u.Encode(Hydr, ehex.New().Set(hex))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case 4:
-			err := u.Set(Pops, ehex.New().Set(hex).Value())
+			err := u.Encode(Pops, ehex.New().Set(hex))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case 5:
-			err := u.Set(Govr, ehex.New().Set(hex).Value())
+			err := u.Encode(Govr, ehex.New().Set(hex))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case 6:
-			err := u.Set(Laws, ehex.New().Set(hex).Value())
+			err := u.Encode(Laws, ehex.New().Set(hex))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case 8:
-			err := u.Set(TL, ehex.New().Set(hex).Value())
+			err := u.Encode(TL, ehex.New().Set(hex))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
-	return nil
+	return u, nil
 }
 
-func (u *uwp) Set(aspect string, val int) error {
+func (u *uwp) Encode(aspect string, val ehex.Ehex) error {
 	switch aspect {
 	default:
 		return fmt.Errorf("aspect '%v' is not valid for this type of profile", aspect)
 	case Port, Size, Atmo, Hydr, Pops, Govr, Laws, TL:
-		u.aspect.Data[aspect] = setUWPdata(aspect, val)
+		u.dataType[aspect] = encodeUWPdata(aspect, val.Code())
 	}
-	if u.aspect.Data[aspect].Meaning() == "value is not correct" {
+	if u.dataType[aspect].Meaning() == "value is not correct" {
 		return fmt.Errorf("value '%v' is not correct for aspect '%v'", val, aspect)
 	}
 	return nil
 }
 
-func setUWPdata(aspect string, val int) ehex.Ehex {
+func encodeUWPdata(aspect string, val string) ehex.Ehex {
 	hex := ehex.New()
 	hex.Set(val)
 	hex.Encode("value is not correct")
 	switch aspect {
 	case Port:
-		switch ehex.New().Set(val).Code() {
+		switch val {
 		case "A":
 			hex.Encode("Excellent Starport")
 		case "B":
@@ -126,7 +140,7 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 			hex.Encode("No Spaceport")
 		}
 	case Size:
-		switch ehex.New().Set(val).Code() {
+		switch val {
 		case "0":
 			hex.Encode("Asteroid Belt")
 		case "1":
@@ -161,7 +175,7 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 			hex.Encode("24,000 km")
 		}
 	case Atmo:
-		switch ehex.New().Set(val).Code() {
+		switch val {
 		case "0":
 			hex.Encode("Vacuum")
 		case "1":
@@ -196,7 +210,7 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 			hex.Encode("Unusual")
 		}
 	case Hydr:
-		switch ehex.New().Set(val).Code() {
+		switch val {
 		case "0":
 			hex.Encode("Desert World")
 		case "1":
@@ -221,7 +235,7 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 			hex.Encode("Water World")
 		}
 	case Pops:
-		switch ehex.New().Set(val).Code() {
+		switch val {
 		case "0":
 			hex.Encode("Unpopulated")
 		case "1":
@@ -256,7 +270,7 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 			hex.Encode("Quadrillions")
 		}
 	case Govr:
-		switch ehex.New().Set(val).Code() {
+		switch val {
 		case "0":
 			hex.Encode("No Government Structure")
 		case "1":
@@ -291,7 +305,7 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 			hex.Encode("Totalitarian Oligarchy")
 		}
 	case Laws:
-		switch ehex.New().Set(val).Code() {
+		switch val {
 		case "0":
 			hex.Encode("No Law: No prohibitions")
 		case "1":
@@ -332,83 +346,83 @@ func setUWPdata(aspect string, val int) ehex.Ehex {
 			hex.Encode("Extreme Law: Routine oppression")
 		}
 	case TL:
-		switch ehex.New().Set(val).Code() {
+		switch val {
 		case "0":
-			hex.Encode("TL 0")
+			hex.Encode("TL0")
 		case "1":
-			hex.Encode("TL 1")
+			hex.Encode("TL1")
 		case "2":
-			hex.Encode("TL 2")
+			hex.Encode("TL2")
 		case "3":
-			hex.Encode("TL 3")
+			hex.Encode("TL3")
 		case "4":
-			hex.Encode("TL 4")
+			hex.Encode("TL4")
 		case "5":
-			hex.Encode("TL 5")
+			hex.Encode("TL5")
 		case "6":
-			hex.Encode("TL 6")
+			hex.Encode("TL6")
 		case "7":
-			hex.Encode("TL 7")
+			hex.Encode("TL7")
 		case "8":
-			hex.Encode("TL 8")
+			hex.Encode("TL8")
 		case "9":
-			hex.Encode("TL 9")
+			hex.Encode("TL9")
 		case "A":
-			hex.Encode("TL 10")
+			hex.Encode("TL10")
 		case "B":
-			hex.Encode("TL 11")
+			hex.Encode("TL11")
 		case "C":
-			hex.Encode("TL 12")
+			hex.Encode("TL12")
 		case "D":
-			hex.Encode("TL 13")
+			hex.Encode("TL13")
 		case "E":
-			hex.Encode("TL 14")
+			hex.Encode("TL14")
 		case "F":
-			hex.Encode("TL 15")
+			hex.Encode("TL15")
 		case "G":
-			hex.Encode("TL 16")
+			hex.Encode("TL16")
 		case "H":
-			hex.Encode("TL 17")
+			hex.Encode("TL17")
 		case "J":
-			hex.Encode("TL 18")
+			hex.Encode("TL18")
 		case "K":
-			hex.Encode("TL 19")
+			hex.Encode("TL19")
 		case "L":
-			hex.Encode("TL 20")
+			hex.Encode("TL20")
 		}
 	}
 	return hex
 }
 
 func (u *uwp) String() string {
-	return fmt.Sprintf("%v%v%v%v%v%v%v-%v", u.aspect.Data[Port].Code(), u.aspect.Data[Size].Code(), u.aspect.Data[Atmo].Code(), u.aspect.Data[Hydr].Code(),
-		u.aspect.Data[Pops].Code(), u.aspect.Data[Govr].Code(), u.aspect.Data[Laws].Code(), u.aspect.Data[TL].Code())
+	return fmt.Sprintf("%v%v%v%v%v%v%v-%v", u.dataType[Port].Code(), u.dataType[Size].Code(), u.dataType[Atmo].Code(), u.dataType[Hydr].Code(),
+		u.dataType[Pops].Code(), u.dataType[Govr].Code(), u.dataType[Laws].Code(), u.dataType[TL].Code())
 }
 
 func (u *uwp) Starport() string {
-	return u.aspect.Data[Port].Code()
+	return u.dataType[Port].Code()
 }
 
 func (u *uwp) Size() int {
-	return u.aspect.Data[Size].Value()
+	return u.dataType[Size].Value()
 }
 func (u *uwp) Atmo() int {
-	return u.aspect.Data[Atmo].Value()
+	return u.dataType[Atmo].Value()
 }
 func (u *uwp) Hydr() int {
-	return u.aspect.Data[Hydr].Value()
+	return u.dataType[Hydr].Value()
 }
 func (u *uwp) Pops() int {
-	return u.aspect.Data[Pops].Value()
+	return u.dataType[Pops].Value()
 }
 func (u *uwp) Govr() int {
-	return u.aspect.Data[Govr].Value()
+	return u.dataType[Govr].Value()
 }
 func (u *uwp) Laws() int {
-	return u.aspect.Data[Laws].Value()
+	return u.dataType[Laws].Value()
 }
 func (u *uwp) TL() int {
-	return u.aspect.Data[TL].Value()
+	return u.dataType[TL].Value()
 }
 
 func (u *uwp) Describe(aspect string) string {
@@ -416,31 +430,31 @@ func (u *uwp) Describe(aspect string) string {
 	default:
 		return "description error"
 	case Port:
-		return u.aspect.Data[Port].Meaning()
+		return u.dataType[Port].Meaning()
 	case Size:
-		return u.aspect.Data[Size].Meaning()
+		return u.dataType[Size].Meaning()
 	case Atmo:
-		return u.aspect.Data[Atmo].Meaning()
+		return u.dataType[Atmo].Meaning()
 	case Hydr:
-		return u.aspect.Data[Hydr].Meaning()
+		return u.dataType[Hydr].Meaning()
 	case Pops:
-		return u.aspect.Data[Pops].Meaning()
+		return u.dataType[Pops].Meaning()
 	case Govr:
-		return u.aspect.Data[Govr].Meaning()
+		return u.dataType[Govr].Meaning()
 	case Laws:
-		return u.aspect.Data[Laws].Meaning()
+		return u.dataType[Laws].Meaning()
 	case TL:
-		return u.aspect.Data[TL].Meaning()
+		return u.dataType[TL].Meaning()
 	case "All":
 		str := ""
-		str += Port + "    : " + u.aspect.Data[Port].Code() + " (" + u.aspect.Data[Port].Meaning() + ")" + "\n"
-		str += Size + "        : " + u.aspect.Data[Size].Code() + " (" + u.aspect.Data[Size].Meaning() + ")" + "\n"
-		str += Atmo + "  : " + u.aspect.Data[Atmo].Code() + " (" + u.aspect.Data[Atmo].Meaning() + ")" + "\n"
-		str += Hydr + " : " + u.aspect.Data[Hydr].Code() + " (" + u.aspect.Data[Hydr].Meaning() + ")" + "\n"
-		str += Pops + "  : " + u.aspect.Data[Pops].Code() + " (" + u.aspect.Data[Pops].Meaning() + ")" + "\n"
-		str += Govr + "   : " + u.aspect.Data[Govr].Code() + " (" + u.aspect.Data[Govr].Meaning() + ")" + "\n"
-		str += Laws + "        : " + u.aspect.Data[Laws].Code() + " (" + u.aspect.Data[Laws].Meaning() + ")" + "\n"
-		str += TL + "  : " + u.aspect.Data[TL].Code() + " (" + u.aspect.Data[TL].Meaning() + ")"
+		str += Port + "    : " + u.dataType[Port].Code() + " (" + u.dataType[Port].Meaning() + ")" + "\n"
+		str += Size + "        : " + u.dataType[Size].Code() + " (" + u.dataType[Size].Meaning() + ")" + "\n"
+		str += Atmo + "  : " + u.dataType[Atmo].Code() + " (" + u.dataType[Atmo].Meaning() + ")" + "\n"
+		str += Hydr + " : " + u.dataType[Hydr].Code() + " (" + u.dataType[Hydr].Meaning() + ")" + "\n"
+		str += Pops + "  : " + u.dataType[Pops].Code() + " (" + u.dataType[Pops].Meaning() + ")" + "\n"
+		str += Govr + "   : " + u.dataType[Govr].Code() + " (" + u.dataType[Govr].Meaning() + ")" + "\n"
+		str += Laws + "        : " + u.dataType[Laws].Code() + " (" + u.dataType[Laws].Meaning() + ")" + "\n"
+		str += TL + "  : " + u.dataType[TL].Code() + " (" + u.dataType[TL].Meaning() + ")"
 		return str
 	}
 }

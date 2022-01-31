@@ -3,6 +3,8 @@ package uwp
 import (
 	"fmt"
 	"testing"
+
+	"github.com/Galdoba/TravellerTools/internal/ehex"
 )
 
 func TestSetUWP(t *testing.T) {
@@ -18,7 +20,7 @@ func TestSetUWP(t *testing.T) {
 	errorsDetected := 0
 	for _, asp := range testAspects {
 		for _, val := range testVals {
-			err := uwpS.Set(asp, val)
+			err := uwpS.Encode(asp, ehex.New().Set(val))
 			switch {
 			default:
 			case err != nil:
@@ -40,33 +42,21 @@ func TestSetUWP(t *testing.T) {
 func TestUWPcall(t *testing.T) {
 	return
 	uwpS := New()
-	uwpS.Set(Port, 10)
-	uwpS.Set(Size, 2)
-	uwpS.Set(Atmo, 2)
-	uwpS.Set(Hydr, 0)
-	uwpS.Set(Pops, 6)
-	uwpS.Set(Govr, 5)
-	uwpS.Set(Laws, 16)
-	uwpS.Set(TL, 8)
+	uwpS.Encode(Port, ehex.New().Set(10))
+	uwpS.Encode(Size, ehex.New().Set(2))
+	uwpS.Encode(Atmo, ehex.New().Set(2))
+	uwpS.Encode(Hydr, ehex.New().Set(0))
+	uwpS.Encode(Pops, ehex.New().Set(6))
+	uwpS.Encode(Govr, ehex.New().Set(5))
+	uwpS.Encode(Laws, ehex.New().Set(16))
+	uwpS.Encode(TL, ehex.New().Set(8))
 	fmt.Println(uwpS)
-	for asp := range uwpS.aspect.Data {
-		fmt.Println(uwpS.Describe(asp))
-	}
-	fmt.Println(uwpS.Describe("All"))
-	fmt.Println(uwpS.Describe("error test"))
-	fmt.Println(uwpS.Starport())
-	fmt.Println(uwpS.Size())
-	fmt.Println(uwpS.Atmo())
-	fmt.Println(uwpS.Hydr())
-	fmt.Println(uwpS.Pops())
-	fmt.Println(uwpS.Govr())
-	fmt.Println(uwpS.Laws())
-	fmt.Println(uwpS.TL())
+
 }
 
 func TestUWPinput(t *testing.T) {
-	uwpS := New()
-	err := uwpS.SetString("X620000-0")
+
+	u, err := FromString("X620000-0")
 	fmt.Println(err)
-	fmt.Println(uwpS.Describe("All"))
+	fmt.Println(u.Describe("All"))
 }

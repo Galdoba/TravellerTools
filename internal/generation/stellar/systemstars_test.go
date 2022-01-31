@@ -36,10 +36,11 @@ func testLines() []string {
 
 func TestStarNexus(t *testing.T) {
 	for _, input := range testLines() {
+		fmt.Println(input)
 		ssd := survey.Parse(input)
-		//fmt.Println(ssd.MW_Name())
-		nx, _ := NewNexus(ssd)
-		//fmt.Println(err)
+		fmt.Println(ssd.MW_Name())
+		nx, err := NewNexus(ssd)
+		fmt.Println(err)
 		fmt.Println(nx)
 	}
 }

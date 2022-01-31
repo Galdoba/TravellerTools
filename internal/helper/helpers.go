@@ -17,3 +17,13 @@ func SliceIntContains(slice []int, element int) bool {
 	}
 	return false
 }
+
+func AppendIfUniqueInt(sl []int, newElem int) []int {
+	for _, elem := range sl {
+		if elem == newElem {
+			return sl
+		}
+	}
+	sl = append(sl, newElem)
+	return sl
+}

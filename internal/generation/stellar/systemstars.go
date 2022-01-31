@@ -63,6 +63,7 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 		stellar = calculations.GenerateNewStellar(name)
 	}
 	//////////////
+	fmt.Println("Placing Stars...")
 	err = sn.placeStars(name, stellar)
 	if err != nil {
 		return &sn, err
@@ -71,15 +72,21 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 		sn.StarSystems[i].SetOrbits()
 	}
 	/////////////Place MW
+	fmt.Println("Placing Mainworld...")
 	sn.PlaceMainWorld()
 	/////////////Place GG
+	fmt.Println("Placing Gas Gigants...")
 	sn.PlaceGasGigants(ssd)
 	/////////////Place Belts
+	fmt.Println("Placing Belts...")
 	sn.PlaceBelts(ssd)
 	/////////////Place Other
+	fmt.Println("Placing Other...")
 	sn.PlaceOther(ssd)
 	/////////////Place Satelites
+	fmt.Println("Placing Satellites...")
 	sn.PlaceSatellites(ssd)
+	fmt.Println("Cleaning...")
 	cleanSN := Clean(sn)
 	return cleanSN, err
 }
@@ -236,15 +243,9 @@ func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
 			case "LGG":
 				tryOrbit = rollLGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
 			case "SGG":
-				r := dp.Roll("1d2").Sum()
-				switch r {
-				case 1:
-					tryOrbit = rollSGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
-				case 2:
-					ggType = "IG"
-					tryOrbit = rollIGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
-				}
-
+				tryOrbit = rollSGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
+			case "IG":
+				tryOrbit = rollIGGplacement(dp) + sn.StarSystems[i].Sun.HZ()
 			}
 			if tryOrbit < 0 {
 				continue
