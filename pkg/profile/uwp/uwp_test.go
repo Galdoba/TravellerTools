@@ -55,8 +55,15 @@ func TestUWPcall(t *testing.T) {
 }
 
 func TestUWPinput(t *testing.T) {
-
+	return
 	u, err := FromString("X620000-0")
 	fmt.Println(err)
 	fmt.Println(u.Describe("All"))
+	fmt.Println(u.Describe(Port))
+}
+
+func TestUWPfromString(t *testing.T) {
+	u, err := FromString("AAAAAAA-A")
+	fmt.Println(u)
+	fmt.Println(err)
 }
