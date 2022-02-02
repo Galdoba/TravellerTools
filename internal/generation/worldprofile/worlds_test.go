@@ -3,51 +3,42 @@ package worldprofile
 import (
 	"fmt"
 	"testing"
+
+	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
 func TestNums(t *testing.T) {
-	drArr := []int{1, 2, 3, 4, 5, 6}
-	try1 := 0
-	port1 := ""
-	dm := 0
-	portMap := make(map[string]int)
-	for _, d1 := range drArr {
-		for _, d2 := range drArr {
-			for _, d3 := range drArr {
-				for _, d4 := range drArr {
-					try1++
-					pp := d1 + d2 - 2
-					switch pp {
-					case 8, 9:
-						dm = 1
-					case 3, 4:
-						dm = -1
-					case 10:
-						dm = 2
-					case 0, 1, 2:
-						dm = -2
-					}
+	tlMap := make(map[string]int)
+	last := "???????-?"
+	for i := 0; i < 10000; i++ {
+		mwUWP := NewMain(last + fmt.Sprintf("_Very  long Seed sdhdhjdfgString%v", i))
+		last = mwUWP
+		_, err := uwp.FromString(mwUWP)
+		if err != nil {
+			t.Errorf("%v failed: %v\ninput string: %v", last, err.Error(), mwUWP)
+		}
 
-					switch d3 + d4 + dm {
-					case 3, 4:
-						port1 = "E"
-					case 5, 6:
-						port1 = "D"
-					case 7, 8:
-						port1 = "C"
-					case 9, 10:
-						port1 = "B"
-					}
-					if d3+d4+dm > 10 {
-						port1 = "A"
-					}
-					if d3+d4+dm < 3 {
-						port1 = "X"
-					}
-					portMap[port1]++
-				}
-			}
+		tlMap[last]++
+	}
+	for k, v := range tlMap {
+		if v > 1 {
+			fmt.Println(k, v)
 		}
 	}
-	fmt.Println(portMap)
+
 }
+
+//A:79 B:206 C:328 D:358 E:226 X:99 - mgt2
+// A :  6%
+// B : 16% 22
+// C : 25% 47
+// D : 27% 74
+// E : 17% 91
+// X :  7%
+//A:6 B:9 C:11 D:4 E:5 X:1 - T5
+// A : 16%
+// B : 25% 41
+// C : 30% 71
+// D : 11% 82
+// E : 14% 96
+// X :  3%

@@ -7,6 +7,23 @@ import (
 	"github.com/Galdoba/TravellerTools/internal/ehex"
 )
 
+const (
+	port = iota
+	size
+	atmo
+	hydro
+	pops
+	govr
+	laws
+	tl
+	stA
+	stB
+	stC
+	stD
+	stE
+	stX
+)
+
 /*
 NewMain(seed string) string
 NewSecondary(ssd survey.SecondSurveyData, otherType int) string
@@ -17,104 +34,219 @@ NewSecondary(ssd survey.SecondSurveyData, otherType int) string
 //NewMain - New mainworld UWP
 func NewMain(seed string) string {
 	dp := dice.New().SetSeed(seed)
+	statMap := make(map[int]int)
 	///////
-	sz := dp.Roll("2d6").DM(-2).Sum()
-	//////
-	at := dp.Flux() + sz
-	switch {
-	case at < 0 || sz == 0:
-		at = 0
-	case at > 15:
-		at = 15
+	statMap = rollSize(statMap, dp)
+	statMap = rollAtmo(statMap, dp)
+	statMap = rollHydro(statMap, dp)
+	statMap = rollPops(statMap, dp)
+	statMap = rollGovr(statMap, dp)
+	statMap = rollLaws(statMap, dp)
+	statMap = rollPort(statMap, dp)
+	statMap = rollTL(statMap, dp)
+	statMap = applyEnviromentalLimits(statMap)
+	return statMapToString(statMap)
+}
+
+func statMapToString(statMap map[int]int) string {
+	res := ""
+	switch statMap[port] {
+	case stA:
+		res = "A"
+	case stB:
+		res = "B"
+	case stC:
+		res = "C"
+	case stD:
+		res = "D"
+	case stE:
+		res = "E"
+	case stX:
+		res = "X"
 	}
-	//////
+	res += ehex.New().Set(statMap[size]).Code()
+	res += ehex.New().Set(statMap[atmo]).Code()
+	res += ehex.New().Set(statMap[hydro]).Code()
+	res += ehex.New().Set(statMap[pops]).Code()
+	res += ehex.New().Set(statMap[govr]).Code()
+	res += ehex.New().Set(statMap[laws]).Code()
+	res += "-"
+	res += ehex.New().Set(statMap[tl]).Code()
+	return res
+}
+
+func rollSize(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+	statMap[size] = dp.Roll("2d6").Sum() - 2
+	return statMap
+}
+
+func rollAtmo(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+	statMap[atmo] = dp.Flux() + statMap[size]
+	switch {
+	case statMap[atmo] < 0 || statMap[size] == 0:
+		statMap[atmo] = 0
+	case statMap[atmo] > 15:
+		statMap[atmo] = 15
+	}
+	return statMap
+}
+
+func rollHydro(statMap map[int]int, dp *dice.Dicepool) map[int]int {
 	dm := 0
-	switch at {
+	switch statMap[atmo] {
 	case 0, 1, 10, 11, 12, 13, 14, 15:
 		dm = -4
 	}
-	hd := dp.Flux() + at + dm
-	if sz < 2 {
-		hd = 0
+	statMap[hydro] = dp.Flux() + statMap[atmo] + dm
+	if statMap[size] < 2 {
+		statMap[hydro] = 0
 	}
-	///////
-	pp := dp.Roll("2d6").DM(-2).Sum()
-	if pp == 10 {
-		pp = dp.Roll("2d6").DM(3).Sum()
+	if statMap[hydro] < 0 {
+		statMap[hydro] = 0
 	}
-	///////
-	gv := dp.Flux() + pp
+	if statMap[hydro] > 10 {
+		statMap[hydro] = 10
+	}
+	return statMap
+}
+
+func rollPops(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+	statMap[pops] = dp.Roll("2d6").DM(-2).Sum()
+	if statMap[pops] == 10 {
+		statMap[pops] = dp.Roll("2d6").DM(3).Sum()
+	}
+	return statMap
+}
+
+func rollGovr(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+	statMap[govr] = dp.Flux() + statMap[pops]
 	switch {
-	case gv < 0:
-		gv = 0
-	case gv > 15:
-		gv = 15
+	case statMap[govr] < 0:
+		statMap[govr] = 0
+	case statMap[govr] > 15:
+		statMap[govr] = 15
 	}
-	lw := dp.Flux() + gv
-	if lw > 18 {
-		lw = 18
+	return statMap
+}
+
+func rollLaws(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+	statMap[laws] = dp.Flux() + statMap[govr]
+	switch {
+	case statMap[laws] < 0:
+		statMap[laws] = 0
+	case statMap[laws] > 18:
+		statMap[laws] = 18
 	}
+	return statMap
+}
+
+func rollPort(statMap map[int]int, dp *dice.Dicepool) map[int]int {
 	stDM := 0
 	switch {
-	case pp == 8 || pp == 9:
+	case statMap[pops] == 8 || statMap[pops] == 9:
 		stDM = 1
-	case pp > 9:
+	case statMap[pops] > 9:
 		stDM = 2
-	case pp < 3:
+	case statMap[pops] < 3:
 		stDM = -2
-	case pp == 3 || pp == 4:
+	case statMap[pops] == 3 || statMap[pops] == 4:
 		stDM = -1
 	}
-	st := "X"
+	statMap[port] = stX
 	stR := dp.Roll("2d6").DM(stDM).Sum()
 	switch stR {
 	case 3, 4:
-		st = "E"
+		statMap[port] = stE
 	case 5, 6:
-		st = "D"
+		statMap[port] = stD
 	case 7, 8:
-		st = "C"
+		statMap[port] = stC
 	case 9, 10:
-		st = "B"
+		statMap[port] = stB
 	}
 	if stR > 10 {
-		st = "A"
+		statMap[port] = stA
 	}
+	return statMap
+}
 
-	tl := dp.Roll("1d6").Sum()
-	switch st {
-	case "A":
-		tl = tl + 6
-	case "B":
-		tl = tl + 4
-	case "C":
-		tl = tl + 2
-	case "X":
-		tl = tl - 4
+func rollTL(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+	statMap[tl] = dp.Roll("1d6").Sum()
+	switch statMap[port] {
+	case stA:
+		statMap[tl] = statMap[tl] + 6
+	case stB:
+		statMap[tl] = statMap[tl] + 4
+	case stC:
+		statMap[tl] = statMap[tl] + 2
+	case stX:
+		statMap[tl] = statMap[tl] - 4
 	}
-	switch sz {
+	switch statMap[size] {
 	case 0, 1:
-		tl = tl + 2
+		statMap[tl] = statMap[tl] + 2
 	case 2, 3, 4:
-		tl = tl + 1
+		statMap[tl] = statMap[tl] + 1
 	}
-	switch at {
+	switch statMap[atmo] {
 	case 0, 1, 2, 3, 10, 11, 12, 13, 14, 15:
-		tl = tl + 1
+		statMap[tl] = statMap[tl] + 1
 	}
-	switch hd {
+	switch statMap[hydro] {
 	case 9:
+		statMap[tl] = statMap[tl] + 1
+	case 10:
+		statMap[tl] = statMap[tl] + 2
 	}
+	switch statMap[pops] {
+	case 1, 2, 3, 4, 5:
+		statMap[tl] = statMap[tl] + 1
+	case 9:
+		statMap[tl] = statMap[tl] + 2
+	case 10, 11, 12, 13, 14, 15:
+		statMap[tl] = statMap[tl] + 4
+	}
+	switch statMap[govr] {
+	case 0, 5:
+		statMap[tl] = statMap[tl] + 1
+	case 13:
+		statMap[tl] = statMap[tl] - 2
+	}
+	if statMap[tl] < 0 {
+		statMap[tl] = 0
+	}
+	return statMap
+}
 
-	res := st
-	res += fmt.Sprintf(ehex.New().Set(sz).Code())
-	res += fmt.Sprintf(ehex.New().Set(at).Code())
-	res += fmt.Sprintf(ehex.New().Set(hd).Code())
-	res += fmt.Sprintf(ehex.New().Set(pp).Code())
-	res += fmt.Sprintf(ehex.New().Set(gv).Code())
-	res += fmt.Sprintf(ehex.New().Set(lw).Code())
-	res += "-"
-	res += fmt.Sprintf(ehex.New().Set(sz).Code())
-
-	return res
+func applyEnviromentalLimits(statMap map[int]int) map[int]int {
+	min := 0
+	current := statMap[tl]
+	switch statMap[atmo] {
+	case 0, 1:
+		min = 8
+	case 2, 3:
+		min = 5
+	case 4, 7, 9:
+		min = 3
+	case 10:
+		min = 8
+	case 11:
+		min = 9
+	case 12:
+		min = 10
+	case 13, 14:
+		min = 5
+	case 15:
+		min = 8
+	}
+	if current < min {
+		fmt.Print(statMapToString(statMap), " -> ")
+		statMap[pops] = 0
+		statMap[govr] = 0
+		statMap[laws] = 0
+		statMap[tl] = 0
+		statMap[port] = stX
+		fmt.Print(statMapToString(statMap), "\n")
+	}
+	return statMap
 }
