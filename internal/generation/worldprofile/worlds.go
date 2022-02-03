@@ -2,9 +2,11 @@ package worldprofile
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
 const (
@@ -22,6 +24,19 @@ const (
 	stD
 	stE
 	stX
+	stF
+	stG
+	stH
+	stY
+	Hospitable
+	Planetoid
+	IceWorld
+	RadWorld
+	Inferno
+	BigWorld
+	Worldlet
+	InnerWorld
+	StormWorld
 )
 
 /*
@@ -36,16 +51,25 @@ func NewMain(seed string) string {
 	dp := dice.New().SetSeed(seed)
 	statMap := make(map[int]int)
 	///////
-	statMap = rollSize(statMap, dp)
-	statMap = rollAtmo(statMap, dp)
-	statMap = rollHydro(statMap, dp)
-	statMap = rollPops(statMap, dp)
-	statMap = rollGovr(statMap, dp)
-	statMap = rollLaws(statMap, dp)
-	statMap = rollPort(statMap, dp)
-	statMap = rollTL(statMap, dp)
+	statMap = rollSize(statMap, dp, 0)
+	statMap = rollAtmo(statMap, dp, 0)
+	statMap = rollHydro(statMap, dp, 0)
+	statMap = rollPops(statMap, dp, 0)
+	statMap = rollGovr(statMap, dp, 0)
+	statMap = rollLaws(statMap, dp, 0)
+	statMap = rollPort(statMap, dp, 0)
+	statMap = rollTL(statMap, dp, 0)
 	statMap = applyEnviromentalLimits(statMap)
 	return statMapToString(statMap)
+}
+
+func NewSecondary(ssd *survey.SecondSurveyData, worldType int, orbitalSuffix string) string {
+	mwUWP := ssd.MW_UWP()
+	mwStats := stringToStatMap(mwUWP)
+	swStats := make(map[int]int)
+	dp := dice.New().SetSeed(ssd.GenerationSeed() + "_" + orbitalSuffix)
+	swStats = rollSize(swStats)
+	return ""
 }
 
 func statMapToString(statMap map[int]int) string {
@@ -63,6 +87,14 @@ func statMapToString(statMap map[int]int) string {
 		res = "E"
 	case stX:
 		res = "X"
+	case stF:
+		res = "F"
+	case stG:
+		res = "G"
+	case stH:
+		res = "H"
+	case stY:
+		res = "Y"
 	}
 	res += ehex.New().Set(statMap[size]).Code()
 	res += ehex.New().Set(statMap[atmo]).Code()
@@ -75,12 +107,53 @@ func statMapToString(statMap map[int]int) string {
 	return res
 }
 
-func rollSize(statMap map[int]int, dp *dice.Dicepool) map[int]int {
-	statMap[size] = dp.Roll("2d6").Sum() - 2
+func stringToStatMap(uwp string) map[int]int {
+	statMap := make(map[int]int)
+	uwpData := strings.Split(uwp, "")
+	switch uwpData[0] {
+	case "A":
+		statMap[port] = stA
+	case "B":
+		statMap[port] = stB
+	case "C":
+		statMap[port] = stC
+	case "D":
+		statMap[port] = stD
+	case "E":
+		statMap[port] = stE
+	case "X":
+		statMap[port] = stX
+	case "F":
+		statMap[port] = stF
+	case "G":
+		statMap[port] = stG
+	case "H":
+		statMap[port] = stH
+	case "Y":
+		statMap[port] = stY
+	}
+	statMap[size] = ehex.New().Set(uwpData[1]).Value()
+	statMap[atmo] = ehex.New().Set(uwpData[2]).Value()
+	statMap[hydro] = ehex.New().Set(uwpData[3]).Value()
+	statMap[pops] = ehex.New().Set(uwpData[4]).Value()
+	statMap[govr] = ehex.New().Set(uwpData[5]).Value()
+	statMap[laws] = ehex.New().Set(uwpData[6]).Value()
+	statMap[tl] = ehex.New().Set(uwpData[8]).Value()
 	return statMap
 }
 
-func rollAtmo(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+func rollSize(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
+	switch worldType {
+	default:
+		statMap[size] = dp.Roll("2d6").Sum() - 2
+	case BigWorld:
+		statMap[size] = dp.Roll("2d6").Sum() + 7
+	}
+
+	return statMap
+}
+
+func rollAtmo(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	statMap[atmo] = dp.Flux() + statMap[size]
 	switch {
 	case statMap[atmo] < 0 || statMap[size] == 0:
@@ -91,7 +164,7 @@ func rollAtmo(statMap map[int]int, dp *dice.Dicepool) map[int]int {
 	return statMap
 }
 
-func rollHydro(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+func rollHydro(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	dm := 0
 	switch statMap[atmo] {
 	case 0, 1, 10, 11, 12, 13, 14, 15:
@@ -110,7 +183,7 @@ func rollHydro(statMap map[int]int, dp *dice.Dicepool) map[int]int {
 	return statMap
 }
 
-func rollPops(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+func rollPops(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	statMap[pops] = dp.Roll("2d6").DM(-2).Sum()
 	if statMap[pops] == 10 {
 		statMap[pops] = dp.Roll("2d6").DM(3).Sum()
@@ -118,7 +191,7 @@ func rollPops(statMap map[int]int, dp *dice.Dicepool) map[int]int {
 	return statMap
 }
 
-func rollGovr(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+func rollGovr(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	statMap[govr] = dp.Flux() + statMap[pops]
 	switch {
 	case statMap[govr] < 0:
@@ -129,7 +202,7 @@ func rollGovr(statMap map[int]int, dp *dice.Dicepool) map[int]int {
 	return statMap
 }
 
-func rollLaws(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+func rollLaws(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	statMap[laws] = dp.Flux() + statMap[govr]
 	switch {
 	case statMap[laws] < 0:
@@ -140,7 +213,7 @@ func rollLaws(statMap map[int]int, dp *dice.Dicepool) map[int]int {
 	return statMap
 }
 
-func rollPort(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+func rollPort(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	stDM := 0
 	switch {
 	case statMap[pops] == 8 || statMap[pops] == 9:
@@ -170,7 +243,7 @@ func rollPort(statMap map[int]int, dp *dice.Dicepool) map[int]int {
 	return statMap
 }
 
-func rollTL(statMap map[int]int, dp *dice.Dicepool) map[int]int {
+func rollTL(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	statMap[tl] = dp.Roll("1d6").Sum()
 	switch statMap[port] {
 	case stA:
