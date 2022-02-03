@@ -6,6 +6,7 @@ import (
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/internal/generation/worldprofile"
 	"github.com/Galdoba/TravellerTools/internal/helper"
 	"github.com/Galdoba/TravellerTools/internal/struct/star"
 	"github.com/Galdoba/TravellerTools/pkg/survey/calculations"
@@ -55,7 +56,7 @@ type SurveyReporter interface {
 
 func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	sn := StarNexus{}
-	sn.ssd = ssd
+	sn.ssd = ssd //TODO: интерфейс не входит в объект, что не дает ему наследовать - разобраться!!!
 	err := fmt.Errorf("initial error was not adressed")
 	name := ssd.NameByConvention()
 	stellar := ssd.Stellar()
@@ -93,6 +94,7 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 
 func Clean(sn StarNexus) *StarNexus {
 	snClean := StarNexus{}
+	snClean.ssd = sn.ssd
 	for s, syst := range sn.StarSystems {
 		if syst.Sun == nil {
 			continue
@@ -464,13 +466,40 @@ func (n *StarNexus) String() string {
 			if b.pbType == "EMPTY" {
 				continue
 			}
-			str += fmt.Sprintf("    Body: %v - %v (%v)\n", b.Name(), b.Orbit(), n.StarSystems[i].Body[k].pbType)
+
+			str += fmt.Sprintf("    Body: %v - %v (%v) - %v\n", b.Name(), b.Orbit(), n.StarSystems[i].Body[k].pbType, worldprofile.NewSecondary(n.ssd, unstring(n.StarSystems[i].Body[k].pbType), b.Name()))
 			for _, s := range n.StarSystems[i].Body[k].satelites {
 				str += fmt.Sprintf("        Sat: %v - %v\n", s.Name(), s.Orbit())
 			}
 		}
 	}
 	return str
+}
+
+func unstring(ptype string) int {
+	switch ptype {
+	case "MW":
+		return 0
+	case "Hospitable":
+		return worldprofile.Hospitable
+	case "Planetoid":
+		return worldprofile.Planetoid
+	case "IceWorld":
+		return worldprofile.IceWorld
+	case "Worldlet":
+		return worldprofile.Worldlet
+	case "RadWorld":
+		return worldprofile.RadWorld
+	case "Inferno":
+		return worldprofile.Inferno
+	case "InnerWorld":
+		return worldprofile.InnerWorld
+	case "BigWorld":
+		return worldprofile.BigWorld
+	case "StormWorld":
+		return worldprofile.StormWorld
+	}
+	return 0
 }
 
 func (stsys *StarSystem) SetOrbits() {

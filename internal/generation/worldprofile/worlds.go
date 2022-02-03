@@ -1,12 +1,10 @@
 package worldprofile
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 	"github.com/Galdoba/TravellerTools/internal/ehex"
-	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
 const (
@@ -59,17 +57,42 @@ func NewMain(seed string) string {
 	statMap = rollLaws(statMap, dp, 0)
 	statMap = rollPort(statMap, dp, 0)
 	statMap = rollTL(statMap, dp, 0)
-	statMap = applyEnviromentalLimits(statMap)
+	statMap = applyEnviromentalLimits(statMap, 0)
 	return statMapToString(statMap)
 }
 
-func NewSecondary(ssd *survey.SecondSurveyData, worldType int, orbitalSuffix string) string {
+type SurveyDataRetriver interface {
+	MW_UWP() string
+	GenerationSeed() string
+}
+
+func NewSecondary(ssd SurveyDataRetriver, worldType int, orbitalSuffix string) string {
 	mwUWP := ssd.MW_UWP()
 	mwStats := stringToStatMap(mwUWP)
 	swStats := make(map[int]int)
 	dp := dice.New().SetSeed(ssd.GenerationSeed() + "_" + orbitalSuffix)
-	swStats = rollSize(swStats)
-	return ""
+	swStats = rollSize(swStats, dp, worldType)
+	swStats = rollAtmo(swStats, dp, worldType)
+	swStats = rollHydro(swStats, dp, worldType)
+	swStats = rollPops(swStats, dp, worldType)
+	if swStats[pops] > mwStats[pops]-1 {
+		swStats[pops] = mwStats[pops] - 1
+	}
+	if swStats[pops] < 0 {
+		swStats[pops] = 0
+	}
+	swStats = rollGovr(swStats, dp, worldType)
+	swStats = rollLaws(swStats, dp, worldType)
+	swStats = rollTL(swStats, dp, worldType)
+	if swStats[tl] > mwStats[tl]-1 {
+		swStats[tl] = mwStats[tl] - 1
+	}
+	if swStats[tl] < 0 {
+		swStats[tl] = 0
+	}
+	swStats = rollPort(swStats, dp, worldType)
+	swStats = applyEnviromentalLimits(swStats, worldType)
+	return statMapToString(swStats)
 }
 
 func statMapToString(statMap map[int]int) string {
@@ -148,13 +171,32 @@ func rollSize(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int
 		statMap[size] = dp.Roll("2d6").Sum() - 2
 	case BigWorld:
 		statMap[size] = dp.Roll("2d6").Sum() + 7
+	case RadWorld, StormWorld:
+		statMap[size] = dp.Roll("2d6").Sum()
+	case Inferno:
+		statMap[size] = dp.Roll("1d6").Sum() + 6
+	case Worldlet:
+		statMap[size] = dp.Roll("1d6").Sum() - 3
+	case Planetoid:
+		statMap[size] = 0
 	}
-
+	if statMap[size] < 0 {
+		statMap[size] = 0
+	}
 	return statMap
 }
 
 func rollAtmo(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
-	statMap[atmo] = dp.Flux() + statMap[size]
+	switch worldType {
+	default:
+		statMap[atmo] = dp.Flux() + statMap[size]
+	case Planetoid:
+		statMap[atmo] = 0
+	case Inferno:
+		statMap[atmo] = 11
+	case StormWorld:
+		statMap[atmo] = dp.Flux() + statMap[size] + 4
+	}
 	switch {
 	case statMap[atmo] < 0 || statMap[size] == 0:
 		statMap[atmo] = 0
@@ -170,7 +212,14 @@ func rollHydro(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]in
 	case 0, 1, 10, 11, 12, 13, 14, 15:
 		dm = -4
 	}
-	statMap[hydro] = dp.Flux() + statMap[atmo] + dm
+	switch worldType {
+	default:
+		statMap[hydro] = dp.Flux() + statMap[atmo] + dm
+	case Planetoid, Inferno:
+		statMap[hydro] = 0
+	case InnerWorld, StormWorld:
+		statMap[hydro] = dp.Flux() + statMap[atmo] + dm - 4
+	}
 	if statMap[size] < 2 {
 		statMap[hydro] = 0
 	}
@@ -184,15 +233,29 @@ func rollHydro(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]in
 }
 
 func rollPops(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
-	statMap[pops] = dp.Roll("2d6").DM(-2).Sum()
-	if statMap[pops] == 10 {
-		statMap[pops] = dp.Roll("2d6").DM(3).Sum()
+	switch worldType {
+	default:
+		statMap[pops] = dp.Roll("2d6").Sum() - 2
+		if statMap[pops] == 10 {
+			statMap[pops] = dp.Roll("2d6").Sum() + 3
+		}
+	case IceWorld, StormWorld:
+		statMap[pops] = dp.Roll("2d6").Sum() - 6
+	case InnerWorld:
+		statMap[pops] = dp.Roll("2d6").Sum() - 4
+	case RadWorld, Inferno:
+		statMap[pops] = 0
 	}
 	return statMap
 }
 
 func rollGovr(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
-	statMap[govr] = dp.Flux() + statMap[pops]
+	switch worldType {
+	default:
+		statMap[govr] = dp.Flux() + statMap[pops]
+	case RadWorld, Inferno:
+		statMap[govr] = 0
+	}
 	switch {
 	case statMap[govr] < 0:
 		statMap[govr] = 0
@@ -203,7 +266,12 @@ func rollGovr(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int
 }
 
 func rollLaws(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
-	statMap[laws] = dp.Flux() + statMap[govr]
+	switch worldType {
+	default:
+		statMap[laws] = dp.Flux() + statMap[govr]
+	case RadWorld, Inferno:
+		statMap[laws] = 0
+	}
 	switch {
 	case statMap[laws] < 0:
 		statMap[laws] = 0
@@ -214,31 +282,48 @@ func rollLaws(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int
 }
 
 func rollPort(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
-	stDM := 0
-	switch {
-	case statMap[pops] == 8 || statMap[pops] == 9:
-		stDM = 1
-	case statMap[pops] > 9:
-		stDM = 2
-	case statMap[pops] < 3:
-		stDM = -2
-	case statMap[pops] == 3 || statMap[pops] == 4:
-		stDM = -1
-	}
-	statMap[port] = stX
-	stR := dp.Roll("2d6").DM(stDM).Sum()
-	switch stR {
-	case 3, 4:
-		statMap[port] = stE
-	case 5, 6:
-		statMap[port] = stD
-	case 7, 8:
-		statMap[port] = stC
-	case 9, 10:
-		statMap[port] = stB
-	}
-	if stR > 10 {
-		statMap[port] = stA
+	switch worldType {
+	default:
+		portIndex := statMap[pops] - dp.Roll("1d6").Sum()
+		switch {
+		case portIndex >= 4:
+			statMap[port] = stF
+		case portIndex == 3:
+			statMap[port] = stG
+		case portIndex == 2 || portIndex == 1:
+			statMap[port] = stH
+		case portIndex <= 0:
+			statMap[port] = stY
+		}
+	case Inferno:
+		statMap[port] = stY
+	case 0: //Mainworld
+		stDM := 0
+		switch {
+		case statMap[pops] == 8 || statMap[pops] == 9:
+			stDM = 1
+		case statMap[pops] > 9:
+			stDM = 2
+		case statMap[pops] < 3:
+			stDM = -2
+		case statMap[pops] == 3 || statMap[pops] == 4:
+			stDM = -1
+		}
+		statMap[port] = stX
+		stR := dp.Roll("2d6").DM(stDM).Sum()
+		switch stR {
+		case 3, 4:
+			statMap[port] = stE
+		case 5, 6:
+			statMap[port] = stD
+		case 7, 8:
+			statMap[port] = stC
+		case 9, 10:
+			statMap[port] = stB
+		}
+		if stR > 10 {
+			statMap[port] = stA
+		}
 	}
 	return statMap
 }
@@ -248,7 +333,7 @@ func rollTL(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	switch statMap[port] {
 	case stA:
 		statMap[tl] = statMap[tl] + 6
-	case stB:
+	case stB, stF:
 		statMap[tl] = statMap[tl] + 4
 	case stC:
 		statMap[tl] = statMap[tl] + 2
@@ -291,7 +376,7 @@ func rollTL(statMap map[int]int, dp *dice.Dicepool, worldType int) map[int]int {
 	return statMap
 }
 
-func applyEnviromentalLimits(statMap map[int]int) map[int]int {
+func applyEnviromentalLimits(statMap map[int]int, worldType int) map[int]int {
 	min := 0
 	current := statMap[tl]
 	switch statMap[atmo] {
@@ -313,13 +398,17 @@ func applyEnviromentalLimits(statMap map[int]int) map[int]int {
 		min = 8
 	}
 	if current < min {
-		fmt.Print(statMapToString(statMap), " -> ")
 		statMap[pops] = 0
 		statMap[govr] = 0
 		statMap[laws] = 0
 		statMap[tl] = 0
-		statMap[port] = stX
-		fmt.Print(statMapToString(statMap), "\n")
+		switch worldType {
+		default:
+			statMap[port] = stY
+		case 0:
+			statMap[port] = stX
+		}
+
 	}
 	return statMap
 }

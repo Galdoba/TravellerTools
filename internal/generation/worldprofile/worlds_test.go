@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
 func TestNums(t *testing.T) {
@@ -17,7 +18,18 @@ func TestNums(t *testing.T) {
 		if err != nil {
 			t.Errorf("%v failed: %v\ninput string: %v", last, err.Error(), mwUWP)
 		}
-
+		ssd, err := survey.NewSecondSurvey(
+			survey.Instruction(survey.MW_UWP, mwUWP),
+			survey.Instruction(survey.MW_Name, last+fmt.Sprintf("_Very  long Seed sdhdhjdfgString%v", i)),
+		)
+		fmt.Println(ssd)
+		seUwp := NewSecondary(ssd, Worldlet, "Ay")
+		fmt.Println("Secondary Worldlet =", seUwp)
+		suwp, err := uwp.FromString(seUwp)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		fmt.Println(suwp.Describe("All"))
 		tlMap[last]++
 	}
 	for k, v := range tlMap {
