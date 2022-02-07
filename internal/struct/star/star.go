@@ -8,15 +8,15 @@ import (
 )
 
 const (
-	UNDEFINED = iota
-	Category_Primary
-	Category_PrimaryCompanion
-	Category_Close
-	Category_CloseCompanion
-	Category_Near
-	Category_NearCompanion
-	Category_Far
-	Category_FarCompanion
+	UNDEFINED                 = 0
+	Category_Primary          = 1
+	Category_PrimaryCompanion = 2
+	Category_Close            = 3
+	Category_CloseCompanion   = 4
+	Category_Near             = 5
+	Category_NearCompanion    = 6
+	Category_Far              = 7
+	Category_FarCompanion     = 8
 )
 
 type Star struct {
@@ -46,7 +46,7 @@ func New(name, code string, category int) (*Star, error) {
 	s.orbit = -2
 	s.category = category
 	s.name = strings.TrimSuffix(name, " ")
-	s.hz = baseHZ(s.spectral, s.size)
+	s.hz = HabitableZone(s.spectral, s.size)
 	s.SetOrbit()
 	s.code = code
 	s.luminocity = baseStellarLuminocity(code)
@@ -992,7 +992,7 @@ func baseStellarLuminocity(class string) float64 {
 	return lumaMap[class]
 }
 
-func baseHZ(spectral, size string) int {
+func HabitableZone(spectral, size string) int {
 	class := spectral + size
 	mapHZ := make(map[string]int)
 	mapHZ["OIa"] = 15
@@ -1639,4 +1639,26 @@ func (s *Star) Mass() float64 {
 
 func (s *Star) Code() string {
 	return s.code
+}
+
+func NameSuffix(i int) string {
+	switch i {
+	case Category_Primary:
+		return "Alpha"
+	case Category_PrimaryCompanion:
+		return "Beta"
+	case Category_Close:
+		return "Gamma"
+	case Category_CloseCompanion:
+		return "Delta"
+	case Category_Near:
+		return "Epsilon"
+	case Category_NearCompanion:
+		return "Zeta"
+	case Category_Far:
+		return "Eta"
+	case Category_FarCompanion:
+		return "Theta"
+	}
+	return "???"
 }

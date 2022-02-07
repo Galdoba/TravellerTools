@@ -532,7 +532,7 @@ func (sn *StarNexus) placeStars(name, stellar string) error {
 	codePosition := 0
 	for stsys, s := range separated {
 		for pos, categ := range s {
-			st, _ := star.New(name+" "+greekLetter(codePosition+1), starCodes[codePosition], categ)
+			st, _ := star.New(name+" "+star.NameSuffix(codePosition+1), starCodes[codePosition], categ)
 			st.SetOrbit()
 			//fmt.Println("orbit:", st.Name(), st.Orbit())
 			switch pos {
@@ -557,28 +557,6 @@ func (n *StarNexus) Print() {
 			n.StarSystems[i].Companion.Print()
 		}
 	}
-}
-
-func greekLetter(i int) string {
-	switch i {
-	case star.Category_Primary:
-		return "Alpha"
-	case star.Category_PrimaryCompanion:
-		return "Beta"
-	case star.Category_Close:
-		return "Gamma"
-	case star.Category_CloseCompanion:
-		return "Delta"
-	case star.Category_Near:
-		return "Epsilon"
-	case star.Category_NearCompanion:
-		return "Zeta"
-	case star.Category_Far:
-		return "Eta"
-	case star.Category_FarCompanion:
-		return "Theta"
-	}
-	return "???"
 }
 
 type PlanetaryBody interface {
