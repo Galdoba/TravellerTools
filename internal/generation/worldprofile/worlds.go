@@ -35,6 +35,11 @@ const (
 	Worldlet
 	InnerWorld
 	StormWorld
+	SGG
+	LGG
+	IG
+	PlanetaryRings
+	AsteroidBelt
 )
 
 /*
@@ -67,6 +72,21 @@ type SurveyDataRetriver interface {
 }
 
 func NewSecondary(ssd SurveyDataRetriver, worldType int, orbitalSuffix string) string {
+	if worldType == LGG {
+		return "Large Gas Gigant"
+	}
+	if worldType == SGG {
+		return "Small Gas Gigant"
+	}
+	if worldType == IG {
+		return "Ice Gigant"
+	}
+	if worldType == PlanetaryRings {
+		return "Planetary Ring"
+	}
+	if worldType == AsteroidBelt {
+		return "Asteroid Belt"
+	}
 	mwUWP := ssd.MW_UWP()
 	mwStats := stringToStatMap(mwUWP)
 	swStats := make(map[int]int)
@@ -86,6 +106,12 @@ func NewSecondary(ssd SurveyDataRetriver, worldType int, orbitalSuffix string) s
 	swStats = rollTL(swStats, dp, worldType)
 	if swStats[tl] > mwStats[tl]-1 {
 		swStats[tl] = mwStats[tl] - 1
+	}
+	if mwStats[tl] < 7 {
+		swStats[pops] = 0
+		swStats[govr] = 0
+		swStats[laws] = 0
+		swStats[tl] = 0
 	}
 	if swStats[tl] < 0 {
 		swStats[tl] = 0

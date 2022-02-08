@@ -8,6 +8,7 @@ import (
 	"github.com/Galdoba/TravellerTools/internal/ehex"
 	"github.com/Galdoba/TravellerTools/internal/generation/worldprofile"
 	"github.com/Galdoba/TravellerTools/internal/helper"
+	"github.com/Galdoba/TravellerTools/internal/struct/satellite"
 	"github.com/Galdoba/TravellerTools/internal/struct/star"
 	"github.com/Galdoba/TravellerTools/pkg/survey/calculations"
 )
@@ -57,7 +58,6 @@ type SurveyReporter interface {
 func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	sn := StarNexus{}
 	sn.ssd = ssd //TODO: интерфейс не входит в объект, что не дает ему наследовать - разобраться!!!
-	err := fmt.Errorf("initial error was not adressed")
 	name := ssd.NameByConvention()
 	stellar := ssd.Stellar()
 	if stellar == "" {
@@ -65,7 +65,7 @@ func NewNexus(ssd SurveyReporter) (*StarNexus, error) {
 	}
 	//////////////
 	fmt.Println("Placing Stars...")
-	err = sn.placeStars(name, stellar)
+	err := sn.placeStars(name, stellar)
 	if err != nil {
 		return &sn, err
 	}
@@ -137,17 +137,41 @@ func (sn *StarNexus) PlaceSatellites(ssd SurveyReporter) {
 				hzPlace = "outer"
 			}
 			sats := rollSats(dp, dm)
+			fmt.Println(orb, sats)
+			satOrbits := placeSattelitesInOrbits(sats, dp)
+
 			for snum, sat := range sats {
 				switch sat {
 				case "S":
 					sType := satType(hzPlace, dp.Roll("1d6").Sum())
-					sn.StarSystems[s].Body[orb].satelites = append(sn.StarSystems[s].Body[orb].satelites, placeWorldTo(fmt.Sprintf("Sat %v (%v)", snum, sType), sType, snum))
+					uwp := worldprofile.NewSecondary(sn.ssd, unstring(sType), "test")
+					sn.StarSystems[s].Body[orb].satelites = append(sn.StarSystems[s].Body[orb].satelites, placeSatelliteTo(uwp, satOrbits[snum]))
+					fmt.Println(worldprofile.NewSecondary(sn.ssd, unstring(sType), ssd.GenerationSeed()+"Satelites"+fmt.Sprintf("Sat %v", snum)))
 				case "R":
-					sn.StarSystems[s].Body[orb].satelites = append(sn.StarSystems[s].Body[orb].satelites, placeWorldTo(fmt.Sprintf("Ring %v", snum), "Ring", snum))
+					sn.StarSystems[s].Body[orb].satelites = append(sn.StarSystems[s].Body[orb].satelites, placeSatelliteTo("Planetary Ring", satOrbits[snum]))
+
 				}
 			}
 		}
 	}
+	//panic("stop")
+}
+
+func placeSattelitesInOrbits(uwps []string, dp *dice.Dicepool) []int {
+	orbits := []int{}
+	lastOrbits := len(orbits)
+	for i := range uwps {
+		for lastOrbits == len(orbits) {
+			tryIndex := dp.Roll("2d6").Sum() + (12 * dp.Roll("1d2").DM(-1).Sum())
+			orbits = helper.AppendIfUniqueInt(orbits, tryIndex)
+		}
+		lastOrbits++
+		if i < 0 {
+			fmt.Println(i, orbits)
+		}
+
+	}
+	return orbits
 }
 
 func satType(place string, index int) string {
@@ -206,18 +230,18 @@ func (sn *StarNexus) PlaceMainWorld() error {
 	remarks := sn.ssd.MW_Remarks()
 	//Place if NOT Satellite
 	if !helper.SliceStrContains(strings.Split(remarks, " "), "Sa") {
-		sn.StarSystems[0].Body[habitZone] = placeWorldTo("MainWorld", "MW", habitZone)
+		sn.StarSystems[0].Body[habitZone] = placeWorldTo("MainWorld", "MW", habitZone, sn.ssd.MW_UWP())
 		return nil
 	}
 	//Place if IS Satellite
 	switch {
 	default:
 		ggSize, ggType := newGasGigantData(sn.ssd.GenerationSeed() + "MW_GG")
-		sn.StarSystems[0].Body[habitZone] = placeWorldTo(fmt.Sprintf("Gas Gigant 0 (%v-%v)", ggSize, ggType), "GG", habitZone)
+		sn.StarSystems[0].Body[habitZone] = placeWorldTo(fmt.Sprintf("Gas Gigant 0 (%v-%v)", ggSize, ggType), ggType, habitZone, "Large Gas Gigant")
 	case gg < 1:
-		sn.StarSystems[0].Body[habitZone] = placeWorldTo("BigWorld w", "BW", habitZone)
+		sn.StarSystems[0].Body[habitZone] = placeWorldTo("BigWorld w", "BW", habitZone, worldprofile.NewSecondary(sn.ssd, unstring("BigWorld"), fmt.Sprintf("%v", habitZone)))
 	}
-	sn.StarSystems[0].Body[habitZone].satelites = append(sn.StarSystems[0].Body[habitZone].satelites, placeWorldTo("Mainworld", "MW_Sat", 0))
+	sn.StarSystems[0].Body[habitZone].satelites = append(sn.StarSystems[0].Body[habitZone].satelites, placeSatelliteTo(sn.ssd.MW_UWP(), 0))
 	//fmt.Println(sn.StarSystems[0].Body[habitZone].satelites[0].Name(), 0, habitZone, 0)
 	return nil
 }
@@ -258,11 +282,12 @@ func (sn *StarNexus) PlaceGasGigants(ssd SurveyReporter) error {
 			if sn.StarSystems[i].Body[tryOrbit].pbType != "EMPTY" {
 				continue
 			}
-			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Gas Gigant %v (%v-%v)", g, ggSize, ggType), "GG", tryOrbit)
+			uwp := worldprofile.NewSecondary(sn.ssd, unstring(ggType), fmt.Sprintf("%v", tryOrbit))
+			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Gas Gigant %v (%v-%v)", g, ggSize, ggType), ggType, tryOrbit, uwp)
 			placed = true
 		}
 	}
-	return fmt.Errorf("Not Implemented")
+	return fmt.Errorf("not Implemented")
 }
 
 func (sn *StarNexus) PlaceBelts(ssd SurveyReporter) error {
@@ -293,12 +318,13 @@ func (sn *StarNexus) PlaceBelts(ssd SurveyReporter) error {
 			if sn.StarSystems[i].Body[tryOrbit].pbType != "EMPTY" {
 				continue
 			}
-			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Belt %v", belt), "Belt", tryOrbit)
+			uwp := worldprofile.NewSecondary(sn.ssd, unstring("Asteroid Belt"), fmt.Sprintf("%v", tryOrbit))
+			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Belt %v", belt), "Asteroid Belt", tryOrbit, uwp)
 			placed = true
 		}
 	}
 
-	return fmt.Errorf("Not Implemented")
+	return fmt.Errorf("not Implemented")
 }
 
 func (sn *StarNexus) PlaceOther(ssd SurveyReporter) error {
@@ -344,13 +370,13 @@ func (sn *StarNexus) PlaceOther(ssd SurveyReporter) error {
 			default:
 				worldType = outerWorldType(dp.Roll("1d6").Sum())
 			}
-
-			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Other %v", w), worldType, tryOrbit)
+			uwp := worldprofile.NewSecondary(sn.ssd, unstring(worldType), fmt.Sprintf("%v", tryOrbit))
+			sn.StarSystems[i].Body[tryOrbit] = placeWorldTo(fmt.Sprintf("Other %v", w), worldType, tryOrbit, uwp)
 			placed = true
 		}
 	}
 
-	return fmt.Errorf("Not Implemented")
+	return fmt.Errorf("not Implemented")
 }
 
 func innerWorldType(i int) string {
@@ -433,14 +459,14 @@ func rollOther2Placement(dp *dice.Dicepool) int {
 	return orb[r-2]
 }
 
-func (sn *StarNexus) hasAnyUnfilled() bool {
-	for _, ss := range sn.StarSystems {
-		if ss.haveUnfilledOrbits() {
-			return true
-		}
-	}
-	return false
-}
+// func (sn *StarNexus) hasAnyUnfilled() bool {
+// 	for _, ss := range sn.StarSystems {
+// 		if ss.haveUnfilledOrbits() {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
 func newGasGigantData(seed string) (string, string) {
 	dp := dice.New().SetSeed(seed)
@@ -457,7 +483,7 @@ func (n *StarNexus) String() string {
 	str := ""
 	for i, st := range n.StarSystems {
 		if st.Sun != nil {
-			str += fmt.Sprintf("Sun: %v - %v\n", st.Sun.Name(), st.Sun.Code())
+			str += fmt.Sprintf("%v %v\n", st.Sun.Name(), st.Sun.Code())
 		}
 		if st.Companion != nil {
 			str += fmt.Sprintf("Companion: %v - %v\n", st.Companion.Name(), st.Companion.Code())
@@ -466,14 +492,47 @@ func (n *StarNexus) String() string {
 			if b.pbType == "EMPTY" {
 				continue
 			}
+			str += constructPlanetLine(b)
 
-			str += fmt.Sprintf("    Body: %v - %v (%v) - %v\n", b.Name(), b.Orbit(), n.StarSystems[i].Body[k].pbType, worldprofile.NewSecondary(n.ssd, unstring(n.StarSystems[i].Body[k].pbType), b.Name()))
 			for _, s := range n.StarSystems[i].Body[k].satelites {
-				str += fmt.Sprintf("        Sat: %v - %v\n", s.Name(), s.Orbit())
+				str += constructSatelliteLine(b, s)
+				//str += fmt.Sprintf("        Sat: %v - %v\n", s.Suffix(), s.Orbit())
 			}
 		}
 	}
 	return str
+}
+
+func constructPlanetLine(b *planetaryBody) string {
+	sl := "    "
+	orb := fmt.Sprintf("| %v", b.Orbit())
+	for len(orb) < 5 {
+		orb += " "
+	}
+	sl += orb + "|    "
+	uwp := "| " + b.UWP()
+	for len(uwp) < 5 {
+		uwp += " "
+	}
+	sl += uwp + "\n"
+	return sl
+}
+
+func constructSatelliteLine(b *planetaryBody, s *satellite.Satellite) string {
+	sl := "    "
+
+	sl += "|    "
+	satOrb := fmt.Sprintf("| %v", s.Orbit())
+	for len(satOrb) < 5 {
+		satOrb += " "
+	}
+	sl += satOrb
+	uwp := "| " + s.UWP()
+	for len(uwp) < 5 {
+		uwp += " "
+	}
+	sl += uwp + "\n"
+	return sl
 }
 
 func unstring(ptype string) int {
@@ -498,6 +557,16 @@ func unstring(ptype string) int {
 		return worldprofile.BigWorld
 	case "StormWorld":
 		return worldprofile.StormWorld
+	case "LGG":
+		return worldprofile.LGG
+	case "SGG":
+		return worldprofile.SGG
+	case "IG":
+		return worldprofile.IG
+	case "Planetary Ring":
+		return worldprofile.PlanetaryRings
+	case "Asteroid Belt":
+		return worldprofile.AsteroidBelt
 	}
 	return 0
 }
@@ -528,6 +597,9 @@ func (sn *StarNexus) placeStars(name, stellar string) error {
 		return err
 	}
 	compos, err := SystemComposition(name, stellar)
+	if err != nil {
+		return err
+	}
 	separated := separateBySystems(compos)
 	codePosition := 0
 	for stsys, s := range separated {
@@ -569,7 +641,8 @@ type planetaryBody struct {
 	orbit     int
 	name      string
 	pbType    string
-	satelites []*planetaryBody
+	satelites []*satellite.Satellite
+	uwp       string
 }
 
 func (pb *planetaryBody) Orbit() int {
@@ -580,12 +653,24 @@ func (pb *planetaryBody) Name() string {
 	return pb.name
 }
 
-func placeWorldTo(wName, wType string, orbit int) *planetaryBody {
-	return &planetaryBody{orbit, wName, wType, nil}
+func (pb *planetaryBody) UWP() string {
+	return pb.uwp
+}
+
+func placeWorldTo(wName, wType string, orbit int, uwp string) *planetaryBody {
+	return &planetaryBody{orbit, wName, wType, nil, uwp}
+}
+
+func placeSatelliteTo(uwp string, orbit int) *satellite.Satellite {
+	sat, err := satellite.New(uwp, orbit)
+	if err != nil {
+		panic("satErr")
+	}
+	return &sat
 }
 
 func EmptyOrbit(o int) *planetaryBody {
-	return &planetaryBody{o, fmt.Sprintf("Orbit %v", o), "EMPTY", nil}
+	return &planetaryBody{o, fmt.Sprintf("Orbit %v", o), "EMPTY", nil, "Empty"}
 }
 
 func separateBySystems(composition []int) [4][]int {
@@ -707,3 +792,56 @@ func (stsys *StarSystem) haveUnfilledOrbits() bool {
 	}
 	return false
 }
+
+func (n *StarNexus) Table() string {
+	str := ""
+	for i, st := range n.StarSystems {
+		//inShadow := true
+		if st.Sun != nil {
+			str += fmt.Sprintf("%v (%v)\n", st.Sun.Name(), st.Sun.Code())
+		}
+		if st.Companion != nil {
+			str += fmt.Sprintf("%v (%v)\n", st.Companion.Name(), st.Companion.Code())
+		}
+		for k, b := range n.StarSystems[i].Body {
+
+			orb := fmt.Sprintf("| %v", b.Orbit())
+			for len(orb) < 5 {
+				orb += " "
+			}
+			sat := "|    "
+			for len(sat) < 5 {
+				sat += " "
+			}
+			uwp := "| " + worldprofile.NewSecondary(n.ssd, unstring(n.StarSystems[i].Body[k].pbType), b.Name())
+			str += orb + sat + uwp + "\n"
+			str += fmt.Sprintf("    Body: %v - %v (%v) - %v / %v\n", b.Name(), b.Orbit(), n.StarSystems[i].Body[k].pbType, b.UWP(), b.Name())
+			for _, s := range n.StarSystems[i].Body[k].satelites {
+				orb += "|    "
+				sat = fmt.Sprintf("| %v", s.Orbit())
+				for len(sat) < 5 {
+					sat += " "
+				}
+				str += orb + sat + "\n"
+				str += fmt.Sprintf("        Sat: %v - %v\n", s.Suffix(), s.Orbit())
+			}
+		}
+	}
+	return str
+}
+
+/*
+Alpha F0 III
+  | 0 |	  |Y300000-0  |Ba Va He |IceWorld
+  |   |1  |Orbital Ring System  |
+  | 1 |	  |Y110000-0  |Ba He    |IceWorld
+  | 2 |   |H320201-7  |Lo Po    |Worldlet
+  |   |1  |Orbital Ring System
+  ........................................
+  | 3 |   |Large Gas Gigant
+  |   |1  |C665200-7  |Lo Po    |BigWorld
+  |   |2  |X8B5000-0  |Ba       |BigWorld
+
+"  ", planetOrbit, satOrbit, Profile/Type, Remarks*
+
+*/

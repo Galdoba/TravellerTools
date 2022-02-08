@@ -2,11 +2,13 @@ package satellite
 
 import "fmt"
 
-type satteliteOrbit struct {
+type Satellite struct {
 	orbitSuffix string
+	orbit       int
 	multiplier  int
 	locked      bool
 	comment     string
+	uwp         string
 }
 
 const (
@@ -42,8 +44,8 @@ const (
 орбита спутника напрямую зависит от родителя
 */
 
-func NewOrbit(orbit int) (satteliteOrbit, error) {
-	so := satteliteOrbit{}
+func New(uwp string, orbit int) (Satellite, error) {
+	so := Satellite{}
 	so.orbitSuffix = suffixMap(orbit)
 	if so.orbitSuffix == "" {
 		return so, fmt.Errorf("orbit index '%v' invalid", orbit)
@@ -51,7 +53,20 @@ func NewOrbit(orbit int) (satteliteOrbit, error) {
 	so.multiplier = multiplierMap(orbit)
 	so.locked = lockedMap(orbit)
 	so.comment = commentMap(orbit)
+	so.uwp = uwp
 	return so, nil
+}
+
+func (s *Satellite) Suffix() string {
+	return s.orbitSuffix
+}
+
+func (s *Satellite) Orbit() int {
+	return s.orbit
+}
+
+func (s *Satellite) UWP() string {
+	return s.uwp
 }
 
 func suffixMap(orbit int) string {
