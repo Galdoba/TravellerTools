@@ -1,6 +1,8 @@
 package worldprofile
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
@@ -40,6 +42,7 @@ const (
 	IG
 	PlanetaryRings
 	AsteroidBelt
+	validUWPregexp = "[ABCDEFGHXY][0123456789ABCDEF][0123456789ABCDEF][0123456789A][0123456789ABCDEF][0123456789ABCDEF][0123456789ABCDEFHGJ]-[0123456789ABCDEFGHJKL]"
 )
 
 /*
@@ -50,6 +53,59 @@ NewSecondary(ssd survey.SecondSurveyData, otherType int) string
 
 */
 //NewMain - New mainworld UWP
+
+func ByMask(mask string, seed string) (string, error) {
+	maskParts := strings.Split(mask, "")
+
+	if err := maskIsValid(mask); err != nil {
+		return "", err
+	}
+
+	return maskParts[0], fmt.Errorf("not implemented")
+}
+
+func maskIsValid(mask string) error {
+	mp := strings.Split(mask, "")
+	validUWPregexp := []string{
+		"[ABCDEFGHXY]",            //port
+		"[0123456789ABCDEF]",      //size
+		"[0123456789ABCDEF]",      //atm
+		"[0123456789A]",           //hydr
+		"[0123456789ABCDEF]",      //pop
+		"[0123456789ABCDEF]",      //govr
+		"[0123456789ABCDEFHGJ]",   //law
+		"-",                       //separator
+		"[0123456789ABCDEFGHJKL]", //tl
+	}
+	for i, uwpSegment := range validUWPregexp {
+		if m, err := regexp.MatchString(uwpSegment, mp[i]); err != nil {
+			switch i {
+			case 0:
+				return fmt.Errorf("starport data invalid %v", m)
+			case 1:
+				return fmt.Errorf("size data invalid %v", m)
+			case 2:
+				return fmt.Errorf("atmospere data invalid %v", m)
+			case 3:
+				return fmt.Errorf("hydrospgere data invalid %v", m)
+			case 4:
+				return fmt.Errorf("population data invalid %v", m)
+			case 5:
+				return fmt.Errorf("goverment data invalid %v", m)
+			case 6:
+				return fmt.Errorf("laws data invalid %v", m)
+			case 7:
+				return fmt.Errorf("separator data invalid %v", m)
+			case 8:
+				return fmt.Errorf("tl data invalid %v", m)
+			}
+			fmt.Printf("segment %v with data %v = valid (%v)", i, uwpSegment, m)
+		}
+
+	}
+	return nil
+}
+
 func NewMain(seed string) string {
 	dp := dice.New().SetSeed(seed)
 	statMap := make(map[int]int)

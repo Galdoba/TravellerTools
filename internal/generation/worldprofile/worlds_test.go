@@ -9,9 +9,10 @@ import (
 )
 
 func TestNums(t *testing.T) {
+	return
 	tlMap := make(map[string]int)
 	last := "???????-?"
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 5; i++ {
 		mwUWP := NewMain(last + fmt.Sprintf("_Very  long Seed sdhdhjdfgString%v", i))
 		last = mwUWP
 		_, err := uwp.FromString(mwUWP)
@@ -23,7 +24,9 @@ func TestNums(t *testing.T) {
 			survey.Instruction(survey.MW_Name, last+fmt.Sprintf("_Very  long Seed sdhdhjdfgString%v", i)),
 		)
 		fmt.Println(ssd)
-		seUwp := NewSecondary(ssd, Worldlet, "Ay")
+		secondaryTypes := []int{Hospitable, Planetoid, IceWorld, RadWorld, Inferno, BigWorld, Worldlet, InnerWorld, StormWorld, SGG, LGG, IG, PlanetaryRings, AsteroidBelt}
+
+		seUwp := NewSecondary(ssd, secondaryTypes[i%len(secondaryTypes)], "Ay")
 		fmt.Println("Secondary Worldlet =", seUwp)
 		suwp, err := uwp.FromString(seUwp)
 		if err != nil {
@@ -38,6 +41,18 @@ func TestNums(t *testing.T) {
 		}
 	}
 
+}
+
+func TestByMask(t *testing.T) {
+	testMasks := []string{"???0???-?"}
+	for i, tm := range testMasks {
+		uwp, err := ByMask(tm, tm)
+		if err != nil {
+			t.Errorf("%v testMaks = %v: %v", i, tm, err)
+		} else {
+			fmt.Printf("success (%v => %v)", tm, uwp)
+		}
+	}
 }
 
 //A:79 B:206 C:328 D:358 E:226 X:99 - mgt2
