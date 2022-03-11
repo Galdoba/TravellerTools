@@ -2,18 +2,67 @@ package weapon
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
+
+	"github.com/Galdoba/TravellerTools/internal/dice"
 )
 
 func testInpute() (input [][]int) {
 	for _, ins1 := range allreceivers() {
 		for _, ins2 := range allAmmo() {
 			for _, ins3 := range allMechanismas() {
-				input = append(input, []int{ins1, ins2, ins3})
+				for _, ins4 := range allTech() {
+					funcFeat := []int{ins1, ins2, ins3, ins4}
+					//input = append(input, []int{ins1, ins2, ins3, ins4})
+					for _, v := range randomFromIntSlice(allFF()) {
+						funcFeat = append(funcFeat, v)
+					}
+					input = append(input, funcFeat)
+				}
 			}
 		}
 	}
 	return input
+}
+
+func allTech() []int {
+	return []int{
+		tech_CONVENTIONAL,
+		tech_GAUSS_TECH,
+		tech_ENERGY,
+	}
+}
+
+func allFF() []int {
+	return []int{
+		feat_func_ADVANCED_PROJECTILE_WEAPON,
+		feat_func_ACCUIRED,
+		feat_func_BULLPUP,
+		feat_func_COMPACT,
+		feat_func_COMPACT_VERY,
+		feat_func_COOLING_SYSTEM_BASIC,
+		feat_func_COOLING_SYSTEM_ADVANCED,
+		feat_func_GUIDENCE_SYSTEM,
+		feat_func_HIGH_CAPACITY,
+		feat_func_HIGH_QUALITY,
+		feat_func_INCREASED_RATE_OF_FIRE_1,
+		feat_func_INCREASED_RATE_OF_FIRE_2,
+		feat_func_INCREASED_RATE_OF_FIRE_3,
+		feat_func_INCREASED_RATE_OF_FIRE_4,
+		feat_func_INCREASED_RATE_OF_FIRE_5,
+		feat_func_INCREASED_RATE_OF_FIRE_6,
+		feat_func_LIGHTWEIGHT,
+		feat_func_LIGHTWEIGHT_EXTREAME,
+		feat_func_LOW_QUALITY_1,
+		feat_func_LOW_QUALITY_2,
+		feat_func_LOW_QUALITY_3,
+		feat_func_LOW_QUALITY_4,
+		feat_func_LOW_QUALITY_5,
+		feat_func_QUICKDRAW,
+		feat_func_RECOIL_COMPENSATION,
+		feat_func_RUGGED,
+	}
 }
 
 func allreceivers() []int {
@@ -23,8 +72,6 @@ func allreceivers() []int {
 		receiver_LONGARM,
 		receiver_LIGHT_SUPPORT_WEAPON,
 		receiver_HEAVY_WEAPON,
-		receiver_GAUSS_TECH,
-		receiver_CONVENTIONAL,
 	}
 }
 
@@ -66,16 +113,35 @@ func allAmmo() []int {
 	}
 }
 
-func TestReciver2(t *testing.T) {
+func TestReciver(t *testing.T) {
 	for i, input := range testInpute() {
-		fmt.Println("test", i+1)
-		r2 := NewReceiver(input...)
-		for _, err := range r2.errors {
+
+		fmt.Printf("test %v (%v) ", i+1, input)
+		r2, err := newReceiver(input...)
+		if err != nil {
+			//continue
 			t.Errorf("error: %v", err)
+			continue
 		}
-		//fmt.Println(r2)
+		if r2.tech == _UNDEFINED_ {
+			continue
+			t.Errorf("tech undefined")
+		}
+		fmt.Println(r2)
 	}
 
+}
+
+func randomFromIntSlice(sl []int) []int {
+	l := len(sl)
+	dp := dice.New()
+	totalLen := dp.Roll("1d6").Sum()
+	res := []int{}
+	for i := 0; i < totalLen; i++ {
+		r := dp.Roll("1d" + strconv.Itoa(l)).Sum()
+		res = append(res, sl[r-1])
+	}
+	return res
 }
 
 // func TestReciver(t *testing.T) {
