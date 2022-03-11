@@ -70,6 +70,16 @@ const (
 	feat_cap_STEALTH_BASIC
 	feat_cap_STEALTH_EXTREME
 	feat_cap_VACUUM
+	brl_len_MINIMAL
+	brl_len_SHORT
+	brl_len_HANDGUN
+	brl_len_ASSAULT
+	brl_len_CARBINE
+	brl_len_RIFLE
+	brl_len_LONG
+	brl_len_VERY_LONG
+	brl_weight_HEAVY
+	brl_weight_STANDARD
 	WRONG_INSTRUCTION
 )
 

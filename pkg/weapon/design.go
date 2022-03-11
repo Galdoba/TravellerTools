@@ -15,7 +15,7 @@ package weapon
 
 type Weapon struct {
 	rcvr *receiver
-	brl  *barrels
+	brl  *barrel
 }
 
 func contains(sl []int, e int) bool {

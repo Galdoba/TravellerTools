@@ -38,12 +38,12 @@ func (r *receiver) addType(inst int) error {
 		r.aType = inst
 	case isMechanismType(inst):
 		if r.mechanism != _UNDEFINED_ {
-			return fmt.Errorf("PWM already assigned")
+			return fmt.Errorf("pwm already assigned")
 		}
 		r.mechanism = inst
 	case isTech(inst):
 		if r.tech != _UNDEFINED_ {
-			return fmt.Errorf("Tech already assigned")
+			return fmt.Errorf("tech already assigned")
 		}
 		r.tech = inst
 	case isFuncFeat(inst):
