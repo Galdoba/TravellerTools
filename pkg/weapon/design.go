@@ -1,5 +1,7 @@
 package weapon
 
+import "fmt"
+
 /*
 1 Decide general type (pistol, rifle, ect...)
 2 choose ammnition/powertype
@@ -25,4 +27,21 @@ func contains(sl []int, e int) bool {
 		}
 	}
 	return false
+}
+
+func inErr() error {
+	return fmt.Errorf("Input is incorrect")
+}
+
+func timesCrossed(aSlice []int, bSlice []int) int {
+	//сколько раз встречаются элементы слайса А в слайсе Б?
+	met := 0
+	for _, bElem := range bSlice {
+		for _, aElem := range aSlice {
+			if aElem == bElem {
+				met++
+			}
+		}
+	}
+	return met
 }

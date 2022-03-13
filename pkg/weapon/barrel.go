@@ -34,6 +34,13 @@ func isBarrelLentgh(i int) bool {
 	return false
 }
 
+func isBarrelWeight(i int) bool {
+	if i >= brl_weight_STANDARD && i <= brl_weight_HEAVY {
+		return true
+	}
+	return false
+}
+
 func inputInstructionsCheck(inst []int) error {
 	instrMap := make(map[int]int)
 	if len(inst) != 2 {

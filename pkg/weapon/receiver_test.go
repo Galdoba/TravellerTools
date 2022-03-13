@@ -2,6 +2,7 @@ package weapon
 
 import (
 	"fmt"
+	"math/bits"
 	"strconv"
 	"testing"
 
@@ -111,24 +112,85 @@ func allAmmo() []int {
 	}
 }
 
-func TestReciver(t *testing.T) {
-	return
-	for i, input := range testInpute() {
-
-		fmt.Printf("test %v (%v) ", i+1, input)
-		r2, err := newReceiver(input...)
+func TestReceiverManual(t *testing.T) {
+	inputSet := [][]int{
+		{1, 2, 3, 4},
+		{1, 36, 22, 8},
+		{1, 54, 32, 8},
+	}
+	for i, input := range inputSet {
+		fmt.Println("Test", i+1, ":")
+		r, err := newReceiver(input...)
 		if err != nil {
-			//continue
-			t.Errorf("error: %v", err)
+			t.Errorf("error: %v", err.Error())
+			fmt.Println(r.errorDescr)
 			continue
 		}
-		if r2.tech == _UNDEFINED_ {
+		fmt.Println(r)
+
+	}
+}
+
+func TestReciver(t *testing.T) {
+	input := append([]int{}, receiver_HANDGUN, receiver_LONGARM)
+	input = append(input, feat_func_COMPACT_VERY, feat_func_COMPACT, feat_func_ADVANCED_PROJECTILE_WEAPON)
+	input = append(input, feat_cap_STEALTH_EXTREME, feat_cap_DISGUISED)
+	input = append(input, ammo_HANDGUN_BlackPowder, ammo_LONGARM_Rifle_Battle) // allAmmo()...)
+	input = append(input, pwm_SEMI_AUTOMATIC, pwm_FULLY_AUTOMATIC)
+	input = append(input, allTech()...)
+	input = append(input, WRONG_INSTRUCTION)
+	dtStr := []string{}
+	for _, s := range input {
+		dtStr = append(dtStr, strconv.Itoa(s))
+	}
+	errors := 0
+	fmt.Println("calculating combinations for [", dtStr, "] 4...")
+	comb := CombinationsTracked(dtStr, 0)
+	testNum := 0
+	for _, strComb := range comb {
+		testNum++
+		//fmt.Printf("Start test %v (%v) \n", testNum, strComb)
+		inp := []int{}
+		for _, sInp := range strComb {
+			i, _ := strconv.Atoi(sInp)
+			inp = append(inp, i)
+		}
+		r2, err := newReceiver(inp...)
+		if err != nil {
+			errors++
+			if err.Error() == "Input is incorrect" {
+				continue
+			}
+			if err.Error() == "unknowm instruction '79'" {
+				continue
+			}
+			t.Errorf("error: -%v-", err)
+
+			//fmt.Println(r2.errorDescr)
 			continue
+		}
+		fmt.Printf("Test %v (%v) \n", testNum, strComb)
+		if r2.tech == _UNDEFINED_ {
 			t.Errorf("tech undefined")
+			errors++
+		}
+		if r2.rType == _UNDEFINED_ {
+			t.Errorf("reciver type undefined")
+			errors++
+		}
+		if r2.aType == _UNDEFINED_ {
+			t.Errorf("callibre undefined")
+			errors++
+		}
+		if r2.mechanism == _UNDEFINED_ {
+			t.Errorf("mechanism undefined")
+			errors++
 		}
 		fmt.Println(r2)
 	}
-
+	fmt.Println("--------")
+	fmt.Println("--------")
+	fmt.Println("Total", testNum, " | errors", errors, "| correct =", testNum-errors)
 }
 
 func randomFromIntSlice(sl []int) []int {
@@ -143,61 +205,41 @@ func randomFromIntSlice(sl []int) []int {
 	return res
 }
 
-// func TestReciver(t *testing.T) {
-// 	input := testInpute()
-// 	totalTests := 0
-// 	errorsDetected := 0
-
-// 	for testNum, instruction := range input {
-// 		totalTests++
-
-// 		r, err := NewReceiver(instruction[0], instruction[1], instruction[2])
-// 		if err != nil {
-// 			errorsDetected++
-// 			continue
-// 			t.Errorf("creation error: %v", err.Error())
-
-// 		}
-// 		fmt.Printf("Test %v: (%v + %v + %v)\n", testNum+1, verbal(instruction[0]), verbal(instruction[1]), verbal(instruction[2]))
-// 		fmt.Println("untested:", r)
-// 		if instruction[2] == pwm_SINGLE_SHOT {
-// 			if r.ammoCapacity != 1.0 {
-// 				t.Errorf("expect ammo capacity '1', but have '%v'", r.ammoCapacity)
-// 			}
-// 		}
-
-// 	}
-// 	fmt.Println("Total tests:", totalTests, "| errors detected:", errorsDetected, "| valid: ", totalTests-errorsDetected)
-// }
-
 /*
 
--
-1
-2
-3
-4
-5
-12
-13
-14
-15
-23
-24
-25
-34
-35
-123
-124
-125
-134
-135
-234
-235
-1234
-1235
-1345
-2345
-12345
 
-*/
+
+ */
+
+func CombinationsTracked(set []string, n int) (subsets [][]string) {
+
+	length := uint(len(set))
+
+	if n > len(set) {
+		n = len(set)
+	}
+
+	// Go through all possible combinations of objects
+	// from 1 (only first object in subset) to 2^length (all objects in subset)
+	total := (1 << length)
+	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
+		if n > 0 && bits.OnesCount(uint(subsetBits)) != n {
+			continue
+		}
+
+		var subset []string
+
+		for object := uint(0); object < length; object++ {
+			// checks if object is contained in subset
+			// by checking if bit 'object' is set in subsetBits
+			if (subsetBits>>object)&1 == 1 {
+				// add object to subset
+				subset = append(subset, set[object])
+			}
+		}
+		// add subset to subsets
+		subsets = append(subsets, subset)
+		fmt.Print("  ", subsetBits*100/total, "% of ", total, ": ", len(subsets), " New combination ", subset, " | Total:                  \r")
+	}
+	return subsets
+}

@@ -223,6 +223,26 @@ func verbal(i int) string {
 		return "feat_cap_STEALTH_EXTREME"
 	case feat_cap_VACUUM:
 		return "feat_cap_VACUUM"
+	case brl_len_MINIMAL:
+		return "brl_len_MINIMAL"
+	case brl_len_SHORT:
+		return "brl_len_SHORT"
+	case brl_len_HANDGUN:
+		return "brl_len_HANDGUN"
+	case brl_len_ASSAULT:
+		return "brl_len_ASSAULT"
+	case brl_len_CARBINE:
+		return "brl_len_CARBINE"
+	case brl_len_RIFLE:
+		return "brl_len_RIFLE"
+	case brl_len_LONG:
+		return "brl_len_LONG"
+	case brl_len_VERY_LONG:
+		return "brl_len_VERY_LONG"
+	case brl_weight_HEAVY:
+		return "brl_weight_HEAVY"
+	case brl_weight_STANDARD:
+		return "brl_weight_STANDARD"
 	case WRONG_INSTRUCTION:
 		return "WRONG_INSTRUCTION"
 	}
