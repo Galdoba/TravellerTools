@@ -55,14 +55,15 @@ const (
 	feat_func_INCREASED_RATE_OF_FIRE_5
 	feat_func_INCREASED_RATE_OF_FIRE_6
 	feat_func_LIGHTWEIGHT
-	feat_func_LIGHTWEIGHT_EXTREAME
+	feat_func_LIGHTWEIGHT_EXTREME
 	feat_func_LOW_QUALITY_1
 	feat_func_LOW_QUALITY_2
 	feat_func_LOW_QUALITY_3
 	feat_func_LOW_QUALITY_4
 	feat_func_LOW_QUALITY_5
 	feat_func_QUICKDRAW
-	feat_func_RECOIL_COMPENSATION
+	feat_func_RECOIL_COMPENSATION_1
+	feat_func_RECOIL_COMPENSATION_2
 	feat_func_RUGGED
 	feat_cap_ARMORED
 	feat_cap_BULWARKED
@@ -70,6 +71,17 @@ const (
 	feat_cap_STEALTH_BASIC
 	feat_cap_STEALTH_EXTREME
 	feat_cap_VACUUM
+	AMMUNITION_CAPACITY_50_LESS
+	AMMUNITION_CAPACITY_40_LESS
+	AMMUNITION_CAPACITY_30_LESS
+	AMMUNITION_CAPACITY_20_LESS
+	AMMUNITION_CAPACITY_10_LESS
+	AMMUNITION_CAPACITY_STANDARD
+	AMMUNITION_CAPACITY_10_MORE
+	AMMUNITION_CAPACITY_20_MORE
+	AMMUNITION_CAPACITY_30_MORE
+	AMMUNITION_CAPACITY_40_MORE
+	AMMUNITION_CAPACITY_50_MORE
 	brl_len_MINIMAL
 	brl_len_SHORT
 	brl_len_HANDGUN
@@ -80,6 +92,43 @@ const (
 	brl_len_VERY_LONG
 	brl_weight_HEAVY
 	brl_weight_STANDARD
+	furniture_STOCKLESS
+	furniture_STOCK_FOLDING
+	furniture_STOCK_FULL
+	furniture_MODULARIZATION
+	furniture_BIPOD_ABSENT
+	furniture_BIPOD_FIXED
+	furniture_BIPOD_DETACHABLE
+	furniture_SUPPORT_MOUNT
+	accessoire_SUPPRESSOR_ABSENT
+	accessoire_SUPPRESSOR_BASIC
+	accessoire_SUPPRESSOR_STANDARD
+	accessoire_SUPPRESSOR_EXTREME
+	accessoire_AFD_MAGAZINE_FIXED
+	accessoire_AFD_MAGAZINE_STANDARD
+	accessoire_AFD_MAGAZINE_EXTENDED
+	accessoire_AFD_MAGAZINE_DRUM
+	accessoire_AFD_BELT
+	accessoire_AFD_CLIPS
+	accessoire_SCOPE_ABSENT
+	accessoire_SCOPE_BASIC
+	accessoire_SCOPE_LONG_RANGE
+	accessoire_SCOPE_LOW_LIGHT
+	accessoire_SCOPE_THERMAL
+	accessoire_SCOPE_COMBINATION
+	accessoire_SCOPE_MULTISPECTRAL
+	accessoire_SCOPE_LASER_POINTER
+	accessoire_SCOPE_ISS
+	accessoire_SCOPE_HOLOGRAPHIC
+	accessoire_OTHER_ABSENT
+	accessoire_OTHER_BAYONET_LUG
+	accessoire_OTHER_BLING
+	accessoire_OTHER_FLASHLIGHT
+	accessoire_OTHER_GRAVITIC_SUPPORT
+	accessoire_OTHER_GUN_CAMERA
+	accessoire_OTHER_WEAPON_INTELLIGENT
+	accessoire_OTHER_WEAPON_SECURE
+	accessoire_OTHER_STABILISATION
 	WRONG_INSTRUCTION
 )
 
@@ -170,7 +219,7 @@ func verbal(i int) string {
 	case feat_func_COMPACT_VERY:
 		return "feat_func_COMPACT_VERY"
 	case feat_func_COOLING_SYSTEM_BASIC:
-		return "feat_func_COOLING_SYSTEM_BASIC"
+		return "Cooling System, Basic"
 	case feat_func_COOLING_SYSTEM_ADVANCED:
 		return "feat_func_COOLING_SYSTEM_ADVANCED"
 	case feat_func_GUIDENCE_SYSTEM:
@@ -193,8 +242,8 @@ func verbal(i int) string {
 		return "feat_func_INCREASED_RATE_OF_FIRE_6"
 	case feat_func_LIGHTWEIGHT:
 		return "feat_func_LIGHTWEIGHT"
-	case feat_func_LIGHTWEIGHT_EXTREAME:
-		return "feat_func_LIGHTWEIGHT_EXTREAME"
+	case feat_func_LIGHTWEIGHT_EXTREME:
+		return "feat_func_LIGHTWEIGHT_EXTREME"
 	case feat_func_LOW_QUALITY_1:
 		return "feat_func_LOW_QUALITY_1"
 	case feat_func_LOW_QUALITY_2:
@@ -207,8 +256,10 @@ func verbal(i int) string {
 		return "feat_func_LOW_QUALITY_5"
 	case feat_func_QUICKDRAW:
 		return "feat_func_QUICKDRAW"
-	case feat_func_RECOIL_COMPENSATION:
-		return "feat_func_RECOIL_COMPENSATION"
+	case feat_func_RECOIL_COMPENSATION_1:
+		return "feat_func_RECOIL_COMPENSATION_1"
+	case feat_func_RECOIL_COMPENSATION_2:
+		return "feat_func_RECOIL_COMPENSATION_2"
 	case feat_func_RUGGED:
 		return "feat_func_RUGGED"
 	case feat_cap_ARMORED:
