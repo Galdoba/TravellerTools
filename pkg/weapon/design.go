@@ -1,6 +1,10 @@
 package weapon
 
-import "fmt"
+import (
+	"fmt"
+
+	. "github.com/Galdoba/TravellerTools/pkg/weapon/components"
+)
 
 /*
 1 Decide general type (pistol, rifle, ect...)
@@ -16,32 +20,55 @@ import "fmt"
 */
 
 type Weapon struct {
-	rcvr *receiver
-	brl  *barrel
+	rcvr            *Receiver
+	brl             *Barrel
+	frn             *Furniture
+	acc             *Accessoire
+	penetration     int
+	sigPhysical     int
+	sigEmmision     int
+	mishapThreshold int
+	///////////////////
+	name           string
+	tl             int
+	effectiveRange int
+	damageDice     int
+	damageMod      int
+	weight         float64
+	cost           int
+	magazine       int
+	magazineCost   int
+	quickdraw      int
+	traits         []string
 }
 
-func contains(sl []int, e int) bool {
-	for _, val := range sl {
-		if val == e {
-			return true
-		}
+func New(instr ...int) (*Weapon, error) {
+	w := Weapon{}
+	err := fmt.Errorf("error was not adressed")
+	if w.rcvr, err = NewReceiver(instr...); err != nil {
+		return nil, err
 	}
-	return false
-}
-
-func inErr() error {
-	return fmt.Errorf("Input is incorrect")
-}
-
-func timesCrossed(aSlice []int, bSlice []int) int {
-	//сколько раз встречаются элементы слайса А в слайсе Б?
-	met := 0
-	for _, bElem := range bSlice {
-		for _, aElem := range aSlice {
-			if aElem == bElem {
-				met++
-			}
-		}
+	if w.brl, err = NewBarrel(instr...); err != nil {
+		return nil, err
 	}
-	return met
+	if w.frn, err = NewFurniture(instr...); err != nil {
+		return nil, err
+	}
+	if w.acc, err = NewAccessoires(instr...); err != nil {
+		return nil, err
+	}
+
+	return &w, nil
+}
+
+//DesignWorksheet - будет возвращать в виде таблицы покомпонентный расклад оружия
+func (wp *Weapon) DesignWorksheet() string {
+	fmt.Println("[Weapon   TL   Range   Damage   Kg   Cost   Magazine   Magazine Cost   Traits]")
+	return ""
+}
+
+//Summary - будет возвращать в виде таблицы выжимку по оружию
+func (wp *Weapon) Summary() string {
+	fmt.Println("[Weapon   TL   Range   Damage   Kg   Cost   Magazine   Magazine Cost   Traits]")
+	return ""
 }

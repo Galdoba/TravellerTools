@@ -1,4 +1,4 @@
-package weapon
+package components
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 
 func TestFurniture(t *testing.T) {
 	fmt.Println("------FURNITURE--------")
-	input := []int{furniture_STOCKLESS, furniture_STOCK_FOLDING, furniture_STOCK_FULL, furniture_MODULARIZATION, furniture_BIPOD_ABSENT, furniture_BIPOD_FIXED, furniture_BIPOD_DETACHABLE, furniture_SUPPORT_MOUNT, WRONG_INSTRUCTION}
+	input := []int{FRNTR_STOCKLESS, FRNTR_STOCK_FOLDING, FRNTR_STOCK_FULL, FRNTR_MODULARIZATION, FRNTR_BIPOD_ABSENT, FRNTR_BIPOD_FIXED, FRNTR_BIPOD_DETACHABLE, FRNTR_SUPPORT_MOUNT, WRONG_INSTRUCTION}
 	dtStr := []string{}
 	for _, s := range input {
 		dtStr = append(dtStr, strconv.Itoa(s))
@@ -26,7 +26,7 @@ func TestFurniture(t *testing.T) {
 			i, _ := strconv.Atoi(sInp)
 			inp = append(inp, i)
 		}
-		_, err := newFurniture(inp...)
+		_, err := NewFurniture(inp...)
 
 		if err != nil {
 			errrMap[err.Error()]++

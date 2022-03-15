@@ -1,4 +1,4 @@
-package weapon
+package components
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 func input() [][]string {
-	dt := []int{brl_len_MINIMAL, brl_len_SHORT, brl_len_HANDGUN, brl_len_ASSAULT, brl_len_CARBINE, brl_len_RIFLE, brl_len_LONG, brl_len_VERY_LONG, brl_weight_HEAVY, brl_weight_STANDARD, WRONG_INSTRUCTION}
+	dt := []int{BRL_len_MINIMAL, BRL_len_SHORT, BRL_len_HANDGUN, BRL_len_ASSAULT, BRL_len_CARBINE, BRL_len_RIFLE, BRL_len_LONG, BRL_len_VERY_LONG, BRL_weight_HEAVY, BRL_weight_STANDARD, WRONG_INSTRUCTION}
 	dtStr := []string{}
 	for _, s := range dt {
 		dtStr = append(dtStr, strconv.Itoa(s))
@@ -29,7 +29,7 @@ func TestBarrel(t *testing.T) {
 			continue
 		}
 		fmt.Println("Test", verbal(instructions[0]), verbal(instructions[1]))
-		brl, err := newBarrel(instructions...)
+		brl, err := NewBarrel(instructions...)
 		if err != nil {
 			t.Errorf("error: %v", err.Error())
 		}

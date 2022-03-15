@@ -1,4 +1,4 @@
-package weapon
+package components
 
 import (
 	"fmt"
@@ -12,89 +12,89 @@ import (
 
 func allTech() []int {
 	return []int{
-		tech_CONVENTIONAL,
-		tech_GAUSS_TECH,
-		tech_ENERGY,
+		TECH_CONVENTIONAL,
+		TECH_GAUSS_TECH,
+		TECH_ENERGY,
 	}
 }
 
 func allFF() []int {
 	return []int{
-		feat_func_ADVANCED_PROJECTILE_WEAPON,
-		feat_func_ACCUIRED,
-		feat_func_BULLPUP,
-		feat_func_COMPACT,
-		feat_func_COMPACT_VERY,
-		feat_func_COOLING_SYSTEM_BASIC,
-		feat_func_COOLING_SYSTEM_ADVANCED,
-		feat_func_GUIDENCE_SYSTEM,
-		feat_func_HIGH_CAPACITY,
-		feat_func_HIGH_QUALITY,
-		feat_func_INCREASED_RATE_OF_FIRE_1,
-		feat_func_INCREASED_RATE_OF_FIRE_2,
-		feat_func_INCREASED_RATE_OF_FIRE_3,
-		feat_func_INCREASED_RATE_OF_FIRE_4,
-		feat_func_INCREASED_RATE_OF_FIRE_5,
-		feat_func_INCREASED_RATE_OF_FIRE_6,
-		feat_func_LIGHTWEIGHT,
-		feat_func_LIGHTWEIGHT_EXTREME,
-		feat_func_LOW_QUALITY_1,
-		feat_func_LOW_QUALITY_2,
-		feat_func_LOW_QUALITY_3,
-		feat_func_LOW_QUALITY_4,
-		feat_func_LOW_QUALITY_5,
-		feat_func_QUICKDRAW,
-		feat_func_RECOIL_COMPENSATION_1,
-		feat_func_RECOIL_COMPENSATION_2,
-		feat_func_RUGGED,
+		FEAT_func_ADVANCED_PROJECTILE_WEAPON,
+		FEAT_func_ACCUIRED,
+		FEAT_func_BULLPUP,
+		FEAT_func_COMPACT,
+		FEAT_func_COMPACT_VERY,
+		FEAT_func_COOLING_SYSTEM_BASIC,
+		FEAT_func_COOLING_SYSTEM_ADVANCED,
+		FEAT_func_GUIDENCE_SYSTEM,
+		FEAT_func_HIGH_CAPACITY,
+		FEAT_func_HIGH_QUALITY,
+		FEAT_func_INCREASED_RATE_OF_FIRE_1,
+		FEAT_func_INCREASED_RATE_OF_FIRE_2,
+		FEAT_func_INCREASED_RATE_OF_FIRE_3,
+		FEAT_func_INCREASED_RATE_OF_FIRE_4,
+		FEAT_func_INCREASED_RATE_OF_FIRE_5,
+		FEAT_func_INCREASED_RATE_OF_FIRE_6,
+		FEAT_func_LIGHTWEIGHT,
+		FEAT_func_LIGHTWEIGHT_EXTREME,
+		FEAT_func_LOW_QUALITY_1,
+		FEAT_func_LOW_QUALITY_2,
+		FEAT_func_LOW_QUALITY_3,
+		FEAT_func_LOW_QUALITY_4,
+		FEAT_func_LOW_QUALITY_5,
+		FEAT_func_QUICKDRAW,
+		FEAT_func_RECOIL_COMPENSATION_1,
+		FEAT_func_RECOIL_COMPENSATION_2,
+		FEAT_func_RUGGED,
 	}
 }
 
 func allreceivers() []int {
 	return []int{
-		receiver_HANDGUN,
-		receiver_ASSAULT_WEAPON,
-		receiver_LONGARM,
-		receiver_LIGHT_SUPPORT_WEAPON,
-		receiver_HEAVY_WEAPON,
+		RCVR_TYPE_HANDGUN,
+		RCVR_TYPE_ASSAULT_WEAPON,
+		RCVR_TYPE_LONGARM,
+		RCVR_TYPE_LIGHT_SUPPORT_WEAPON,
+		RCVR_TYPE_HEAVY_WEAPON,
 	}
 }
 
 func allMechanismas() []int {
 	return []int{
-		pwm_SINGLE_SHOT,
-		pwm_REPEATER,
-		pwm_SEMI_AUTOMATIC,
-		pwm_BURST_CAPABLE,
-		pwm_FULLY_AUTOMATIC,
-		//pwm_RAPID_FIRE,
-		//pwm_VERY_RAPID_FIRE,
-		pwm_UNDERWATER,
+		MECHANISM_SINGLE_SHOT,
+		MECHANISM_REPEATER,
+		MECHANISM_SEMI_AUTOMATIC,
+		MECHANISM_BURST_CAPABLE,
+		MECHANISM_FULLY_AUTOMATIC,
+		//MECHANISM_RAPID_FIRE,
+		//MECHANISM_VERY_RAPID_FIRE,
+		MECHANISM_UNDERWATER,
 	}
 }
 
 func allAmmo() []int {
 	return []int{
-		ammo_HANDGUN_BlackPowder,
-		ammo_HANDGUN_Light,
-		ammo_HANDGUN_Medium,
-		ammo_HANDGUN_Heavy,
-		ammo_SHOTGUN_Smoothbores_Small,
-		ammo_SHOTGUN_Smoothbores_Light,
-		ammo_SHOTGUN_Smoothbores_Standard,
-		ammo_SHOTGUN_Smoothbores_Heavy,
-		ammo_LONGARM_BlackPowder,
-		ammo_LONGARM_Rifle_Light,
-		ammo_LONGARM_Rifle_Intermediate,
-		ammo_LONGARM_Rifle_Battle,
-		ammo_LONGARM_Rifle_AntiMaterial,
-		ammo_LONGARM_Rifle_AntiMaterialHeavy,
-		ammo_SNUB,
-		ammo_Rocket,
-		ammo_GAUSS_Standard,
-		ammo_GAUSS_Small,
-		ammo_GAUSS_Enchanced,
-		ammo_GAUSS_Shotgun,
+		CALLIBRE_HANDGUN_BlackPowder,
+		CALLIBRE_HANDGUN_Light,
+		CALLIBRE_HANDGUN_Medium,
+		CALLIBRE_HANDGUN_Heavy,
+		CALLIBRE_SHOTGUN_Smoothbores_Small,
+		CALLIBRE_SHOTGUN_Smoothbores_Light,
+		CALLIBRE_SHOTGUN_Smoothbores_Standard,
+		CALLIBRE_SHOTGUN_Smoothbores_Heavy,
+		CALLIBRE_LONGARM_BlackPowder,
+		CALLIBRE_LONGARM_Rifle_Light,
+		CALLIBRE_LONGARM_Rifle_Intermediate,
+		CALLIBRE_LONGARM_Rifle_Battle,
+		CALLIBRE_LONGARM_Rifle_AntiMaterial,
+		CALLIBRE_LONGARM_Rifle_AntiMaterialHeavy,
+		CALLIBRE_SNUB,
+		CALLIBRE_Rocket,
+		CALLIBRE_GAUSS_Standard,
+		CALLIBRE_GAUSS_Small,
+		CALLIBRE_GAUSS_Enchanced,
+		CALLIBRE_GAUSS_Shotgun,
 	}
 }
 
@@ -107,7 +107,7 @@ func TestReceiverManual(t *testing.T) {
 	}
 	for i, input := range inputSet {
 		fmt.Println("Test", i+1, ":")
-		r, err := newReceiver(input...)
+		r, err := NewReceiver(input...)
 		if err != nil {
 			t.Errorf("error: %v", err.Error())
 			fmt.Println(r.errorDescr)
@@ -120,12 +120,12 @@ func TestReceiverManual(t *testing.T) {
 
 func TestReciver(t *testing.T) {
 	input := []int{}
-	input = append(input, receiver_HANDGUN) //, receiver_LONGARM)
+	input = append(input, RCVR_TYPE_HANDGUN) //, RCVR_TYPE_LONGARM)
 	//input = append(input, allFF()...)
-	//input = append(input, feat_cap_STEALTH_EXTREME, feat_cap_STEALTH_BASIC)                                                                                                                                                                                 //, feat_cap_BULWARKED)
-	input = append(input, ammo_HANDGUN_Medium)
-	input = append(input, pwm_SEMI_AUTOMATIC)           //, pwm_FULLY_AUTOMATIC)
-	input = append(input, tech_CONVENTIONAL)            // allTech()...)
+	//input = append(input, FEAT_cap_STEALTH_EXTREME, FEAT_cap_STEALTH_BASIC)                                                                                                                                                                                 //, FEAT_cap_BULWARKED)
+	input = append(input, CALLIBRE_HANDGUN_Medium)
+	input = append(input, MECHANISM_SEMI_AUTOMATIC)     //, MECHANISM_FULLY_AUTOMATIC)
+	input = append(input, TECH_CONVENTIONAL)            // allTech()...)
 	input = append(input, AMMUNITION_CAPACITY_STANDARD) //, AMMUNITION_CAPACITY_STANDARD, AMMUNITION_CAPACITY_50_MORE)
 	//input = append(input, WRONG_INSTRUCTION)
 	dtStr := []string{}
@@ -145,7 +145,7 @@ func TestReciver(t *testing.T) {
 			i, _ := strconv.Atoi(sInp)
 			inp = append(inp, i)
 		}
-		_, err := newReceiver(inp...)
+		_, err := NewReceiver(inp...)
 		if err != nil {
 			errrMap[err.Error()]++
 			errors++
