@@ -6,8 +6,8 @@ type Receiver struct {
 	rType               int
 	aType               int
 	mechanism           int
-	tech                int
-	ACapacity           int
+	gauss               bool
+	ammoCapacityMod     int
 	features_functional []int
 	features_capability []int
 	errorDescr          string
@@ -51,10 +51,6 @@ func (r *Receiver) analize(instructions []int) error {
 
 	}
 	ttMet := timesCrossed(instructions, allreceiverInstructions("Tech Type"))
-	if ttMet < 1 {
-		return fmt.Errorf("Tech type instruction is missing")
-
-	}
 	if ttMet > 1 {
 		return fmt.Errorf(fmt.Sprintf("Tech type met %v times in instructions set", ttMet))
 
@@ -84,7 +80,9 @@ func (r *Receiver) analize(instructions []int) error {
 	}
 	if atMet != 1 {
 		return fmt.Errorf(fmt.Sprintf("Ammo type met %v times in instructions set", atMet))
-
+	}
+	if ttMet == 1 && timesCrossed(instructions, []int{CALLIBRE_GAUSS_Enchanced, CALLIBRE_GAUSS_Shotgun, CALLIBRE_GAUSS_Small, CALLIBRE_GAUSS_Standard}) < 1 {
+		return fmt.Errorf(fmt.Sprintf("ammunition: Gauss technology MUST correlate with Gauss Ammo"))
 	}
 	acMet := timesCrossed(instructions, allreceiverInstructions("Ammunition Capacity"))
 	if acMet < 1 {
@@ -140,9 +138,9 @@ func (r *Receiver) addType(inst int) error {
 	case isMechanismType(inst):
 		r.mechanism = inst
 	case isTech(inst):
-		r.tech = inst
+		r.gauss = true
 	case isAmmunitionCapacity(inst):
-		r.ACapacity = inst
+		r.ammoCapacityMod = inst
 	case isFuncFeat(inst):
 		r.features_functional = append(r.features_functional, inst)
 	case isCapFeat(inst):
@@ -159,7 +157,7 @@ func (r *Receiver) String() string {
 	str += "Receiver Type : " + verbal(r.rType) + "\n"
 	str += "Ammo Type     : " + verbal(r.aType) + "\n"
 	str += "Mechanism Type: " + verbal(r.mechanism) + "\n"
-	str += "Tech Type: " + verbal(r.tech) + "\n"
+
 	str += "FUNCTIONAL FEATURES: \n"
 	for _, ff := range r.features_functional {
 		str += verbal(ff) + "\n"
@@ -190,7 +188,7 @@ func allreceiverInstructions(types string) []int {
 			ri = append(ri, i)
 		}
 	case "Tech Type":
-		for i := TECH_GAUSS_TECH; i <= TECH_CONVENTIONAL; i++ {
+		for i := TECH_GAUSS_TECH; i <= TECH_GAUSS_TECH; i++ {
 			ri = append(ri, i)
 		}
 	case "PWM Type":
@@ -206,7 +204,7 @@ func allreceiverInstructions(types string) []int {
 			ri = append(ri, i)
 		}
 	case "Ammunition Capacity":
-		for i := AMMUNITION_CAPACITY_50_LESS; i <= AMMUNITION_CAPACITY_50_MORE; i++ {
+		for i := AMMUNITION_CAPACITY_50PCT_LESS; i <= AMMUNITION_CAPACITY_50PCT_MORE; i++ {
 			ri = append(ri, i)
 		}
 	}
@@ -235,7 +233,7 @@ func isTech(i int) bool {
 }
 
 func isAmmunitionCapacity(i int) bool {
-	if i >= AMMUNITION_CAPACITY_50_LESS && i <= AMMUNITION_CAPACITY_50_MORE {
+	if i >= AMMUNITION_CAPACITY_50PCT_LESS && i <= AMMUNITION_CAPACITY_50PCT_MORE {
 		return true
 	}
 	return false
@@ -283,4 +281,26 @@ func capFeatureError(accepted []int, new int) error {
 	}
 
 	return nil
+}
+
+//ReceiverType - returns Receiver Type
+func (r *Receiver) ReceiverType() int {
+	return r.rType
+}
+
+//Mechanism - returns Mechanism
+func (r *Receiver) Mechanism() int {
+	return r.mechanism
+}
+
+func (r *Receiver) AmmunitionType() int {
+	return r.aType
+}
+
+func (r *Receiver) AmmunitionCapacity() int {
+	return r.ammoCapacityMod
+}
+
+func (r *Receiver) IsGauss() bool {
+	return r.gauss
 }

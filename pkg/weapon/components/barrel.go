@@ -27,6 +27,10 @@ func NewBarrel(instructions ...int) (*Barrel, error) {
 	return &brl, err
 }
 
+func (b *Barrel) Length() int {
+	return b.lenght
+}
+
 func isBarrelLentgh(i int) bool {
 	if i >= BRL_len_MINIMAL && i <= BRL_len_VERY_LONG {
 		return true
