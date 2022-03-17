@@ -28,7 +28,7 @@ func TestBarrel(t *testing.T) {
 		if !(isBarrelLentgh(instructions[0]) && isBarrelWeight(instructions[1])) {
 			continue
 		}
-		fmt.Println("Test", verbal(instructions[0]), verbal(instructions[1]))
+		fmt.Println("Test", Verbal(instructions[0]), Verbal(instructions[1]))
 		brl, err := NewBarrel(instructions...)
 		if err != nil {
 			t.Errorf("error: %v", err.Error())

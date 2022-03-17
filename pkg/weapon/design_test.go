@@ -8,7 +8,7 @@ import (
 )
 
 func TestWeapon(t *testing.T) {
-	input := []int{RCVR_TYPE_HANDGUN, CALLIBRE_HANDGUN_Medium, MECHANISM_SEMI_AUTOMATIC, BRL_len_HANDGUN, FRNTR_STOCKLESS, AMMUNITION_CAPACITY_30PCT_LESS}
+	input := []int{RCVR_TYPE_LIGHT_SUPPORT_WEAPON, CALLIBRE_LONGARM_Rifle_AntiMaterialHeavy, MECHANISM_SEMI_AUTOMATIC, BRL_len_HANDGUN, FRNTR_STOCKLESS, AMMUNITION_CAPACITY_50PCT_LESS}
 	expected := WpnSheet{
 		penetration:    -1,
 		tl:             6,

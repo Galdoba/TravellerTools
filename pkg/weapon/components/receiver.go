@@ -154,17 +154,17 @@ func (r *Receiver) String() string {
 		return "INTERNAL ERROR: " + r.errorDescr
 	}
 	str := ""
-	str += "Receiver Type : " + verbal(r.rType) + "\n"
-	str += "Ammo Type     : " + verbal(r.aType) + "\n"
-	str += "Mechanism Type: " + verbal(r.mechanism) + "\n"
+	str += "Receiver Type : " + Verbal(r.rType) + "\n"
+	str += "Ammo Type     : " + Verbal(r.aType) + "\n"
+	str += "Mechanism Type: " + Verbal(r.mechanism) + "\n"
 
 	str += "FUNCTIONAL FEATURES: \n"
 	for _, ff := range r.features_functional {
-		str += verbal(ff) + "\n"
+		str += Verbal(ff) + "\n"
 	}
 	str += "CAPABILITY FEATURES: \n"
 	for _, fc := range r.features_capability {
-		str += verbal(fc) + "\n"
+		str += Verbal(fc) + "\n"
 	}
 	return str
 }

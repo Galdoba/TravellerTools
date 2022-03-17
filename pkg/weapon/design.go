@@ -135,7 +135,8 @@ func (w *WpnSheet) calculateStats(instr ...int) error {
 	/////////Calibre
 	switch w.rcvr.AmmunitionType() {
 	default:
-		return fmt.Errorf("calculateCost: stats was not modified by Ammo Type")
+		return fmt.Errorf("calculateCost: stats was not modified by calibre val %v", w.rcvr.AmmunitionType())
+		////////////////////////////////////////////////////////////////////////////////////////
 	case CALLIBRE_HANDGUN_Light:
 		w.damageDice = 2
 		ammoCostPer100Rounds = 60
@@ -154,6 +155,139 @@ func (w *WpnSheet) calculateStats(instr ...int) error {
 		rcvrTotals = rcvrTotals * 1.2
 		totalWeight = totalWeight * 1.15
 		addTrait = append(addTrait, "Bulky")
+		////////////////////////////////////////////////////////////////////////////////////////
+	case CALLIBRE_SMOOTHBORES_Small:
+		rcvrTotals = rcvrTotals * 0.75
+		switch w.rcvr.ReceiverType() {
+		default:
+			return fmt.Errorf("Not possiple to have %v with %v", Verbal(w.rcvr.ReceiverType()), Verbal(w.rcvr.AmmunitionType()))
+		case RCVR_TYPE_HANDGUN:
+			addTrait = append(addTrait, "Bulky")
+		case RCVR_TYPE_ASSAULT_WEAPON:
+		case RCVR_TYPE_LONGARM:
+		}
+		w.damageDice = 3
+		w.damageMod = -2
+		ammoCostPer100Rounds = 100
+		ammoCap = ammoCap * 1.4
+		totalWeight = totalWeight * 0.6
+		w.penetration = -1
+		switch w.rcvr.ReceiverType() {
+		default:
+			return fmt.Errorf("Not possiple to have %v with %v", Verbal(w.rcvr.ReceiverType()), Verbal(w.rcvr.AmmunitionType()))
+		case RCVR_TYPE_HANDGUN:
+			addTrait = append(addTrait, "Bulky")
+		case RCVR_TYPE_ASSAULT_WEAPON:
+		case RCVR_TYPE_LONGARM:
+		}
+	case CALLIBRE_SMOOTHBORES_Light:
+		rcvrTotals = rcvrTotals * 0.75
+		switch w.rcvr.ReceiverType() {
+		default:
+			return fmt.Errorf("Not possiple to have %v with %v", Verbal(w.rcvr.ReceiverType()), Verbal(w.rcvr.AmmunitionType()))
+		case RCVR_TYPE_HANDGUN:
+			addTrait = append(addTrait, "Very Bulky")
+		case RCVR_TYPE_ASSAULT_WEAPON:
+			addTrait = append(addTrait, "Bulky")
+		case RCVR_TYPE_LONGARM:
+		}
+		w.penetration = -1
+		w.damageDice = 4
+		w.damageMod = -4
+		ammoCostPer100Rounds = 125
+		ammoCap = ammoCap * 1.2
+		totalWeight = totalWeight * 0.8
+	case CALLIBRE_SMOOTHBORES_Standard:
+		rcvrTotals = rcvrTotals * 0.75
+		switch w.rcvr.ReceiverType() {
+		default:
+			return fmt.Errorf("Not possiple to have %v with %v", Verbal(w.rcvr.ReceiverType()), Verbal(w.rcvr.AmmunitionType()))
+		case RCVR_TYPE_ASSAULT_WEAPON:
+			addTrait = append(addTrait, "Very Bulky")
+		case RCVR_TYPE_LONGARM:
+			addTrait = append(addTrait, "Bulky")
+		}
+		w.penetration = -1
+		w.damageDice = 4
+		ammoCostPer100Rounds = 150
+	case CALLIBRE_SMOOTHBORES_Heavy:
+		rcvrTotals = rcvrTotals * 0.75
+		switch w.rcvr.ReceiverType() {
+		default:
+			return fmt.Errorf("Not possiple to have %v with %v", Verbal(w.rcvr.ReceiverType()), Verbal(w.rcvr.AmmunitionType()))
+		case RCVR_TYPE_LONGARM:
+			addTrait = append(addTrait, "Very Bulky")
+		}
+		w.penetration = -1
+		w.damageDice = 4
+		w.damageMod = 4
+		ammoCostPer100Rounds = 175
+		ammoCap = ammoCap * 0.8
+		totalWeight = totalWeight * 1.2
+		////////////////////////////////////////////////////////////////////////////////////////
+	case CALLIBRE_LONGARM_Rifle_Light:
+		w.damageDice = 2
+		ammoCostPer100Rounds = 40
+		ammoCap = ammoCap * 1.2
+		totalWeight = totalWeight * 0.6
+	case CALLIBRE_LONGARM_Rifle_Intermediate:
+		w.damageDice = 3
+		ammoCostPer100Rounds = 50
+		totalWeight = totalWeight * 0.8
+	case CALLIBRE_LONGARM_Rifle_Battle:
+		w.damageDice = 3
+		w.damageMod = 3
+		ammoCostPer100Rounds = 100
+		ammoCap = ammoCap * 0.8
+	case CALLIBRE_LONGARM_Rifle_Heavy:
+		w.damageDice = 4
+		ammoCostPer100Rounds = 250
+		rcvrTotals = rcvrTotals * 1.25
+		totalWeight = totalWeight * 1.1
+		ammoCap = ammoCap * 0.6
+	case CALLIBRE_LONGARM_Rifle_AntiMaterial:
+		w.damageDice = 5
+		ammoCostPer100Rounds = 1500
+		rcvrTotals = rcvrTotals * 2.5
+		ammoCap = ammoCap * 0.4
+		totalWeight = totalWeight * 1.5
+		switch w.rcvr.ReceiverType() {
+		default:
+			return fmt.Errorf("Not possiple to have %v with %v", Verbal(w.rcvr.ReceiverType()), Verbal(w.rcvr.AmmunitionType()))
+		case RCVR_TYPE_LIGHT_SUPPORT_WEAPON, RCVR_TYPE_HEAVY_WEAPON:
+		}
+		addTrait = append(addTrait, "Bulky")
+	case CALLIBRE_LONGARM_Rifle_AntiMaterialHeavy:
+		w.damageDice = 6
+		ammoCostPer100Rounds = 3000
+		rcvrTotals = rcvrTotals * 3.5
+		ammoCap = ammoCap * 0.2
+		totalWeight = totalWeight * 2
+		addTrait = append(addTrait, "Very Bulky")
+		switch w.rcvr.ReceiverType() {
+		default:
+			return fmt.Errorf("Not possiple to have %v with %v", Verbal(w.rcvr.ReceiverType()), Verbal(w.rcvr.AmmunitionType()))
+		case RCVR_TYPE_LIGHT_SUPPORT_WEAPON, RCVR_TYPE_HEAVY_WEAPON:
+		}
+	case CALLIBRE_HANDGUN_BlackPowder:
+		w.damageDice = 2
+		w.damageMod = -3
+		ammoCostPer100Rounds = 10
+		w.penetration = -2
+		addTrait = append(addTrait, "Slow Loader 8")
+	case CALLIBRE_LONGARM_BlackPowder:
+		w.damageDice = 3
+		w.damageMod = -3
+		ammoCostPer100Rounds = 25
+		w.penetration = -2
+		addTrait = append(addTrait, "Slow Loader 12")
+	case CALLIBRE_SNUB:
+		w.damageDice = 3
+		w.damageMod = -3
+		ammoCostPer100Rounds = 200
+		w.penetration = -1
+		addTrait = append(addTrait, "Zero-G")
+
 		//if totalWeight > 2 = remove Bulky
 	}
 
