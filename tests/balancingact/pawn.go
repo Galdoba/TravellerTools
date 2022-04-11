@@ -19,7 +19,6 @@ type pawn struct {
 func (p *pawn) String() string {
 	str := "Name: " + p.name + "\n"
 	str += fmt.Sprintf("WIL %v  INT %v  EDU %v  CHR %v\n", p.chars[WIL], p.chars[INT], p.chars[EDU], p.chars[CHR])
-
 	str += fmt.Sprintf("Administration %v\n", p.skills[Administration])
 	str += fmt.Sprintf("CovertOps %v\n", p.skills[CovertOps])
 	str += fmt.Sprintf("Economics %v\n", p.skills[Economics])
