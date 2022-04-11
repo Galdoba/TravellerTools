@@ -17,14 +17,14 @@ func testInput() []input {
 		{"Leader 2", Leader},
 		{"Agent 3", Agent},
 		{"Agent 4", Agent},
-		//{"Unknown", 0}, expected to fail
+		//{"Unknown", 0}, //expected to fail
 	}
 }
 
 func TestPawn(t *testing.T) {
-	t.Errorf("this is a test")
+
 	for i, inp := range testInput() {
-		fmt.Println("Creating pawn", i)
+		fmt.Print("Creating pawn ", i)
 		p, err := createPawn(inp.name, inp.role)
 		if err != nil {
 			t.Errorf("internal error: %v", err.Error())
@@ -51,9 +51,11 @@ func TestPawn(t *testing.T) {
 				t.Errorf("pawn.skills[%v] expected to present)", v)
 			}
 		}
-		fmt.Println("pawn", i, "created:", p)
+		//fmt.Println("pawn", i, "created:")
+		//fmt.Println(p)
 		time.Sleep(time.Millisecond * 15)
-		fmt.Println("  ")
+		//fmt.Println("  ")
+		fmt.Println(" SUCCESS!")
 	}
 
 }

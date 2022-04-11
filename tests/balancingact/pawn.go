@@ -7,12 +7,25 @@ import (
 )
 
 type pawn struct {
-	name         string
-	chars        map[int]int
-	skills       map[int]int
-	position     int
-	organisation int
-	subordinates []*pawn
+	ID         int
+	name       string
+	chars      map[int]int
+	skills     map[int]int
+	position   int // leader or agent
+	location   *planet
+	activeTask string //состояние активного задания
+}
+
+func (p *pawn) String() string {
+	str := "Name: " + p.name + "\n"
+	str += fmt.Sprintf("WIL %v  INT %v  EDU %v  CHR %v\n", p.chars[WIL], p.chars[INT], p.chars[EDU], p.chars[CHR])
+
+	str += fmt.Sprintf("Administration %v\n", p.skills[Administration])
+	str += fmt.Sprintf("CovertOps %v\n", p.skills[CovertOps])
+	str += fmt.Sprintf("Economics %v\n", p.skills[Economics])
+	str += fmt.Sprintf("Politics %v\n", p.skills[Politics])
+	str += fmt.Sprintf("Military %v", p.skills[Military])
+	return str
 }
 
 func createPawn(name string, pawnType int) (*pawn, error) {
@@ -24,7 +37,6 @@ func createPawn(name string, pawnType int) (*pawn, error) {
 	case Leader, Agent:
 		p.position = pawnType
 	}
-
 	roller := dice.New()
 	p.chars = make(map[int]int)
 	for _, chr := range []int{WIL, INT, EDU, CHR} {
@@ -44,6 +56,10 @@ func createPawn(name string, pawnType int) (*pawn, error) {
 	}
 	for s := 0; s < skillPoints; s++ {
 		toUp := roller.Roll("1d5").DM(-1).Sum()
+		if p.skills[skillList[toUp]] >= 5 {
+			s--
+			continue
+		}
 		p.skills[skillList[toUp]]++
 	}
 	return &p, nil
