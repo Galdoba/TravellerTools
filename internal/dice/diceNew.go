@@ -227,6 +227,14 @@ func (d *Dicepool) TreatAasB(a, b int) {
 	}
 }
 
+////////////////////
+//Pick - возвращает случайный элемент из слайса и его номер
+func (d *Dicepool) Pick(slice []interface{}) (int, interface{}) {
+	l := fmt.Sprintf("%v", len(slice))
+	r := d.Roll("1d" + l).DM(-1).Sum()
+	return r, slice[r]
+}
+
 /*
 чего ку
 амиксин
