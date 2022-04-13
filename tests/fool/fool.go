@@ -7,11 +7,13 @@ import (
 )
 
 const (
-	GAMESTATE_START = iota
+	UNDEFINED_VALUE = iota
+	GAMESTATE_SETUP
 	GAMESTATE_END_TURN
 	GAMESTATE_END_GAME
 	GAMESTATE_ATTACK_PLAYER_1
 	GAMESTATE_ATTACK_PLAYER_2
+	WRONG_VALUE
 )
 
 type Pool struct {
@@ -27,6 +29,7 @@ type Game struct {
 	deck      *deck.Deck
 	player    []*Player
 	graveyard *deck.Deck
+	gamestate int
 }
 
 func NewGame(players int) *Game {
@@ -35,7 +38,20 @@ func NewGame(players int) *Game {
 	for i := 0; i < players; i++ {
 		g.player = append(g.player, NewPlayer(fmt.Sprintf("Player %v", i+1)))
 	}
+	g.graveyard = deck.NewDeck("Graveyard")
+	g.gamestate = GAMESTATE_SETUP
 	return &g
+}
+
+func (g *Game) Play() error {
+	loop := 0
+	for g.gamestate != GAMESTATE_END_GAME {
+		fmt.Println("Loop", loop)
+		if loop > 10 {
+			break
+		}
+	}
+	return nil
 }
 
 type Player struct {
