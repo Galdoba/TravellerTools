@@ -1,4 +1,4 @@
-package mgt2trade
+package traffic
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
-func BaseFreightFactor(source, destination mWorld) (int, error) {
+func BaseFreightFactor_MGT2_Core(source, destination mWorld) (int, error) {
 	factor := -1000
 	sUWP, err := uwp.FromString(source.MW_UWP())
 	if err != nil {
@@ -94,4 +94,32 @@ func BaseFreightFactor(source, destination mWorld) (int, error) {
 	}
 	factor = fMod
 	return factor, nil
+}
+
+func FreightTrafficValues_MGT2_Core(ftv int) (dice, add int) {
+	switch ftv {
+	default:
+		if ftv > 19 {
+			return 10, 0
+		}
+		return 0, 0
+	case 2, 3:
+		return 1, 0
+	case 4, 5:
+		return 2, 0
+	case 6, 7, 8:
+		return 3, 0
+	case 9, 10, 11:
+		return 4, 0
+	case 12, 13, 14:
+		return 5, 0
+	case 15, 16:
+		return 6, 0
+	case 17:
+		return 7, 0
+	case 18:
+		return 8, 0
+	case 19:
+		return 9, 0
+	}
 }

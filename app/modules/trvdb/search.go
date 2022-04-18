@@ -67,6 +67,10 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 	switch len(quarry) {
 	default:
 		searchKey = quarry[0]
+		if searchKey == "" {
+			fmt.Print("State your quary: ")
+			searchKey, _ = user.InputStr()
+		}
 	case 0:
 		fmt.Print("State your quary: ")
 		searchKey, _ = user.InputStr()
@@ -80,9 +84,11 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 			matches = append(matches, line)
 		}
 	}
-	if len(matches) > 1300 || len(matches) < 1 {
-		fmt.Println(len(matches), "detected. Please make another quary.")
-		return nil, fmt.Errorf("matches limit exided")
+	if len(matches) > 1300 {
+		return nil, fmt.Errorf("matches limit exided (%v)", len(matches))
+	}
+	if len(matches) < 1 {
+		return nil, fmt.Errorf("world '%v' not found", searchKey)
 	}
 	if len(matches) < 1 {
 		return nil, fmt.Errorf("no matches on '%v' in database", searchKey)

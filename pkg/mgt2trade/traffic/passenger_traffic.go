@@ -1,10 +1,17 @@
-package mgt2trade
+package traffic
 
 import (
 	"fmt"
 
 	"github.com/Galdoba/TravellerTools/pkg/astrogation"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+)
+
+const (
+	Passage_Low = iota
+	Passage_Basic
+	Passage_Middle
+	Passage_High
 )
 
 type mWorld interface {
@@ -14,7 +21,11 @@ type mWorld interface {
 	CoordY() int
 }
 
-func BasePassengerFactor(source, destination mWorld) (int, error) {
+type PassengerTrafficData struct {
+	Passage map[int]int
+}
+
+func BasePassengerFactor_MGT2_Core(source, destination mWorld) (int, error) {
 	factor := -1000
 	sUWP, err := uwp.FromString(source.MW_UWP())
 	if err != nil {
@@ -89,4 +100,32 @@ func BasePassengerFactor(source, destination mWorld) (int, error) {
 	}
 	factor = fMod
 	return factor, nil
+}
+
+func PassengerTrafficValues_MGT2_Core(ptv int) (dice, add int) {
+	switch ptv {
+	default:
+		if ptv > 19 {
+			return 10, 0
+		}
+		return 0, 0
+	case 2, 3:
+		return 1, 0
+	case 4, 5, 6:
+		return 2, 0
+	case 7, 8, 9, 10:
+		return 3, 0
+	case 11, 12, 13:
+		return 4, 0
+	case 14, 15:
+		return 5, 0
+	case 16:
+		return 6, 0
+	case 17:
+		return 7, 0
+	case 18:
+		return 8, 0
+	case 19:
+		return 9, 0
+	}
 }

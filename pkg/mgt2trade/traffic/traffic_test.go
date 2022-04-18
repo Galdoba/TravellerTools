@@ -1,4 +1,4 @@
-package mgt2trade
+package traffic
 
 import (
 	"fmt"
@@ -46,7 +46,7 @@ func Test_PassengerTraffic(t *testing.T) {
 	inp := input()
 	for i, input := range inp {
 		fmt.Println("test", i+1, input.source, input.dest)
-		pf, err := BasePassengerFactor(&input.source, &input.dest)
+		pf, err := BasePassengerFactor_MGT2_Core(&input.source, &input.dest)
 		if err != nil {
 			t.Errorf("internal error: %v", err.Error())
 			continue
@@ -55,7 +55,7 @@ func Test_PassengerTraffic(t *testing.T) {
 			t.Errorf("factor value was not adressed")
 			continue
 		}
-		bf, err := BaseFreightFactor(&input.source, &input.dest)
+		bf, err := BaseFreightFactor_MGT2_Core(&input.source, &input.dest)
 		if err != nil {
 			t.Errorf("internal error: %v", err.Error())
 			continue
