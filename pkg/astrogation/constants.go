@@ -1,7 +1,9 @@
 package astrogation
 
 import (
-	"github.com/Galdoba/convert"
+	"fmt"
+	"strconv"
+
 	"github.com/Galdoba/utils"
 )
 
@@ -13,13 +15,16 @@ func JumpDriveLimitStar(star string) (orbit int) {
 		return -1
 	}
 	//fmt.Println("Error:", data, star)
-	dec := convert.StoI(string(data[1]))
+	dec, err := strconv.Atoi(string(data[1]))
+	if err != nil {
+		return -1
+	}
 	if dec < 5 {
 		dec = 0
 	} else {
 		dec = 5
 	}
-	seq := string(data[0]) + convert.ItoS(dec)
+	seq := string(data[0]) + fmt.Sprintf("%v", dec)
 	size := string(data[2:])
 	//fmt.Println(size, seq)
 	col := 0
