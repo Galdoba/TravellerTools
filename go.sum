@@ -1,5 +1,7 @@
 github.com/Galdoba/convert v0.0.0-20190624041132-29cce9aaf367 h1:+wx3TnHWMRzfY5VjZMS5rR+L5W/kNpFmf10KjD/zKpc=
 github.com/Galdoba/convert v0.0.0-20190624041132-29cce9aaf367/go.mod h1:trgnT6xxj/VcUq2ViYhBggnxPQb7hvzosf0nICLo2fA=
+github.com/Galdoba/devtools v0.0.0-20220405034325-4c158a967c6c h1:USf/gI0lhXpjcdEp/OwMjlhf/NFLyQ+MImr4htOcFgk=
+github.com/Galdoba/devtools v0.0.0-20220405034325-4c158a967c6c/go.mod h1:siQE0dUxR1HthsAiGjeB3WNcn9jA582sHiFDlYYJnR4=
 github.com/Galdoba/utils v0.0.0-20211006043430-41d7b3fa4b0a h1:G/xkIBAepccB7rBTs6m8MzdKsqmq4OY2EalD24kSoi8=
 github.com/Galdoba/utils v0.0.0-20211006043430-41d7b3fa4b0a/go.mod h1:WXWC9lUOMxvAvq3FT7RGDcBsGi2a3X3RX2ghULDNqpg=
 github.com/mxschmitt/golang-combinations v1.1.0 h1:WlIZCnDm+Xlb2pRPf+R/qPKlGOU1w8lpN69/uy5z+Zg=

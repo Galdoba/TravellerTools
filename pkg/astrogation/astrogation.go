@@ -219,6 +219,10 @@ type Coordinates struct {
 	cube cubeCoords
 }
 
+func (c *Coordinates) ValuesHEX() (int, int) {
+	return c.hex.col, c.hex.row
+}
+
 func NewCoordinates(x, y int) Coordinates {
 	coords := Coordinates{}
 	coords.hex = setHexCoords(x, y)
@@ -234,4 +238,22 @@ func DistanceRaw(x1, y1, x2, y2 int) int {
 	c1 := NewCoordinates(x1, y1)
 	c2 := NewCoordinates(x2, y2)
 	return cubeDistance(c1.cube, c2.cube)
+}
+
+//JumpCoordinatesFrom - дает перечень всех хексов в радиусе j
+//требует координатов секторной карты в формате "XXYY"
+func JumpFromCoordinates(start Coordinates, j int) []Coordinates {
+	var coords []Coordinates
+	//start := Hex(initHex)
+	for x := -j; x <= j; x++ {
+		for y := utils.Max(-j, -x-j); y <= utils.Min(j, -x+j); y++ {
+			z := -x - y
+			cb := addCube(setCubeCoords(x, y, z), start.cube)
+			hx := cubeToEvenq(cb)
+			addCoords := NewCoordinates(hx.col, hx.row)
+			coords = append(coords, addCoords)
+		}
+	}
+	return coords
+
 }

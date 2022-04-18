@@ -424,6 +424,20 @@ func Search(key string) ([]*SecondSurveyData, error) {
 	return ssdArr, nil
 }
 
+func SearchByCoordinates(x, y int) (*SecondSurveyData, error) {
+	lines := utils.LinesFromTXT(cleanedDataPath)
+	for _, val := range lines {
+		if strings.Contains(val, fmt.Sprintf("%v", x)) && strings.Contains(val, fmt.Sprintf("%v", y)) {
+			ssd := Parse(val)
+			if ssd.CoordX() == x && ssd.CoordY() == y {
+				return ssd, nil
+			}
+		}
+
+	}
+	return nil, fmt.Errorf("no entry on set coordinates")
+}
+
 func (ssd *SecondSurveyData) CoordX() int {
 	return ssd.coordX
 }
