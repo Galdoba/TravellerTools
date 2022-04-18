@@ -9,7 +9,6 @@ import (
 
 func emulateInput() []string {
 	return []string{
-
 		"drinax",
 		"driNax",
 		"asim",
