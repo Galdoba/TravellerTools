@@ -16,18 +16,21 @@ func Traffic(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	targetWorldsCoordinates := searchNeighbours(sourceworld, 3)
+	targetWorldsCoordinates := searchNeighbours(sourceworld, 6)
 	fmt.Println("base freight factor:")
 	freightFS := freightInfo{}
 	freightFT := freightInfo{}
 	passengersFS := passengerInfo{}
 	passengersFT := passengerInfo{}
 	for _, coord := range targetWorldsCoordinates {
+
 		targetWorld, srchErr := survey.SearchByCoordinates(coord.ValuesHEX())
 		if srchErr != nil {
 			return srchErr
 		}
-
+		if targetWorld.CoordX() == sourceworld.CoordX() && targetWorld.CoordY() == sourceworld.CoordY() {
+			continue
+		}
 		switch c.String("ruleset") {
 		default:
 			ff, fError := traffic.BaseFreightFactor_MGT2_Core(sourceworld, targetWorld)
@@ -84,7 +87,7 @@ func searchNeighbours(sw *survey.SecondSurveyData, distance int) []astrogation.C
 	jcoord := astrogation.JumpFromCoordinates(astrogation.NewCoordinates(sw.CoordX(), sw.CoordY()), distance)
 	coords := []astrogation.Coordinates{}
 	for i, v := range jcoord {
-		fmt.Printf("Search %v/%v\r", i, len(jcoord))
+		fmt.Printf("Search %v/%v    \r", i, len(jcoord))
 		nWorld, err := survey.SearchByCoordinates(v.ValuesHEX())
 
 		if err != nil {
@@ -95,7 +98,7 @@ func searchNeighbours(sw *survey.SecondSurveyData, distance int) []astrogation.C
 		if nWorld.CoordX() == sw.CoordX() && nWorld.CoordY() == sw.CoordY() {
 			continue
 		}
-		fmt.Println(fmt.Sprintf("%v (%v)/%v %v", nWorld.MW_Name(), nWorld.MW_UWP(), nWorld.Sector(), nWorld.Hex()))
+		//	fmt.Println(fmt.Sprintf("%v (%v)/%v %v", nWorld.MW_Name(), nWorld.MW_UWP(), nWorld.Sector(), nWorld.Hex()))
 		coords = append(coords, astrogation.NewCoordinates(nWorld.CoordX(), nWorld.CoordY()))
 	}
 	fmt.Println("                               \r")

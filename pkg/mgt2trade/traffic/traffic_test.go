@@ -10,6 +10,7 @@ type testInput struct {
 	travel string
 	x      int
 	y      int
+	rem    string
 }
 
 type inputStruct struct {
@@ -30,14 +31,17 @@ func (ti *testInput) CoordX() int {
 func (ti *testInput) CoordY() int {
 	return ti.y
 }
+func (ti *testInput) MW_Remarks() string {
+	return ti.rem
+}
 
 func input() []inputStruct {
 	inp := []inputStruct{}
-	inp = append(inp, inputStruct{source: testInput{"A576655-C", "", 23, 20}, dest: testInput{"B867564-6", "R", 21, 25}})
-	inp = append(inp, inputStruct{source: testInput{"C543487-B", "A", 24, 21}, dest: testInput{"B867564-6", "R", 22, 21}})
-	inp = append(inp, inputStruct{source: testInput{"A894A96-F", "", 32, 35}, dest: testInput{"B552665-B", "", 30, 32}})
-	inp = append(inp, inputStruct{source: testInput{"A894A96-F", "", 32, 35}, dest: testInput{"C645747-5", "A", 30, 32}})
-	inp = append(inp, inputStruct{source: testInput{"C645747-5", "A", 30, 32}, dest: testInput{"A894A96-F", "", 12, 35}})
+	inp = append(inp, inputStruct{source: testInput{"A43645A-E", "", -107, -17, "Ni"}, dest: testInput{"B867564-6", "", -108, -17, "Ag Ni Ga Pr O:2324"}}) //Drinax ---> Asim
+	//inp = append(inp, inputStruct{source: testInput{"C543487-B", "A", 24, 21, ""}, dest: testInput{"B867564-6", "R", 22, 21, ""}})
+	//inp = append(inp, inputStruct{source: testInput{"A894A96-F", "", 32, 35, ""}, dest: testInput{"B552665-B", "", 30, 32, ""}})
+	//inp = append(inp, inputStruct{source: testInput{"A894A96-F", "", 32, 35, ""}, dest: testInput{"C645747-5", "A", 30, 32, ""}})
+	//inp = append(inp, inputStruct{source: testInput{"C645747-5", "A", 30, 32, ""}, dest: testInput{"A894A96-F", "", 12, 35, ""}})
 
 	return inp
 }
@@ -64,8 +68,19 @@ func Test_PassengerTraffic(t *testing.T) {
 			t.Errorf("factor value was not adressed")
 			continue
 		}
-		fmt.Println("Passenger Factor =", pf)
-		fmt.Println("Freight Factor =", bf)
+		bfMP, err := BaseFreightFactor_MGT1_MP(&input.source, &input.dest)
+		if err != nil {
+			t.Errorf("internal error: %v", err.Error())
+			continue
+		}
+		if bfMP == -1000 {
+			t.Errorf("factor value was not adressed")
+			continue
+		}
+
+		fmt.Println("MGT2_Core: Passenger Factor =", pf)
+		fmt.Println("MGT2_Core: Freight Factor =", bf)
+		fmt.Println("MGT1_MP  : Freight Factor =", bfMP)
 		fmt.Println("Test PASS")
 	}
 

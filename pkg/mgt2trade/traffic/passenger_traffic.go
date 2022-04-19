@@ -17,6 +17,7 @@ const (
 type mWorld interface {
 	MW_UWP() string
 	TravelZone() string
+	MW_Remarks() string
 	CoordX() int
 	CoordY() int
 }
