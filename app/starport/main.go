@@ -51,6 +51,13 @@ func main() {
 					Value:       "",
 					Destination: new(string),
 				},
+				&cli.StringFlag{
+					Name:        "ruleset",
+					Usage:       "обеспечивает выбор набора правил",
+					Required:    false,
+					Value:       "mgt2_core",
+					Destination: new(string),
+				},
 			},
 			Action: func(c *cli.Context) error {
 
