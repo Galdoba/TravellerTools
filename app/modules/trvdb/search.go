@@ -70,6 +70,7 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 		if searchKey == "" {
 			fmt.Print("State your quary: ")
 			searchKey, _ = user.InputStr()
+
 		}
 	case 0:
 		fmt.Print("State your quary: ")

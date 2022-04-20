@@ -6,48 +6,61 @@ import (
 	"github.com/Galdoba/TravellerTools/app/modules/trvdb"
 	"github.com/Galdoba/TravellerTools/pkg/astrogation"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic"
+	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
+	"github.com/Galdoba/utils"
 	"github.com/urfave/cli"
 )
 
 func Traffic(c *cli.Context) error {
 	searchKey := c.String("worldname")
-	sourceworld, err := trvdb.WorldByName(searchKey)
+	reach := c.Int("reach")
+	sourceworld, err := SearchSourcePort(searchKey)
 	if err != nil {
 		return err
 	}
-	targetWorldsCoordinates := searchNeighbours(sourceworld, 6)
-	fmt.Println("base freight factor:")
+	fmt.Printf("Sourceworld [%v] detected...\nChecking for neighbours within a reach of %v parsecs...\n", sourceworld.MW_Name(), reach)
+	targetWorldsCoordinates := searchNeighbours(sourceworld, reach)
+
+	fmt.Println("Gathering traffic data:")
 	freightFS := freightInfo{}
 	freightFT := freightInfo{}
 	passengersFS := passengerInfo{}
 	passengersFT := passengerInfo{}
 	for _, coord := range targetWorldsCoordinates {
 
-		targetWorld, srchErr := survey.SearchByCoordinates(coord.ValuesHEX())
+		targetWorld, srchErr := PortByCoordinates(coord.ValuesHEX())
 		if srchErr != nil {
 			return srchErr
 		}
+		//fmt.Printf("Evaluating %v/%v: %v (%v %v)                     \r", i, len(targetWorldsCoordinates), targetWorld.MW_Name(), targetWorld.Sector(), targetWorld.Hex())
 		if targetWorld.CoordX() == sourceworld.CoordX() && targetWorld.CoordY() == sourceworld.CoordY() {
 			continue
 		}
 		switch c.String("ruleset") {
 		default:
-			ff, fError := traffic.BaseFreightFactor_MGT2_Core(sourceworld, targetWorld)
-			if fError != nil {
-				return fError
-			}
-			freightFS.addAverageFreight_MGT2_Core(ff)
-			freightFT.addAverageFreight_MGT2_Core(ff)
 			pf, pError := traffic.BasePassengerFactor_MGT2_Core(sourceworld, targetWorld)
 			if pError != nil {
 				return nil
 			}
 			passengersFS.addAveragePassengers_MGT2_Core(pf)
 			passengersFT.addAveragePassengers_MGT2_Core(pf)
+			ff, fError := traffic.BaseFreightFactor_MGT2_Core(sourceworld, targetWorld)
+			if fError != nil {
+				return fError
+			}
+			freightFS.addAverageFreight_MGT2_Core(ff)
+			freightFT.addAverageFreight_MGT2_Core(ff)
+
 		}
+		fmt.Printf("[%v] <--> [%v] \n", sourceworld.MW_Name(), targetWorld.MW_Name())
+		fmt.Printf("Departing: %v passengers and %v tons of freight\n", passengersFS.total, freightFS.totalTons)
+		fmt.Printf("Arriving : %v passengers and %v tons of freight\n", passengersFT.total, freightFT.totalTons)
 
 	}
+	tradeData := TrafficData{sourceworld, "Soureworld", len(targetWorldsCoordinates), 4}
+
+	fmt.Print(tradeData.String())
 	fmt.Printf("TOTAL FREIGHT: [%v]\nArriving [%v] tons of cargo\nDeparting [%v] tons of cargo\n", sourceworld.MW_Name(), freightFT.totalTons, freightFS.totalTons)
 	fmt.Printf("TOTAL PASSENGERS: [%v]\nArriving passengers[%v]\nDeparting passengers[%v]\n", sourceworld.MW_Name(), passengersFT.total, passengersFS.total)
 	return nil
@@ -83,25 +96,27 @@ func (pi *passengerInfo) addAveragePassengers_MGT2_Core(bpv int) {
 	pi.total = pi.low + pi.basic + pi.middle + pi.high
 }
 
-func searchNeighbours(sw *survey.SecondSurveyData, distance int) []astrogation.Coordinates {
+func searchNeighbours(sw Port, distance int) []astrogation.Coordinates {
 	jcoord := astrogation.JumpFromCoordinates(astrogation.NewCoordinates(sw.CoordX(), sw.CoordY()), distance)
 	coords := []astrogation.Coordinates{}
 	for i, v := range jcoord {
 		fmt.Printf("Search %v/%v    \r", i, len(jcoord))
-		nWorld, err := survey.SearchByCoordinates(v.ValuesHEX())
 
+		//nWorld, err := survey.SearchByCoordinates(v.ValuesHEX())
+		nWorld, err := PortByCoordinates(v.ValuesHEX())
 		if err != nil {
 			//x, y := v.ValuesHEX()
-			//fmt.Println(x, y, err.Error())♦
+			//fmt.Println(x, y, err.Error())
 			continue
 		}
 		if nWorld.CoordX() == sw.CoordX() && nWorld.CoordY() == sw.CoordY() {
 			continue
 		}
-		//	fmt.Println(fmt.Sprintf("%v (%v)/%v %v", nWorld.MW_Name(), nWorld.MW_UWP(), nWorld.Sector(), nWorld.Hex()))
+		//fmt.Println(fmt.Sprintf("add %v (%v)/%v %v", nWorld.MW_Name(), nWorld.MW_UWP(), nWorld.Sector(), nWorld.Hex()))
 		coords = append(coords, astrogation.NewCoordinates(nWorld.CoordX(), nWorld.CoordY()))
 	}
-	fmt.Println("                               \r")
+	//fmt.Printf("%v worlds detected in %v parsec radius       \n", len(coords), distance)
+	utils.ClearScreen()
 	return coords
 }
 
@@ -118,4 +133,37 @@ type passengerInfo struct {
 	middle int
 	high   int
 	total  int
+}
+
+type Port interface {
+	MW_Name() string
+	MW_UWP() string
+	MW_Remarks() string
+	TravelZone() string
+	Hex() string
+	Sector() string
+	CoordX() int
+	CoordY() int
+}
+
+func TradeCodes(p Port) string {
+	uwpS := p.MW_UWP()
+	u, _ := uwp.FromString(uwpS)
+	res := ""
+	if u.TL() >= 12 {
+		res = "Ht "
+	}
+	if u.TL() <= 5 && u.Pops() >= 1 {
+		res = "Lt "
+	}
+	return res + p.MW_Remarks()
+}
+
+func PortByCoordinates(x, y int) (Port, error) {
+	return survey.SearchByCoordinates(x, y)
+
+}
+
+func SearchSourcePort(searchKey string) (Port, error) {
+	return trvdb.WorldByName(searchKey)
 }

@@ -45,18 +45,22 @@ func main() {
 			Category:  "Информация",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
-					Name:        "worldname",
-					Usage:       "запрос, по которому надо искать Мир в Базе (ОБЯЗАТЕЛЕН)",
-					Required:    false,
-					Value:       "",
-					Destination: new(string),
+					Name:     "worldname",
+					Usage:    "запрос, по которому надо искать Мир в Базе (ОБЯЗАТЕЛЕН)",
+					Required: false,
+					Value:    "",
+				},
+				&cli.Int64Flag{
+					Name:     "reach",
+					Usage:    "радиус поиска соседей (дефолтное значение = 4)",
+					Required: false,
+					Value:    4,
 				},
 				&cli.StringFlag{
-					Name:        "ruleset",
-					Usage:       "обеспечивает выбор набора правил",
-					Required:    false,
-					Value:       "mgt2_core",
-					Destination: new(string),
+					Name:     "ruleset",
+					Usage:    "обеспечивает выбор набора правил",
+					Required: false,
+					Value:    "mgt2_core",
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -140,3 +144,15 @@ func main0() {
 	}
 	fmt.Println("                               \r")
 }
+
+/*RESULT DATA
+
+World  : Regina (Spinward Marches 1910)
+UWP    : A788899-C
+TC/Rem : Ri Pa Ph An Cp (Green Zone)
+---------------------------------------
+Spaceport Traffic Report:
+There are 20 worlds in 4 parsecs radius. [&WORLD_NAME] is not located on a Trade Route.
+
+
+*/
