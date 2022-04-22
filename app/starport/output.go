@@ -4,11 +4,35 @@ import (
 	"fmt"
 )
 
+const (
+	DEFAULT_VALUE = iota
+	TRAFFIC_PASSENGERS_DEPART
+	TRAFFIC_PASSENGERS_ARRIVE
+	TRAFFIC_FREIGHT_DEPART
+	TRAFFIC_FREIGHT_ARRIVE
+	WRONG_INSTRUCTION
+)
+
 type TrafficData struct {
-	port      Port
-	status    string
-	neibhours int
-	reach     int
+	port        Port
+	freightD    map[Port]freightInfo
+	passengersD map[Port]passengerInfo
+	freightA    map[Port]freightInfo
+	passengersA map[Port]passengerInfo
+	status      string
+	neibhours   int
+	reach       int
+}
+
+func NewTrafficData(source Port, reach int) *TrafficData {
+	td := TrafficData{}
+	td.port = source
+	td.freightD = make(map[Port]freightInfo)
+	td.passengersD = make(map[Port]passengerInfo)
+	td.freightA = make(map[Port]freightInfo)
+	td.passengersA = make(map[Port]passengerInfo)
+	td.reach = reach
+	return &td
 }
 
 func (td *TrafficData) String() string {
@@ -40,9 +64,33 @@ func (td *TrafficData) String() string {
 	}
 	rep := fmt.Sprintf("%v\n%v\n%v\n%v\n%v\n", sep, l1, l2, l3, sep)
 	rep += "Spaceport Traffic Report:\n"
-	rep += fmt.Sprintf("There are %v worlds in %v parsecs radius. ", td.neibhours, td.reach)
-
+	rep += fmt.Sprintf("There are %v worlds in %v parsecs radius.", len(td.freightD), td.reach)
+	rep += fmt.Sprintf("%v serves average %v passengers and %v tons of freight cargo per week\n", td.port.MW_Name(), td.sumOf(TRAFFIC_PASSENGERS_ARRIVE)+td.sumOf(TRAFFIC_PASSENGERS_DEPART),
+		td.sumOf(TRAFFIC_FREIGHT_ARRIVE)+td.sumOf(TRAFFIC_FREIGHT_DEPART))
 	return rep
+}
+
+func (td *TrafficData) sumOf(instr int) int {
+	sum := -1000
+	switch instr {
+	case TRAFFIC_FREIGHT_ARRIVE:
+		for _, v := range td.freightA {
+			sum += v.total
+		}
+	case TRAFFIC_FREIGHT_DEPART:
+		for _, v := range td.freightD {
+			sum += v.total
+		}
+	case TRAFFIC_PASSENGERS_ARRIVE:
+		for _, v := range td.passengersA {
+			sum += v.total
+		}
+	case TRAFFIC_PASSENGERS_DEPART:
+		for _, v := range td.passengersD {
+			sum += v.total
+		}
+	}
+	return sum
 }
 
 /*RESULT DATA

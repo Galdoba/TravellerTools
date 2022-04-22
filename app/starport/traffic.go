@@ -23,11 +23,13 @@ func Traffic(c *cli.Context) error {
 	targetWorldsCoordinates := searchNeighbours(sourceworld, reach)
 
 	fmt.Println("Gathering traffic data:")
-	freightFS := freightInfo{}
-	freightFT := freightInfo{}
-	passengersFS := passengerInfo{}
-	passengersFT := passengerInfo{}
+
+	tradeData := NewTrafficData(sourceworld, reach)
 	for _, coord := range targetWorldsCoordinates {
+		freightFS := freightInfo{}
+		freightFT := freightInfo{}
+		passengersFS := passengerInfo{}
+		passengersFT := passengerInfo{}
 
 		targetWorld, srchErr := PortByCoordinates(coord.ValuesHEX())
 		if srchErr != nil {
@@ -51,18 +53,22 @@ func Traffic(c *cli.Context) error {
 			}
 			freightFS.addAverageFreight_MGT2_Core(ff)
 			freightFT.addAverageFreight_MGT2_Core(ff)
-
+			tradeData.freightD[targetWorld] = freightFS
+			tradeData.freightA[targetWorld] = freightFT
+			tradeData.passengersD[targetWorld] = passengersFT
+			tradeData.passengersA[targetWorld] = passengersFT
 		}
-		fmt.Printf("[%v] <--> [%v] \n", sourceworld.MW_Name(), targetWorld.MW_Name())
-		fmt.Printf("Departing: %v passengers and %v tons of freight\n", passengersFS.total, freightFS.totalTons)
-		fmt.Printf("Arriving : %v passengers and %v tons of freight\n", passengersFT.total, freightFT.totalTons)
+		//fmt.Printf("[%v] <--> [%v] \n", sourceworld.MW_Name(), targetWorld.MW_Name())
+		//fmt.Printf("Departing: %v passengers and %v tons of freight\n", tradeData.passengersD[targetWorld].total, tradeData.freightD[targetWorld].total)
+		//fmt.Printf("Arriving : %v passengers and %v tons of freight\n", tradeData.passengersA[targetWorld].total, tradeData.freightA[targetWorld].total)
+		fmt.Printf("[%v] <--> [%v]   Passengers (D/A): %v/%v   Freight (D/A): %v/%v\n", sourceworld.MW_Name(), targetWorld.MW_Name(), tradeData.passengersD[targetWorld].total, tradeData.passengersA[targetWorld].total, tradeData.freightD[targetWorld].total, tradeData.freightA[targetWorld].total)
 
 	}
-	tradeData := TrafficData{sourceworld, "Soureworld", len(targetWorldsCoordinates), 4}
+	//tradeData := TrafficData{sourceworld, "Soureworld", len(targetWorldsCoordinates), 4}
 
 	fmt.Print(tradeData.String())
-	fmt.Printf("TOTAL FREIGHT: [%v]\nArriving [%v] tons of cargo\nDeparting [%v] tons of cargo\n", sourceworld.MW_Name(), freightFT.totalTons, freightFS.totalTons)
-	fmt.Printf("TOTAL PASSENGERS: [%v]\nArriving passengers[%v]\nDeparting passengers[%v]\n", sourceworld.MW_Name(), passengersFT.total, passengersFS.total)
+	fmt.Printf("TOTAL FREIGHT: [%v]\nArriving [%v] tons of cargo\nDeparting [%v] tons of cargo\n", sourceworld.MW_Name(), 0, 0)
+	fmt.Printf("TOTAL PASSENGERS: [%v]\nArriving passengers[%v]\nDeparting passengers[%v]\n", sourceworld.MW_Name(), 0, 0)
 	return nil
 }
 
@@ -74,13 +80,13 @@ func (fi *freightInfo) addAverageFreight_MGT2_Core(bfv int) {
 	fi.mnLots = mnLotsDice * 4
 	fi.inLots = inLotsDice * 4
 	for i := 0; i < fi.mjLots; i++ {
-		fi.totalTons += 40
+		fi.total += 40
 	}
 	for i := 0; i < fi.mnLots; i++ {
-		fi.totalTons += 20
+		fi.total += 20
 	}
 	for i := 0; i < fi.inLots; i++ {
-		fi.totalTons += 4
+		fi.total += 4
 	}
 }
 
@@ -121,10 +127,10 @@ func searchNeighbours(sw Port, distance int) []astrogation.Coordinates {
 }
 
 type freightInfo struct {
-	mjLots    int
-	mnLots    int
-	inLots    int
-	totalTons int
+	mjLots int
+	mnLots int
+	inLots int
+	total  int
 }
 
 type passengerInfo struct {
