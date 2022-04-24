@@ -28,8 +28,8 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 		fmt.Print("State your quary: ")
 		searchKey, _ = user.InputStr()
 	}
-	if len(searchKey) < 4 {
-		return nil, fmt.Errorf("quarry must me at least 4 characters [%v]", searchKey)
+	if len(searchKey) < 3 {
+		return nil, fmt.Errorf("quarry must me at least 3 characters [%v]", searchKey)
 	}
 	matches := []string{}
 	for _, line := range utils.LinesFromTXT(dataBase) {

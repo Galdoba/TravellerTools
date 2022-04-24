@@ -64,14 +64,17 @@ func (td *TrafficData) String() string {
 	}
 	rep := fmt.Sprintf("%v\n%v\n%v\n%v\n%v\n", sep, l1, l2, l3, sep)
 	rep += "Spaceport Traffic Report:\n"
-	rep += fmt.Sprintf("There are %v worlds in %v parsecs radius.", len(td.freightD), td.reach)
-	rep += fmt.Sprintf("%v serves average %v passengers and %v tons of freight cargo per week\n", td.port.MW_Name(), td.sumOf(TRAFFIC_PASSENGERS_ARRIVE)+td.sumOf(TRAFFIC_PASSENGERS_DEPART),
-		td.sumOf(TRAFFIC_FREIGHT_ARRIVE)+td.sumOf(TRAFFIC_FREIGHT_DEPART))
+	rep += fmt.Sprintf("There are %v worlds in %v parsecs radius. ", len(td.freightD), td.reach)
+	//rep += fmt.Sprintf("%v serves average %v passengers and %v tons of freight cargo per week.\n", td.port.MW_Name(), td.sumOf(TRAFFIC_PASSENGERS_ARRIVE)+td.sumOf(TRAFFIC_PASSENGERS_DEPART),
+	rep += fmt.Sprintf("%v serves average %v passengers per week. %v of them arriving and %v are departing from the world. \n", td.port.MW_Name(), td.sumOf(TRAFFIC_PASSENGERS_ARRIVE)+td.sumOf(TRAFFIC_PASSENGERS_DEPART),
+		td.sumOf(TRAFFIC_PASSENGERS_ARRIVE), td.sumOf(TRAFFIC_PASSENGERS_DEPART))
+	rep += fmt.Sprintf("Freight traffic is about %v dTons per week. %v of them comming from the outer space and %v is leaving the Port. \n", td.sumOf(TRAFFIC_FREIGHT_ARRIVE)+td.sumOf(TRAFFIC_FREIGHT_DEPART),
+		td.sumOf(TRAFFIC_FREIGHT_ARRIVE), td.sumOf(TRAFFIC_FREIGHT_DEPART))
 	return rep
 }
 
 func (td *TrafficData) sumOf(instr int) int {
-	sum := -1000
+	sum := 0
 	switch instr {
 	case TRAFFIC_FREIGHT_ARRIVE:
 		for _, v := range td.freightA {

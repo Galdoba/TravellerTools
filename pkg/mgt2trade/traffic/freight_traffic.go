@@ -108,83 +108,143 @@ func BaseFreightFactor_MGT1_MP(source, destination mWorld) (int, error) {
 		return factor, err
 	}
 	fMod := 0
+	fMod += dUWP.Pops()
 	if source.CoordX() == destination.CoordX() && source.CoordY() == destination.CoordY() {
 		return factor, fmt.Errorf("sorce and destination can not have same coordinates")
 	}
 	sTC := strings.Fields(source.MW_Remarks())
+	switch {
+	case sUWP.TL() >= 12:
+		sTC = append(sTC, "Ht")
+	case sUWP.TL() <= 5:
+		sTC = append(sTC, "Lt")
+	}
 	dTC := strings.Fields(destination.MW_Remarks())
-	fmt.Println(sTC, dTC)
+	switch {
+	case dUWP.TL() >= 12:
+		dTC = append(dTC, "Ht")
+	case dUWP.TL() <= 5:
+		dTC = append(dTC, "Lt")
+	}
+
 	//applying uwp factors for noth S and D:
-	if sUWP.Pops() < 2 {
-		fMod -= 4
-	}
-	if dUWP.Pops() < 2 {
-		fMod -= 4
-	}
-	if sUWP.Pops() == 6 || sUWP.Pops() == 7 {
+	if sliceContains(sTC, "Ag") {
 		fMod += 2
 	}
-	if dUWP.Pops() == 6 || dUWP.Pops() == 7 {
-		fMod += 2
-	}
-	if sUWP.Pops() > 7 {
-		fMod += 4
-	}
-	if dUWP.Pops() > 7 {
-		fMod += 4
-	}
-	if sUWP.TL() < 7 {
-		fMod -= 1
-	}
-	if dUWP.TL() < 7 {
-		fMod -= 1
-	}
-	if sUWP.TL() > 8 {
-		fMod += 2
-	}
-	if dUWP.TL() > 8 {
-		fMod += 2
-	}
-	if sUWP.Starport() == "A" {
-		fMod += 2
-	}
-	if dUWP.Starport() == "A" {
-		fMod += 2
-	}
-	if sUWP.Starport() == "B" || sUWP.Starport() == "F" {
+	if sliceContains(dTC, "Ag") {
 		fMod += 1
 	}
-	if dUWP.Starport() == "B" || dUWP.Starport() == "F" {
+	if sliceContains(sTC, "As") {
+		fMod += -3
+	}
+	if sliceContains(dTC, "As") {
 		fMod += 1
 	}
-	if sUWP.Starport() == "E" || sUWP.Starport() == "H" {
-		fMod -= 1
+	if sliceContains(sTC, "Ba") {
+		fMod += -100000
 	}
-	if dUWP.Starport() == "E" || dUWP.Starport() == "H" {
-		fMod -= 1
+	if sliceContains(dTC, "Ba") {
+		fMod += -5
 	}
-	if sUWP.Starport() == "X" {
-		fMod -= 3
+	if sliceContains(sTC, "De") {
+		fMod += -3
 	}
-	if dUWP.Starport() == "X" {
-		fMod -= 3
+	if sliceContains(dTC, "De") {
+		fMod += 0
+	}
+	if sliceContains(sTC, "Fl") {
+		fMod += -3
+	}
+	if sliceContains(dTC, "Fl") {
+		fMod += 0
+	}
+	if sliceContains(sTC, "Ga") {
+		fMod += 2
+	}
+	if sliceContains(dTC, "Ga") {
+		fMod += 1
+	}
+	if sliceContains(sTC, "Hi") {
+		fMod += 2
+	}
+	if sliceContains(dTC, "Hi") {
+		fMod += 0
+	}
+	if sliceContains(sTC, "Ic") {
+		fMod += -3
+	}
+	if sliceContains(dTC, "Ic") {
+		fMod += 0
+	}
+	if sliceContains(sTC, "In") {
+		fMod += 3
+	}
+	if sliceContains(dTC, "In") {
+		fMod += 2
+	}
+	if sliceContains(sTC, "Lo") {
+		fMod += -5
+	}
+	if sliceContains(dTC, "Lo") {
+		fMod += 0
+	}
+	if sliceContains(sTC, "Na") {
+		fMod += -3
+	}
+	if sliceContains(dTC, "Na") {
+		fMod += 1
+	}
+	if sliceContains(sTC, "Ni") {
+		fMod += -3
+	}
+	if sliceContains(dTC, "Ni") {
+		fMod += 1
+	}
+	if sliceContains(sTC, "Po") {
+		fMod += -3
+	}
+	if sliceContains(dTC, "Po") {
+		fMod += -3
+	}
+	if sliceContains(sTC, "Ri") {
+		fMod += 2
+	}
+	if sliceContains(dTC, "Ri") {
+		fMod += 2
+	}
+	if sliceContains(sTC, "Wa") {
+		fMod += -3
+	}
+	if sliceContains(dTC, "Wa") {
+		fMod += 0
 	}
 	if source.TravelZone() == "A" {
-		fMod -= 2
+		fMod += 5
 	}
 	if destination.TravelZone() == "A" {
-		fMod -= 2
+		fMod += -5
 	}
 	if source.TravelZone() == "R" {
-		fMod -= 6
+		fMod += -5
 	}
 	if destination.TravelZone() == "R" {
-		fMod -= 6
+		fMod += -100000
 	}
-	dist := astrogation.DistanceRaw(source.CoordX(), source.CoordY(), destination.CoordX(), destination.CoordY())
-	if dist > 1 {
-		fMod = fMod - (dist - 1)
+	
+	sTL := sUWP.TL()
+	dTL := dUWP.TL()
+	tMod := sTL - dTL
+	if tMod > 0 {
+		tMod = tMod * -1
 	}
+	if tMod < -5 {
+		tMod = -5
+	}
+	fMod += tMod
+	// dist := astrogation.DistanceRaw(source.CoordX(), source.CoordY(), destination.CoordX(), destination.CoordY())
+	// if dist > 1 {
+	// 	fMod = fMod - (dist - 1)
+	// }
 	factor = fMod
 	return factor, nil
 }

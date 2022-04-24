@@ -21,26 +21,24 @@ func Traffic(c *cli.Context) error {
 	}
 	fmt.Printf("Sourceworld [%v] detected...\nChecking for neighbours within a reach of %v parsecs...\n", sourceworld.MW_Name(), reach)
 	targetWorldsCoordinates := searchNeighbours(sourceworld, reach)
-
 	fmt.Println("Gathering traffic data:")
-
 	tradeData := NewTrafficData(sourceworld, reach)
 	for _, coord := range targetWorldsCoordinates {
 		freightFS := freightInfo{}
 		freightFT := freightInfo{}
 		passengersFS := passengerInfo{}
 		passengersFT := passengerInfo{}
-
 		targetWorld, srchErr := PortByCoordinates(coord.ValuesHEX())
 		if srchErr != nil {
 			return srchErr
 		}
-		//fmt.Printf("Evaluating %v/%v: %v (%v %v)                     \r", i, len(targetWorldsCoordinates), targetWorld.MW_Name(), targetWorld.Sector(), targetWorld.Hex())
 		if targetWorld.CoordX() == sourceworld.CoordX() && targetWorld.CoordY() == sourceworld.CoordY() {
 			continue
 		}
 		switch c.String("ruleset") {
 		default:
+			return fmt.Errorf("ruleset is not defined")
+		case "mgt2_core":
 			pf, pError := traffic.BasePassengerFactor_MGT2_Core(sourceworld, targetWorld)
 			if pError != nil {
 				return nil
@@ -55,7 +53,33 @@ func Traffic(c *cli.Context) error {
 			freightFT.addAverageFreight_MGT2_Core(ff)
 			tradeData.freightD[targetWorld] = freightFS
 			tradeData.freightA[targetWorld] = freightFT
-			tradeData.passengersD[targetWorld] = passengersFT
+			tradeData.passengersD[targetWorld] = passengersFS
+			tradeData.passengersA[targetWorld] = passengersFT
+		case "mgt1_mp":
+			pfd, pError := traffic.BasePassengerFactor_MGT1_MP(sourceworld, targetWorld)
+			if pError != nil {
+				return nil
+			}
+			pfa, pError := traffic.BasePassengerFactor_MGT1_MP(targetWorld, sourceworld)
+			if pError != nil {
+				return nil
+			}
+			passengersFS.addAveragePassengers_MGT1_MP(pfd)
+			passengersFT.addAveragePassengers_MGT1_MP(pfa)
+			ffd, fError := traffic.BaseFreightFactor_MGT1_MP(sourceworld, targetWorld)
+			if fError != nil {
+				return fError
+			}
+			ffa, fError := traffic.BaseFreightFactor_MGT1_MP(targetWorld, sourceworld)
+			if fError != nil {
+				return fError
+			}
+			fmt.Println(pfd, pfa, ffd, ffa)
+			freightFS.addAverageFreight_MGT2_Core(ffd)
+			freightFT.addAverageFreight_MGT2_Core(ffa)
+			tradeData.freightD[targetWorld] = freightFS
+			tradeData.freightA[targetWorld] = freightFT
+			tradeData.passengersD[targetWorld] = passengersFS
 			tradeData.passengersA[targetWorld] = passengersFT
 		}
 		//fmt.Printf("[%v] <--> [%v] \n", sourceworld.MW_Name(), targetWorld.MW_Name())
@@ -67,8 +91,6 @@ func Traffic(c *cli.Context) error {
 	//tradeData := TrafficData{sourceworld, "Soureworld", len(targetWorldsCoordinates), 4}
 
 	fmt.Print(tradeData.String())
-	fmt.Printf("TOTAL FREIGHT: [%v]\nArriving [%v] tons of cargo\nDeparting [%v] tons of cargo\n", sourceworld.MW_Name(), 0, 0)
-	fmt.Printf("TOTAL PASSENGERS: [%v]\nArriving passengers[%v]\nDeparting passengers[%v]\n", sourceworld.MW_Name(), 0, 0)
 	return nil
 }
 
@@ -95,6 +117,18 @@ func (pi *passengerInfo) addAveragePassengers_MGT2_Core(bpv int) {
 	bpas, _ := traffic.PassengerTrafficValues_MGT2_Core(bpv + 7)
 	mpas, _ := traffic.PassengerTrafficValues_MGT2_Core(bpv + 7)
 	hpas, _ := traffic.PassengerTrafficValues_MGT2_Core(bpv + 7 - 4)
+	pi.low += lpas * 4
+	pi.basic += bpas * 4
+	pi.middle += mpas * 4
+	pi.high += hpas * 4
+	pi.total = pi.low + pi.basic + pi.middle + pi.high
+}
+
+func (pi *passengerInfo) addAveragePassengers_MGT1_MP(bpv int) {
+	lpas, _ := traffic.PassengerTrafficValues_MGT1_MP(bpv, traffic.Passage_Low)
+	bpas, _ := traffic.PassengerTrafficValues_MGT1_MP(bpv, traffic.Passage_Basic)
+	mpas, _ := traffic.PassengerTrafficValues_MGT1_MP(bpv, traffic.Passage_Middle)
+	hpas, _ := traffic.PassengerTrafficValues_MGT1_MP(bpv, traffic.Passage_High)
 	pi.low += lpas * 4
 	pi.basic += bpas * 4
 	pi.middle += mpas * 4
