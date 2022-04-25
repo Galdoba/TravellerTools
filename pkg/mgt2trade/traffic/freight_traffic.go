@@ -230,7 +230,7 @@ func BaseFreightFactor_MGT1_MP(source, destination mWorld) (int, error) {
 	if destination.TravelZone() == "R" {
 		fMod += -100000
 	}
-	
+
 	sTL := sUWP.TL()
 	dTL := dUWP.TL()
 	tMod := sTL - dTL
@@ -275,4 +275,27 @@ func FreightTrafficValues_MGT2_Core(ftv int) (dice, add int) {
 	case 19:
 		return 9, 0
 	}
+}
+
+const (
+	Lot_Incidental = iota
+	Lot_Minor
+	Lot_Major
+)
+
+func FreightTrafficValues_MGT1_MP(ftv, lotType int) (dice, add int) {
+	minFTV := 0
+	switch lotType {
+	case Lot_Incidental:
+		minFTV = 9
+	case Lot_Minor:
+		minFTV = 4
+	case Lot_Major:
+		minFTV = 2
+	}
+	if ftv < minFTV {
+		return 0, 0
+	}
+	addMod := ftv - minFTV - 4
+	return 1, addMod
 }

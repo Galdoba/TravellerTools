@@ -74,17 +74,13 @@ func Traffic(c *cli.Context) error {
 			if fError != nil {
 				return fError
 			}
-			fmt.Println(pfd, pfa, ffd, ffa)
-			freightFS.addAverageFreight_MGT2_Core(ffd)
-			freightFT.addAverageFreight_MGT2_Core(ffa)
+			freightFS.addAverageFreight_MGT1_MP(ffd)
+			freightFT.addAverageFreight_MGT1_MP(ffa)
 			tradeData.freightD[targetWorld] = freightFS
 			tradeData.freightA[targetWorld] = freightFT
 			tradeData.passengersD[targetWorld] = passengersFS
 			tradeData.passengersA[targetWorld] = passengersFT
 		}
-		//fmt.Printf("[%v] <--> [%v] \n", sourceworld.MW_Name(), targetWorld.MW_Name())
-		//fmt.Printf("Departing: %v passengers and %v tons of freight\n", tradeData.passengersD[targetWorld].total, tradeData.freightD[targetWorld].total)
-		//fmt.Printf("Arriving : %v passengers and %v tons of freight\n", tradeData.passengersA[targetWorld].total, tradeData.freightA[targetWorld].total)
 		fmt.Printf("[%v] <--> [%v]   Passengers (D/A): %v/%v   Freight (D/A): %v/%v\n", sourceworld.MW_Name(), targetWorld.MW_Name(), tradeData.passengersD[targetWorld].total, tradeData.passengersA[targetWorld].total, tradeData.freightD[targetWorld].total, tradeData.freightA[targetWorld].total)
 
 	}
@@ -101,6 +97,24 @@ func (fi *freightInfo) addAverageFreight_MGT2_Core(bfv int) {
 	fi.mjLots = mjLotsDice * 4
 	fi.mnLots = mnLotsDice * 4
 	fi.inLots = inLotsDice * 4
+	for i := 0; i < fi.mjLots; i++ {
+		fi.total += 40
+	}
+	for i := 0; i < fi.mnLots; i++ {
+		fi.total += 20
+	}
+	for i := 0; i < fi.inLots; i++ {
+		fi.total += 4
+	}
+}
+
+func (fi *freightInfo) addAverageFreight_MGT1_MP(bfv int) {
+	mjLotsDice, aMj := traffic.FreightTrafficValues_MGT1_MP(bfv, traffic.Lot_Major)
+	mnLotsDice, aMn := traffic.FreightTrafficValues_MGT1_MP(bfv, traffic.Lot_Minor)
+	inLotsDice, aIn := traffic.FreightTrafficValues_MGT1_MP(bfv, traffic.Lot_Incidental)
+	fi.mjLots = mjLotsDice*4 + aMj
+	fi.mnLots = mnLotsDice*4 + aMn
+	fi.inLots = inLotsDice*4 + aIn
 	for i := 0; i < fi.mjLots; i++ {
 		fi.total += 40
 	}
