@@ -64,8 +64,29 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-
 				return Traffic(c)
+			},
+		},
+		{
+			Name:     "info",
+			Usage:    "расписывает информацию о порте",
+			Category: "Информация",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:     "worldname",
+					Usage:    "запрос, по которому надо искать Мир в Базе (ОБЯЗАТЕЛЕН)",
+					Required: false,
+					Value:    "",
+				},
+				&cli.Int64Flag{
+					Name:     "reach",
+					Usage:    "радиус поиска соседей (дефолтное значение = 4)",
+					Required: false,
+					Value:    4,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				return Info(c)
 			},
 		},
 		//////////////////////////////////////
