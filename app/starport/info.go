@@ -16,7 +16,7 @@ func Info(c *cli.Context) error {
 		return err
 	}
 	fmt.Printf("Sourceworld [%v] detected...\nChecking for neighbours within a reach of %v parsecs...\n", sourceworld.MW_Name(), reach)
-	targetWorldsCoordinates := searchNeighbours(sourceworld, 4)
+	targetWorldsCoordinates := searchNeighbours(sourceworld, 2)
 	tradePointCoordinates := append(targetWorldsCoordinates, astrogation.NewCoordinates(sourceworld.CoordX(), sourceworld.CoordY()))
 	fmt.Println(targetWorldsCoordinates)
 	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
@@ -57,3 +57,25 @@ func Info(c *cli.Context) error {
 	fmt.Println("Gathering traffic data:")
 	return nil
 }
+
+/*
++Camoran
++Khusai
++Kteiroa
++Asim
++Marduk
++Iroioah
++Tyokh
++Torpol
++The World
++Pourne
++Clarke
++Sink
++Paal
++Hilfer
++Blue
++Ergo
++Tech-World
++Drinax
+
+*/

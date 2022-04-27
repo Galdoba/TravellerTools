@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	directionN  = 0
-	directionNE = 1
-	directionSE = 2
-	directionS  = 3
-	directionSW = 4
-	directionNW = 5
+	directionSE = iota
+	directionNE
+	directionN
+	directionNW
+	directionSW
+	directionS
 )
 
 type stellarHex struct {
@@ -37,70 +37,63 @@ func Hex(hexStr string) stellarHex {
 		fmt.Println(err)
 	}
 	h.hex = setHexCoords(col, row)
-	h.cube = evenQToCube(h.hex)
+	h.cube = hexToCube(h.hex)
 	return h
 }
 
 type cubeCoords struct {
-	x int
-	y int
-	z int
+	q int
+	r int
+	s int
 }
 
-func cubeCoordsStr(cube cubeCoords) string {
-	fmt.Println(cube)
-	xStr := coordNumToStr("X", cube.x)
-	yStr := coordNumToStr("Y", cube.y)
-	zStr := coordNumToStr("Z", cube.z)
-	output := xStr + " " + yStr + " " + zStr
-	return output
-}
+// func cubeCoordsStr(cube cubeCoords) string {
+// 	fmt.Println(cube)
+// 	xStr := coordNumToStr("X", cube.q)
+// 	yStr := coordNumToStr("Y", cube.r)
+// 	zStr := coordNumToStr("Z", cube.s)
+// 	output := xStr + " " + yStr + " " + zStr
+// 	return output
+// }
 
-func coordNumToStr(coordName string, x int) string {
-	xStr := coordName
-	if x < 0 {
-		xStr += "-"
-		x = x * -1
-	} else {
-		xStr += " "
-	}
-	fmt.Println("1:", xStr)
-	if x < 10 && x > -10 {
-		xStr += "0"
-		xStr += strconv.Itoa(x)
-	} else {
-		xStr += strconv.Itoa(x)
-	}
-	return xStr
-}
+// func coordNumToStr(coordName string, x int) string {
+// 	xStr := coordName
+// 	if x < 0 {
+// 		xStr += "-"
+// 		x = x * -1
+// 	} else {
+// 		xStr += " "
+// 	}
+// 	fmt.Println("1:", xStr)
+// 	if x < 10 && x > -10 {
+// 		xStr += "0"
+// 		xStr += strconv.Itoa(x)
+// 	} else {
+// 		xStr += strconv.Itoa(x)
+// 	}
+// 	return xStr
+// }
 
-func setCubeCoords(x, y, z int) cubeCoords {
+func setCubeCoords(q, r, s int) cubeCoords {
 	cube := cubeCoords{}
-	cube.x = x
-	cube.y = y
-	cube.z = z
+	cube.q = q //x
+	cube.r = r //y
+	cube.s = s //z
 	return cube
 }
 
-func oddQToCube(hex hexCoords) cubeCoords {
-	x := hex.col
-	z := hex.row - (hex.col-(hex.col&1))/2
-	y := -x - z
-	return setCubeCoords(x, y, z)
-}
+// func evenQToCube(hex hexCoords) cubeCoords {
+// 	var x = hex.col
+// 	var z = hex.row - (hex.col+(hex.col&1))/2
+// 	var y = -x - z
+// 	return setCubeCoords(x, y, z)
+// }
 
-func evenQToCube(hex hexCoords) cubeCoords {
-	var x = hex.col
-	var z = hex.row - (hex.col+(hex.col&1))/2
-	var y = -x - z
-	return setCubeCoords(x, y, z)
-}
-
-func cubeToEvenq(cube cubeCoords) hexCoords {
-	var col = cube.x
-	var row = cube.z + (cube.x+(cube.x&1))/2
-	return setHexCoords(col, row)
-}
+// func cubeToEvenq(cube cubeCoords) hexCoords {
+// 	var col = cube.q
+// 	var row = cube.s + (cube.q+(cube.q&1))/2
+// 	return setHexCoords(col, row)
+// }
 
 type hexCoords struct {
 	col int
@@ -115,46 +108,95 @@ func setHexCoords(c, r int) hexCoords {
 }
 
 func cubeToHex(cube cubeCoords) hexCoords {
-	col := cube.x
-	row := cube.z + (cube.x-(cube.x&1))/2
+	col := cube.q
+	row := cube.r + (cube.q-(cube.q&1))/2
 	return setHexCoords(col, row)
 }
 
-var hexDirections [][]hexCoords
+func hexToCube(hex hexCoords) cubeCoords {
+	q := hex.col
+	r := hex.row - (hex.col-hex.col&1)/2
+	return cubeCoords{q, r, -q - r}
+}
+
+// func oddQToCube(hex hexCoords) cubeCoords {
+// 	x := hex.col
+// 	z := hex.row - (hex.col-(hex.col&1))/2
+// 	y := -x - z
+// 	return setCubeCoords(x, y, z)
+// }
+
+//var hexDirections [][]hexCoords
+var cubeDirectionVectors []cubeCoords
 
 func init() {
 	// hexDirections = [][]hexCoords{
 	// 	{hexCoords{1, 0}, hexCoords{1, -1}, hexCoords{0, -1}, hexCoords{-1, -1}, hexCoords{-1, 0}, hexCoords{0, 1}},
 	// 	{hexCoords{1, 1}, hexCoords{1, 0}, hexCoords{0, -1}, hexCoords{-1, 0}, hexCoords{-1, 1}, hexCoords{0, 1}},
 	// }
-	hexDirections = [][]hexCoords{
-		{hexCoords{0, -1}, hexCoords{1, -1}, hexCoords{1, 0}, hexCoords{0, 1}, hexCoords{-1, 0}, hexCoords{-1, -1}},
-		{hexCoords{0, -1}, hexCoords{1, 0}, hexCoords{1, 1}, hexCoords{0, 1}, hexCoords{-1, 1}, hexCoords{-1, 0}},
+	// hexDirections = [][]hexCoords{
+	// 	{hexCoords{0, -1}, hexCoords{1, -1}, hexCoords{1, 0}, hexCoords{0, 1}, hexCoords{-1, 0}, hexCoords{-1, -1}},
+	// 	{hexCoords{0, -1}, hexCoords{1, 0}, hexCoords{1, 1}, hexCoords{0, 1}, hexCoords{-1, 1}, hexCoords{-1, 0}},
+	// }
+	cubeDirectionVectors = []cubeCoords{
+		{1, 0, -1}, // SE
+		{1, -1, 0}, // NE
+		{0, -1, 1}, // N
+		{-1, 0, 1}, // NW
+		{-1, 1, 0}, // SW
+		{0, 1, -1}, // S
 	}
-
 }
 
-func hexNeighbor(hex hexCoords, direction int) hexCoords {
-	parity := hex.col & 1
-	dir := hexDirections[parity][direction]
-	return setHexCoords(hex.col+dir.col, hex.row+dir.row)
+func cubeDirection(direction int) cubeCoords {
+	return cubeDirectionVectors[direction]
+}
+
+func cubeAdd(hex, vec cubeCoords) cubeCoords {
+	return cubeCoords{hex.q + vec.q, hex.r + vec.r, hex.s + vec.s}
 }
 
 func cubeNeighbor(cube cubeCoords, direction int) cubeCoords {
-	hex := cubeToHex(cube)
-	parity := hex.col & 1
-	dir := hexDirections[parity][direction]
-	hexN := setHexCoords(hex.col+dir.col, hex.row+dir.row)
-	return oddQToCube(hexN)
+	return cubeAdd(cube, cubeDirection(direction))
 }
 
+func cubeScale(hex cubeCoords, factor int) cubeCoords {
+	return cubeCoords{hex.q * factor, hex.r * factor, hex.s * factor}
+}
+
+func cubeRing(center cubeCoords, radius int) []cubeCoords {
+	ring := []cubeCoords{}
+	hex := cubeAdd(center, cubeScale(cubeDirection(directionN), radius))
+	for i := 0; i <= 5; i++ {
+		for j := 0; j <= radius; j++ {
+			ring = append(ring, hex)
+			hex = cubeNeighbor(hex, i)
+		}
+	}
+	return ring
+}
+
+func cubeSpiral(center cubeCoords, radius int) []cubeCoords {
+	spiral := []cubeCoords{center}
+	for i := 1; i <= radius; i++ {
+		spiral = append(spiral, cubeRing(center, i)...)
+	}
+	return spiral
+}
+
+// func hexNeighbor(hex hexCoords, direction int) hexCoords {
+// 	parity := hex.col & 1
+// 	dir := hexDirections[parity][direction]
+// 	return setHexCoords(hex.col+dir.col, hex.row+dir.row)
+// }
+
 func cubeDistance(cubeA, cubeB cubeCoords) int {
-	return int((math.Abs(float64(cubeA.x-cubeB.x)) + math.Abs(float64(cubeA.y-cubeB.y)) + math.Abs(float64(cubeA.z-cubeB.z))) / 2)
+	return int((math.Abs(float64(cubeA.q-cubeB.q)) + math.Abs(float64(cubeA.r-cubeB.r)) + math.Abs(float64(cubeA.s-cubeB.s))) / 2)
 }
 
 func hexDistance(hexA, hexB hexCoords) int {
-	cubeA := evenQToCube(hexA)
-	cubeB := evenQToCube(hexB)
+	cubeA := hexToCube(hexA)
+	cubeB := hexToCube(hexB)
 	return cubeDistance(cubeA, cubeB)
 }
 
@@ -178,7 +220,7 @@ func evenQToStr(hx hexCoords) string {
 }
 
 func addCube(ac, bc cubeCoords) cubeCoords {
-	return setCubeCoords(ac.x+bc.x, ac.y+bc.y, ac.z+bc.z)
+	return setCubeCoords(ac.q+bc.q, ac.r+bc.r, ac.s+bc.s)
 }
 
 //JumpCoordinatesFrom - дает перечень всех хексов в радиусе j
@@ -190,7 +232,7 @@ func JumpCoordinatesFrom(initHex string, j int) []string {
 		for y := utils.Max(-j, -x-j); y <= utils.Min(j, -x+j); y++ {
 			z := -x - y
 			cb := addCube(setCubeCoords(x, y, z), start.cube)
-			hx := cubeToEvenq(cb)
+			hx := cubeToHex(cb)
 			coords = append(coords, evenQToStr(hx))
 		}
 	}
@@ -226,7 +268,7 @@ func (c *Coordinates) ValuesHEX() (int, int) {
 func NewCoordinates(x, y int) Coordinates {
 	coords := Coordinates{}
 	coords.hex = setHexCoords(x, y)
-	coords.cube = evenQToCube(coords.hex)
+	coords.cube = hexToCube(coords.hex)
 	return coords
 }
 
@@ -249,7 +291,7 @@ func JumpFromCoordinates(start Coordinates, j int) []Coordinates {
 		for y := utils.Max(-j, -x-j); y <= utils.Min(j, -x+j); y++ {
 			z := -x - y
 			cb := addCube(setCubeCoords(x, y, z), start.cube)
-			hx := cubeToEvenq(cb)
+			hx := cubeToHex(cb)
 			addCoords := NewCoordinates(hx.col, hx.row)
 			coords = append(coords, addCoords)
 		}
