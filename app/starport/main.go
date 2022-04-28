@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Galdoba/TravellerTools/app/modules/trvdb"
-	"github.com/Galdoba/TravellerTools/pkg/astrogation"
-	"github.com/Galdoba/TravellerTools/pkg/survey"
 	"github.com/urfave/cli"
 )
 
@@ -52,15 +49,15 @@ func main() {
 				},
 				&cli.Int64Flag{
 					Name:     "reach",
-					Usage:    "радиус поиска соседей (дефолтное значение = 4)",
+					Usage:    "радиус поиска соседей (дефолтное значение 0: адаптивно - если TL12-, то 2, иначе TL-10 )",
 					Required: false,
-					Value:    4,
+					Value:    0,
 				},
 				&cli.StringFlag{
 					Name:     "ruleset",
 					Usage:    "обеспечивает выбор набора правил",
 					Required: false,
-					Value:    "mgt2_core",
+					Value:    "mgt1_mp",
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -80,9 +77,9 @@ func main() {
 				},
 				&cli.Int64Flag{
 					Name:     "reach",
-					Usage:    "радиус поиска соседей (дефолтное значение = 4)",
+					Usage:    "радиус поиска соседей (дефолтное значение 0: адаптивно - если TL12-, то 2, иначе TL-10 )",
 					Required: false,
-					Value:    4,
+					Value:    0,
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -132,38 +129,6 @@ func main() {
 	if err := app.Run(args); err != nil {
 		fmt.Println(err.Error())
 	}
-
-}
-
-func main0() {
-
-	wrlds, err := trvdb.WorldByName()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println("Found", wrlds)
-	sw := wrlds
-
-	fmt.Println("Source World Chosen:", fmt.Sprintf("%v (%v)/%v %v\n", sw.MW_Name(), sw.MW_UWP(), sw.Sector(), sw.Hex()))
-	jcoord := astrogation.JumpFromCoordinates(astrogation.NewCoordinates(sw.CoordX(), sw.CoordY()), 3)
-	fmt.Println("Trade capable worlds:")
-	for i, v := range jcoord {
-		fmt.Printf("Search %v/%v\r", i, len(jcoord))
-		nWorld, err := survey.SearchByCoordinates(v.ValuesHEX())
-
-		if err != nil {
-			//x, y := v.ValuesHEX()
-			//fmt.Println(x, y, err.Error())♦
-			continue
-		}
-		if nWorld.CoordX() == sw.CoordX() && nWorld.CoordY() == sw.CoordY() {
-			continue
-		}
-		fmt.Println(fmt.Sprintf("%v (%v)/%v %v", nWorld.MW_Name(), nWorld.MW_UWP(), nWorld.Sector(), nWorld.Hex()))
-
-	}
-	fmt.Println("                               \r")
 }
 
 /*RESULT DATA

@@ -166,9 +166,9 @@ func cubeScale(hex cubeCoords, factor int) cubeCoords {
 
 func cubeRing(center cubeCoords, radius int) []cubeCoords {
 	ring := []cubeCoords{}
-	hex := cubeAdd(center, cubeScale(cubeDirection(directionN), radius))
-	for i := 0; i <= 5; i++ {
-		for j := 0; j <= radius; j++ {
+	hex := cubeAdd(center, cubeScale(cubeDirection(4), radius))
+	for i := 0; i < 6; i++ {
+		for j := 0; j < radius; j++ {
 			ring = append(ring, hex)
 			hex = cubeNeighbor(hex, i)
 		}
@@ -255,14 +255,37 @@ func JumpCoordinatesAll() []string {
 }
 
 //////////////
+type Coordinator interface {
+	CoordX() int
+	CoordY() int
+}
 
 type Coordinates struct {
 	hex  hexCoords
 	cube cubeCoords
 }
 
-func (c *Coordinates) ValuesHEX() (int, int) {
+func (c *Coordinates) CoordX() int {
+	return c.hex.col
+}
+
+func (c *Coordinates) CoordY() int {
+	return c.hex.row
+}
+
+func CoordinatesOf(coord Coordinator) Coordinates {
+	coords := Coordinates{}
+	coords.hex = setHexCoords(coord.CoordX(), coord.CoordY())
+	coords.cube = hexToCube(coords.hex)
+	return coords
+}
+
+func (c *Coordinates) HexValues() (int, int) {
 	return c.hex.col, c.hex.row
+}
+
+func (c *Coordinates) CubeValues() (int, int, int) {
+	return c.cube.q, c.cube.r, c.cube.s
 }
 
 func NewCoordinates(x, y int) Coordinates {
@@ -270,6 +293,26 @@ func NewCoordinates(x, y int) Coordinates {
 	coords.hex = setHexCoords(x, y)
 	coords.cube = hexToCube(coords.hex)
 	return coords
+}
+
+func isSame(c1, c2 Coordinates) bool {
+	if c1.cube.q != c2.cube.q {
+		return false
+	}
+	if c1.cube.r != c2.cube.r {
+		return false
+	}
+	if c1.cube.s != c2.cube.s {
+		return false
+	}
+	return true
+}
+
+func coordsFromCube(cc cubeCoords) Coordinates {
+	coord := Coordinates{}
+	coord.cube = cc
+	coord.hex = cubeToHex(cc)
+	return coord
 }
 
 func Distance(c1, c2 Coordinates) int {
@@ -284,18 +327,13 @@ func DistanceRaw(x1, y1, x2, y2 int) int {
 
 //JumpCoordinatesFrom - дает перечень всех хексов в радиусе j
 //требует координатов секторной карты в формате "XXYY"
-func JumpFromCoordinates(start Coordinates, j int) []Coordinates {
+func JumpMap(center Coordinator, radius int) []Coordinates {
 	var coords []Coordinates
-	//start := Hex(initHex)
-	for x := -j; x <= j; x++ {
-		for y := utils.Max(-j, -x-j); y <= utils.Min(j, -x+j); y++ {
-			z := -x - y
-			cb := addCube(setCubeCoords(x, y, z), start.cube)
-			hx := cubeToHex(cb)
-			addCoords := NewCoordinates(hx.col, hx.row)
-			coords = append(coords, addCoords)
-		}
+	startHex := hexCoords{center.CoordX(), center.CoordY()}
+	start_cube := hexToCube(startHex)
+	spiral_cube := cubeSpiral(start_cube, radius)
+	for _, cc := range spiral_cube {
+		coords = append(coords, coordsFromCube(cc))
 	}
 	return coords
-
 }

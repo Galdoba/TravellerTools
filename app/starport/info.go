@@ -4,24 +4,28 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/pkg/astrogation"
 	"github.com/urfave/cli"
 )
 
 func Info(c *cli.Context) error {
 	searchKey := c.String("worldname")
-	reach := c.Int("reach")
+
 	sourceworld, err := SearchSourcePort(searchKey)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Sourceworld [%v] detected...\nChecking for neighbours within a reach of %v parsecs...\n", sourceworld.MW_Name(), reach)
-	targetWorldsCoordinates := searchNeighbours(sourceworld, 2)
-	tradePointCoordinates := append(targetWorldsCoordinates, astrogation.NewCoordinates(sourceworld.CoordX(), sourceworld.CoordY()))
-	fmt.Println(targetWorldsCoordinates)
+	reach := 4
+	fmt.Printf("Sourceworld [%v] detected...\nChecking for Trade Routs within a reach of %v parsecs...\n", sourceworld.MW_Name(), reach)
+	targetWorldsCoordinates := searchNeighbours(sourceworld, reach)
+	//tradePointCoordinates := append(targetWorldsCoordinates, astrogation.NewCoordinates(sourceworld.CoordX(), sourceworld.CoordY()))
+	//fmt.Println(targetWorldsCoordinates)
+	fmt.Printf("%v have...\n", sourceworld.MW_Name())
 	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
-	for _, crds := range tradePointCoordinates {
-		port, _ := PortByCoordinates(crds.ValuesHEX())
+	for _, crds := range targetWorldsCoordinates {
+		port, _ := PortByCoordinates(crds.HexValues())
+		if port.TravelZone() == "R" || sourceworld.TravelZone() == "R" {
+			continue
+		}
 		tcodes := strings.Fields(TradeCodes(port))
 		cargoIN := false
 		cargoOUT := false
@@ -32,6 +36,9 @@ func Info(c *cli.Context) error {
 			case "As", "De", "Ic", "Ni", "Ag", "Ga", "Wa":
 				cargoOUT = true
 			}
+		}
+		if cargoIN || cargoOUT {
+			fmt.Println("Trade route with", port.MW_Name())
 		}
 		// if cargoIN {
 		// 	fmt.Println(port.MW_Name(), "receiving Cargo")
@@ -47,7 +54,7 @@ func Info(c *cli.Context) error {
 		// 	fmt.Println(port.MW_Name(), "sending Cargo")
 		// }
 
-		fmt.Println("IN:", cargoIN, "OUT:", cargoOUT, "---", port.MW_Name())
+		//fmt.Println("IN:", cargoIN, "OUT:", cargoOUT, "---", port.MW_Name())
 
 		// if !cargoOUT && !cargoIN {
 		// 	fmt.Println(port.MW_Name(), "is BACKWATER?")

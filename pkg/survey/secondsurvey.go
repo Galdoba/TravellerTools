@@ -427,11 +427,12 @@ func Search(key string) ([]*SecondSurveyData, error) {
 func SearchByCoordinates(x, y int) (*SecondSurveyData, error) {
 	lines := utils.LinesFromTXT(cleanedDataPath)
 	for _, val := range lines {
-		if strings.Contains(val, fmt.Sprintf("%v", x)) && strings.Contains(val, fmt.Sprintf("%v", y)) {
-			ssd := Parse(val)
-			if ssd.CoordX() == x && ssd.CoordY() == y {
-				return ssd, nil
-			}
+		if !strings.Contains(val, fmt.Sprintf("|%v|%v|", x, y)) {
+			continue
+		}
+		ssd := Parse(val)
+		if ssd.CoordX() == x && ssd.CoordY() == y {
+			return ssd, nil
 		}
 
 	}

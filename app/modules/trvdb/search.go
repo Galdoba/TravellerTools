@@ -32,7 +32,8 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 		return nil, fmt.Errorf("quarry must me at least 3 characters [%v]", searchKey)
 	}
 	matches := []string{}
-	for _, line := range utils.LinesFromTXT(dataBase) {
+	db := utils.LinesFromTXT(dataBase)
+	for _, line := range db {
 		if strings.Contains(strings.ToUpper(line), strings.ToUpper(searchKey)) {
 			matches = append(matches, line)
 		}

@@ -8,18 +8,11 @@ import (
 func inputCube() [][]int {
 	return [][]int{
 		{0, 0},
-		{0, 5},
-		{0, -1},
-		{1, 0},
-		{1, -2},
-		{1, 2},
-		{-1, 0},
-		{-1, -2},
-		{-1, 2},
 	}
 }
 
 func Test_Coordinates(t *testing.T) {
+	t.Skip()
 	for _, set := range inputCube() {
 		if len(set) != 2 {
 			t.Errorf("expect input [%v] to have 2 integers, have %v", set, len(set))
@@ -47,8 +40,17 @@ func Test_Coordinates(t *testing.T) {
 		}
 		fmt.Println(cc, oddq)
 		fmt.Println("---------------------------------")
-		for _, val := range cubeDirectionVectors {
-			fmt.Println(cubeNeighbor(cc, val))
+		for _, dir := range []int{directionN, directionNE, directionSE, directionS, directionSW, directionNW} {
+			neib := cubeNeighbor(cc, dir)
+			fmt.Println(neib, cubeToHex(neib))
+		}
+		fmt.Println("RING:")
+		for _, cb := range cubeRing(cc, 2) {
+			fmt.Println(cb, cubeToHex(cb))
+		}
+		fmt.Println("Spiral:")
+		for _, cb := range cubeSpiral(cc, 2) {
+			fmt.Println(cb, cubeToHex(cb))
 		}
 		fmt.Println("=================================")
 

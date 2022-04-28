@@ -8,19 +8,21 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
-	"github.com/Galdoba/utils"
 	"github.com/urfave/cli"
 )
 
 func Traffic(c *cli.Context) error {
 	searchKey := c.String("worldname")
-	reach := c.Int("reach")
+
 	sourceworld, err := SearchSourcePort(searchKey)
 	if err != nil {
 		return err
 	}
+
+	reach := processReach(c.Int("reach"), sourceworld.MW_UWP())
 	fmt.Printf("Sourceworld [%v] detected...\nChecking for neighbours within a reach of %v parsecs...\n", sourceworld.MW_Name(), reach)
 	targetWorldsCoordinates := searchNeighbours(sourceworld, reach)
+
 	fmt.Println("Gathering traffic data:")
 	tradeData := NewTrafficData(sourceworld, reach)
 	for _, coord := range targetWorldsCoordinates {
@@ -28,7 +30,7 @@ func Traffic(c *cli.Context) error {
 		freightFT := freightInfo{}
 		passengersFS := passengerInfo{}
 		passengersFT := passengerInfo{}
-		targetWorld, srchErr := PortByCoordinates(coord.ValuesHEX())
+		targetWorld, srchErr := PortByCoordinates(coord.HexValues())
 		if srchErr != nil {
 			return srchErr
 		}
@@ -88,6 +90,17 @@ func Traffic(c *cli.Context) error {
 
 	fmt.Print(tradeData.String())
 	return nil
+}
+
+func processReach(flagValue int, uwpS string) int {
+	if flagValue > 0 {
+		return flagValue
+	}
+	u, _ := uwp.FromString(uwpS)
+	if u.TL() < 11 {
+		return 2
+	}
+	return u.TL() - 9
 }
 
 func (fi *freightInfo) addAverageFreight_MGT2_Core(bfv int) {
@@ -150,27 +163,21 @@ func (pi *passengerInfo) addAveragePassengers_MGT1_MP(bpv int) {
 	pi.total = pi.low + pi.basic + pi.middle + pi.high
 }
 
-func searchNeighbours(sw Port, distance int) []astrogation.Coordinates {
-	jcoord := astrogation.JumpFromCoordinates(astrogation.NewCoordinates(sw.CoordX(), sw.CoordY()), distance)
+func searchNeighbours(sourceworld Port, distance int) []astrogation.Coordinates {
+	jcoord := astrogation.JumpMap(sourceworld, distance)
 	coords := []astrogation.Coordinates{}
 	for i, v := range jcoord {
 		fmt.Printf("Search %v/%v    \r", i, len(jcoord))
-
-		//nWorld, err := survey.SearchByCoordinates(v.ValuesHEX())
-		nWorld, err := PortByCoordinates(v.ValuesHEX())
+		neighbour, err := PortByCoordinates(v.HexValues())
 		if err != nil {
-			//x, y := v.ValuesHEX()
-			//fmt.Println(x, y, err.Error())
 			continue
 		}
-		if nWorld.CoordX() == sw.CoordX() && nWorld.CoordY() == sw.CoordY() {
+		if neighbour.CoordX() == sourceworld.CoordX() && neighbour.CoordY() == sourceworld.CoordY() {
 			continue
 		}
-		//fmt.Println(fmt.Sprintf("add %v (%v)/%v %v", nWorld.MW_Name(), nWorld.MW_UWP(), nWorld.Sector(), nWorld.Hex()))
-		coords = append(coords, astrogation.NewCoordinates(nWorld.CoordX(), nWorld.CoordY()))
+		coords = append(coords, astrogation.CoordinatesOf(neighbour))
 	}
-	//fmt.Printf("%v worlds detected in %v parsec radius       \n", len(coords), distance)
-	utils.ClearScreen()
+	//	utils.ClearScreen()
 	return coords
 }
 
