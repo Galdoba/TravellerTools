@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Galdoba/TravellerTools/pkg/astrogation"
 	"github.com/urfave/cli"
 )
 
@@ -37,8 +38,9 @@ func Info(c *cli.Context) error {
 				cargoOUT = true
 			}
 		}
-		if cargoIN || cargoOUT {
+		if (cargoIN || cargoOUT) && astrogation.TradeRouteExist(sourceworld, port, targetWorldsCoordinates) {
 			fmt.Println("Trade route with", port.MW_Name())
+
 		}
 		// if cargoIN {
 		// 	fmt.Println(port.MW_Name(), "receiving Cargo")
