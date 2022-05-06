@@ -47,12 +47,29 @@ func Test_PlotCourse(t *testing.T) {
 	pos := positions{}
 	pos.field = createField()
 
-	pos.start = NewCoordinates(-3, -1)
-	pos.end = NewCoordinates(3, 1)
+	pos.start = NewCoordinates(0, 0)
+	pos.end = NewCoordinates(2, 2)
+	pos.path = vanilaAstar(pos.start, pos.end)
 	fmt.Println(pos)
 	if len(pos.path) == 0 {
 		t.Errorf("Path was not created")
 		return
+	}
+	if !isSame(pos.path[0], pos.start) {
+		t.Errorf("Path start is not start")
+	}
+	if !isSame(pos.path[len(pos.path)-1], pos.start) {
+		t.Errorf("Path end is not end")
+	}
+	lastPoint := Coordinates{}
+	for i, ppoint := range pos.path {
+		if i == 0 {
+			lastPoint = ppoint
+			continue
+		}
+		if Distance(ppoint, lastPoint) != 1 {
+			t.Errorf("Path must have distance 1 (temp test)")
+		}
 	}
 
 }
