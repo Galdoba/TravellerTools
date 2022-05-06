@@ -39,3 +39,23 @@ func TradeRouteExist(sourceWRLD, destinationWRLD Coordinator, validJumpPoints []
 	}
 	return false
 }
+
+type position struct {
+	coord Coordinates
+	g     int //Distance from Start
+	h     int //Distance to End
+	f     int //evaluation weight
+}
+
+func (c *Coordinates) evaluate(start, end Coordinates) position {
+	current := position{}
+	current.coord = start
+	current.g = 0
+	current.h = Distance(current.coord, end)
+	current.f = current.g + current.g
+}
+
+func vanilaAstar(start, end Coordinates) {
+	path := []position{}
+
+}
