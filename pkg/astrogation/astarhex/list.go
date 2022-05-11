@@ -35,7 +35,7 @@ func (l *List) Remove(removeNode Node) {
 // if the node is not found the return value is -1
 func (l *List) GetIndex(searchNode Node) int {
 	for index, node := range l.nodes {
-		if node.X == searchNode.X && node.Y == searchNode.Y {
+		if node.Q == searchNode.Q && node.R == searchNode.R && node.S == searchNode.S {
 			return index
 		}
 	}

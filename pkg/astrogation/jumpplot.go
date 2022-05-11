@@ -1,6 +1,8 @@
 package astrogation
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func TradeRouteExist(sourceWRLD, destinationWRLD Coordinator, validJumpPoints []Coordinates) bool {
 	source := CoordinatesOf(sourceWRLD)
@@ -40,22 +42,14 @@ func TradeRouteExist(sourceWRLD, destinationWRLD Coordinator, validJumpPoints []
 	return false
 }
 
-type position struct {
-	coord Coordinates
-	g     int //Distance from Start
-	h     int //Distance to End
-	f     int //evaluation weight
-}
+/*
+Приоритеты построения маршрута
+0. наличие координат в базе (если нет то 100000)
+1. Высокая безопасность (10000 - zone)
+2. Есть космопорт (1000 - starport)
+3. Большое население (100-pop)
+4. Есть ГГ (10-ГГ)
 
-func (c *Coordinates) evaluate(start, end Coordinates) position {
-	current := position{}
-	current.coord = start
-	current.g = 0
-	current.h = Distance(current.coord, end)
-	current.f = current.g + current.g
-}
 
-func vanilaAstar(start, end Coordinates) {
-	path := []position{}
 
-}
+*/

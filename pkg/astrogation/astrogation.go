@@ -47,32 +47,11 @@ type cubeCoords struct {
 	s int
 }
 
-// func cubeCoordsStr(cube cubeCoords) string {
-// 	fmt.Println(cube)
-// 	xStr := coordNumToStr("X", cube.q)
-// 	yStr := coordNumToStr("Y", cube.r)
-// 	zStr := coordNumToStr("Z", cube.s)
-// 	output := xStr + " " + yStr + " " + zStr
-// 	return output
-// }
-
-// func coordNumToStr(coordName string, x int) string {
-// 	xStr := coordName
-// 	if x < 0 {
-// 		xStr += "-"
-// 		x = x * -1
-// 	} else {
-// 		xStr += " "
-// 	}
-// 	fmt.Println("1:", xStr)
-// 	if x < 10 && x > -10 {
-// 		xStr += "0"
-// 		xStr += strconv.Itoa(x)
-// 	} else {
-// 		xStr += strconv.Itoa(x)
-// 	}
-// 	return xStr
-// }
+type Cube interface {
+	Qaxis() int
+	Raxis() int
+	Saxis() int
+}
 
 func setCubeCoords(q, r, s int) cubeCoords {
 	cube := cubeCoords{}
@@ -277,6 +256,13 @@ func CoordinatesOf(coord Coordinator) Coordinates {
 	coords := Coordinates{}
 	coords.hex = setHexCoords(coord.CoordX(), coord.CoordY())
 	coords.cube = hexToCube(coords.hex)
+	return coords
+}
+
+func CoordinatesQRS(q, r, s int) Coordinates {
+	coords := Coordinates{}
+	coords.cube = setCubeCoords(q, r, s)
+	coords.hex = cubeToHex(coords.cube)
 	return coords
 }
 

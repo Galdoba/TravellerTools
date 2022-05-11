@@ -3,7 +3,10 @@ package astarhex
 import (
 	"errors"
 	"fmt"
-	"math"
+	"strings"
+
+	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
 // Config holds important settings
@@ -15,9 +18,10 @@ import (
 // InvalidNodes can be used to add not accessible nodes like obstacles etc.
 // WeightedNodes can be used to add nodes to be avoided like mud or mountains
 type Config struct {
-	GridWidth, GridHeight int
-	InvalidNodes          []Node
-	WeightedNodes         []Node
+	//GridWidth, GridHeight int
+	//InvalidNodes          []Node
+	//WeightedNodes         []Node
+	MaxJumpDistance int
 }
 
 type astar struct {
@@ -28,54 +32,59 @@ type astar struct {
 
 // New creates a new astar instance
 func New(config Config) (*astar, error) {
-	if config.GridWidth < 2 || config.GridHeight < 2 {
-		return nil, errors.New("GridWidth and GridHeight must be min 2")
+	if config.MaxJumpDistance < 1 {
+		return nil, errors.New("MaxJumpDistance must > 0")
 	}
-	a := &astar{config: config}
-	return a.init(), nil
+
+	a := astar{config: config}
+
+	return &a, nil
 }
 
 // init initialised needed properties
 // internal function
-func (a *astar) init() *astar {
-	// add invalidNodes directly to the closedList
-	a.closedList.Add(a.config.InvalidNodes...)
-	return a
-}
+// func (a *astar) init() *astar {
+// 	// add invalidNodes directly to the closedList
+// 	a.closedList.Add(a.config.InvalidNodes...)
+// 	return a
+// }
 
 // H caluclates the absolute distance between
 // nodeA and nodeB calculates by the manhattan distance
 func (a *astar) H(nodeA Node, nodeB Node) int {
-	absX := math.Abs(float64(nodeA.X - nodeB.X))
-	absY := math.Abs(float64(nodeA.Y - nodeB.Y))
-	return int(absX + absY)
+	//absX := math.Abs(float64(nodeA.X - nodeB.X))
+	//absY := math.Abs(float64(nodeA.Y - nodeB.Y))
+	return Distance(nodeA, nodeB) * 100000
 }
 
 // GetNeighborNodes calculates the next neighbors of the given node
 // if a neighbor node is not accessible the node will be ignored
 func (a *astar) GetNeighborNodes(node Node) []Node {
 	var neighborNodes []Node
-
-	upNode := Node{X: node.X, Y: node.Y + 1, parent: &node}
-	if a.isAccessible(upNode) {
-		neighborNodes = append(neighborNodes, upNode)
+	northNode := Node{Q: node.Q, R: node.R - 1, S: node.S + 1, parent: &node}
+	if a.isAccessible(northNode) {
+		neighborNodes = append(neighborNodes, northNode)
 	}
-
-	downNode := Node{X: node.X, Y: node.Y - 1, parent: &node}
-	if a.isAccessible(downNode) {
-		neighborNodes = append(neighborNodes, downNode)
+	northEastNode := Node{Q: node.Q + 1, R: node.R - 1, S: node.S, parent: &node}
+	if a.isAccessible(northEastNode) {
+		neighborNodes = append(neighborNodes, northEastNode)
 	}
-
-	leftNode := Node{X: node.X - 1, Y: node.Y, parent: &node}
-	if a.isAccessible(leftNode) {
-		neighborNodes = append(neighborNodes, leftNode)
+	southEastNode := Node{Q: node.Q + 1, R: node.R, S: node.S - 1, parent: &node}
+	if a.isAccessible(southEastNode) {
+		neighborNodes = append(neighborNodes, southEastNode)
 	}
-
-	rightNode := Node{X: node.X + 1, Y: node.Y, parent: &node}
-	if a.isAccessible(rightNode) {
-		neighborNodes = append(neighborNodes, rightNode)
+	southNode := Node{Q: node.Q, R: node.R + 1, S: node.S - 1, parent: &node}
+	if a.isAccessible(southNode) {
+		neighborNodes = append(neighborNodes, southNode)
 	}
-
+	southWestNode := Node{Q: node.Q - 1, R: node.R + 1, S: node.S, parent: &node}
+	if a.isAccessible(southWestNode) {
+		neighborNodes = append(neighborNodes, southWestNode)
+	}
+	northWestNode := Node{Q: node.Q - 1, R: node.R, S: node.S + 1, parent: &node}
+	if a.isAccessible(northWestNode) {
+		neighborNodes = append(neighborNodes, northWestNode)
+	}
 	return neighborNodes
 }
 
@@ -84,9 +93,9 @@ func (a *astar) GetNeighborNodes(node Node) []Node {
 func (a *astar) isAccessible(node Node) bool {
 
 	// if node is out of bound
-	if node.X < 0 || node.Y < 0 || node.X > a.config.GridWidth-1 || node.Y > a.config.GridHeight-1 {
-		return false
-	}
+	// if node.X < 0 || node.Y < 0 || node.X > a.config.GridWidth-1 || node.Y > a.config.GridHeight-1 {
+	// return false
+	// }
 
 	// check if the node is in the closedList
 	// the predefined invalidNodes are also in this list
@@ -100,7 +109,7 @@ func (a *astar) isAccessible(node Node) bool {
 // IsEndNode checks if the given node has
 // equal node coordinates with the end node
 func (a *astar) IsEndNode(checkNode, endNode Node) bool {
-	return checkNode.X == endNode.X && checkNode.Y == endNode.Y
+	return checkNode.Q == endNode.Q && checkNode.R == endNode.R && checkNode.S == endNode.S
 }
 
 // FindPath starts the a* algorithm for the given start and end node
@@ -111,6 +120,7 @@ func (a *astar) FindPath(startNode, endNode Node) ([]Node, error) {
 
 	a.startNode = startNode
 	a.endNode = endNode
+	fmt.Println("Distance:", Distance(startNode, endNode))
 
 	defer func() {
 		a.openList.Clear()
@@ -155,14 +165,14 @@ func (a *astar) FindPath(startNode, endNode Node) ([]Node, error) {
 // calculateNode calculates the F, G and H value for the given node
 func (a *astar) calculateNode(node *Node) {
 
-	node.g++
+	node.g += EvaluateMovementWeight(node)
 
 	// check for special node weighting
-	for _, wNode := range a.config.WeightedNodes {
-		if node.X == wNode.X && node.Y == wNode.Y {
-			node.g = node.g + wNode.Weighting
-		}
-	}
+	// for _, wNode := range a.config.WeightedNodes {
+	// 	if node.Q == wNode.Q && node.R == wNode.R && node.S == wNode.S {
+	// 		node.g = node.g + 1 // wNode.Weighting
+	// 	}
+	// }
 
 	node.h = a.H(*node, a.endNode)
 	node.f = node.g + node.h
@@ -189,4 +199,53 @@ func (a *astar) getNodePath(currentNode Node) []Node {
 		currentNode = parentNode
 	}
 	return nodePath
+}
+
+///////////////////////////
+
+func EvaluateMovementWeight(n *Node) int {
+	//coord := NewCoordinates(crd.CoordX(), crd.CoordY())
+	wrld, err := survey.SearchByCoordinates(n.CoordX(), n.CoordY())
+	if err != nil {
+		return 100000
+	}
+	wrldWeight := 100000
+	switch wrld.TravelZone() {
+	case "R":
+		wrldWeight -= 10000
+	case "A":
+		wrldWeight -= 45000
+	case "":
+		wrldWeight -= 90000
+	}
+	for i, val := range strings.Split(wrld.MW_UWP(), "") {
+		if i == 0 { //космопорт
+			switch val {
+			case "A":
+				wrldWeight -= 6000
+			case "B":
+				wrldWeight -= 5000
+			case "C":
+				wrldWeight -= 4000
+			case "D":
+				wrldWeight -= 3000
+			case "E":
+				wrldWeight -= 2000
+			case "X":
+				wrldWeight -= 0
+			}
+		}
+		if i == 4 { //население
+			popFactor := ehex.New().Set(val).Value()
+			wrldWeight -= (popFactor * 100)
+		}
+	}
+	for i, val := range strings.Split(wrld.PBG(), "") {
+		if i == 0 || i == 1 {
+			continue
+		}
+		ggFactor := ehex.New().Set(val).Value()
+		wrldWeight -= (ggFactor * 10)
+	}
+	return wrldWeight
 }
