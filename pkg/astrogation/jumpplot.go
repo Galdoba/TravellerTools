@@ -2,18 +2,21 @@ package astrogation
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/astarhex"
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
+	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
-func TradeRouteExist(sourceWRLD, destinationWRLD Coordinator, validJumpPoints []Coordinates) bool {
-	source := CoordinatesOf(sourceWRLD)
-	destination := CoordinatesOf(destinationWRLD)
-	if Distance(source, destination) > 4 {
+func TradeRouteExist(source, destination hexagon.Hexagon, validJumpPoints []hexagon.Hexagon) bool {
+	if hexagon.Distance(source, destination) > 4 {
 		fmt.Println("Distance(source, destination) > 4")
 		return false
 	}
 	destFound := false
 	for _, c := range validJumpPoints {
-		if isSame(c, destination) {
+		if hexagon.Match(c, destination) {
 			destFound = true
 		}
 	}
@@ -23,11 +26,11 @@ func TradeRouteExist(sourceWRLD, destinationWRLD Coordinator, validJumpPoints []
 	}
 
 	for _, transitPoint := range validJumpPoints {
-		if isSame(source, transitPoint) {
+		if hexagon.Match(source, transitPoint) {
 			continue
 		}
-		transDist := Distance(source, transitPoint)
-		endDist := Distance(transitPoint, destination)
+		transDist := hexagon.Distance(source, transitPoint)
+		endDist := hexagon.Distance(transitPoint, destination)
 		if transDist > 2 {
 			continue
 		}
@@ -40,6 +43,28 @@ func TradeRouteExist(sourceWRLD, destinationWRLD Coordinator, validJumpPoints []
 
 	}
 	return false
+}
+
+func PlotCource(start, end hexagon.Hex, MaxJumpDistance int, MaxConseuqnceJumps int) string {
+	ast, err := astarhex.New(astarhex.Config{MaxJumpDistance, MaxConseuqnceJumps})
+	if err != nil {
+		return err.Error()
+	}
+	path, pErr := ast.FindPathHex(start, end)
+	if pErr != nil {
+		return pErr.Error()
+	}
+	path = append(path, *astarhex.SetNodeHex(hexagon.FromHex(start)))
+	pathStr := ""
+	for _, hx := range path {
+		wr, errW := survey.SearchByCoordinates(hx.Hex.HexValues())
+		if errW != nil {
+			return errW.Error()
+		}
+		pathStr += wr.MW_Name() + " ---> "
+	}
+	pathStr = strings.TrimSuffix(pathStr, " ---> ")
+	return pathStr
 }
 
 /*

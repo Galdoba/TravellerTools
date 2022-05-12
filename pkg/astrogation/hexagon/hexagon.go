@@ -24,21 +24,26 @@ type Hexagon struct {
 	hex  hexCoords
 }
 
-func New(feed int, coordinates ...int) (*Hexagon, error) {
+func New_Unsafe(feed int, coordinates ...int) Hexagon {
+	hex, _ := New(feed, coordinates...)
+	return hex
+}
+
+func New(feed int, coordinates ...int) (Hexagon, error) {
 	hx := Hexagon{}
 	switch feed {
 	default:
-		return nil, fmt.Errorf("feed value unreconised")
+		return hx, fmt.Errorf("feed value unreconised")
 	case Feed_HEX:
 		if len(coordinates) != 2 {
-			return nil, fmt.Errorf("2 coordinates expected")
+			return hx, fmt.Errorf("2 coordinates expected")
 		}
 		hx.hex.col = coordinates[0]
 		hx.hex.row = coordinates[1]
 		hx.cube = hexToCube(hx.hex)
 	case Feed_CUBE:
 		if len(coordinates) != 3 {
-			return nil, fmt.Errorf("3 coordinates expected")
+			return hx, fmt.Errorf("3 coordinates expected")
 		}
 		hx.cube.q = coordinates[0]
 		hx.cube.r = coordinates[1]
@@ -47,10 +52,10 @@ func New(feed int, coordinates ...int) (*Hexagon, error) {
 	}
 	switch {
 	case hx.cube.sum() != 0:
-		return nil, fmt.Errorf("cube sum is not 0")
+		return hx, fmt.Errorf("cube sum is not 0")
 
 	}
-	return &hx, nil
+	return hx, nil
 }
 
 type Hex interface {
@@ -74,8 +79,9 @@ func (h *hexCoords) CoordY() int {
 	return h.row
 }
 
-func FromHex(h Hex) (*Hexagon, error) {
-	return New(Feed_HEX, h.CoordX(), h.CoordY())
+func FromHex(h Hex) Hexagon {
+	hex, _ := New(Feed_HEX, h.CoordX(), h.CoordY())
+	return hex
 }
 
 type Cube interface {
@@ -96,7 +102,7 @@ func (hx *Hexagon) CoordS() int {
 	return hx.cube.s
 }
 
-func FromCube(c Cube) (*Hexagon, error) {
+func FromCube(c Cube) (Hexagon, error) {
 	return New(Feed_CUBE, c.CoordQ(), c.CoordR(), c.CoordS())
 }
 
@@ -202,6 +208,12 @@ func cubeAdd(hex, vec cubeCoords) cubeCoords {
 	return cubeCoords{hex.q + vec.q, hex.r + vec.r, hex.s + vec.s}
 }
 
+func Add(hex, vec Hexagon) Hexagon {
+	newCube := cubeAdd(hex.cube, vec.cube)
+	newHex, _ := New(Feed_CUBE, newCube.q, newCube.r, newCube.s)
+	return newHex
+}
+
 func cubeNeighbor(cube cubeCoords, direction int) cubeCoords {
 	return cubeAdd(cube, cubeDirection(direction))
 }
@@ -269,16 +281,35 @@ func (c *Hexagon) CubeValues() (int, int, int) {
 }
 
 func Match(c1, c2 Hexagon) bool {
-	return c1.cube.q != c2.cube.q && c1.cube.r != c2.cube.r && c1.cube.s != c2.cube.s
+	return MatchHex(&c1, &c2) && MatchCube(&c1, &c2)
+
+}
+
+func MatchHex(h1, h2 Hex) bool {
+	return h1.CoordX() == h2.CoordX() && h1.CoordY() == h2.CoordY()
+}
+
+func MatchCube(c1, c2 Cube) bool {
+	return c1.CoordQ() == c2.CoordQ() && c1.CoordR() == c2.CoordR() && c1.CoordS() == c2.CoordS()
 }
 
 func Distance(c1, c2 Hexagon) int {
 	return cubeDistance(c1.cube, c2.cube)
 }
 
-func Neighbors(c Cube) ([]*Hexagon, error) {
+func DistanceCube(c1, c2 Hexagon) int {
+	return cubeDistance(c1.cube, c2.cube)
+}
+
+func DistanceHex(h1, h2 Hex) int {
+	//hx1, _ := FromHex(h1)
+	//hx2, _ := FromHex(h2)
+	return cubeDistance(FromHex(h1).cube, FromHex(h2).cube)
+}
+
+func Neighbors(c Cube) ([]Hexagon, error) {
 	cb := cubeCoords{c.CoordQ(), c.CoordR(), c.CoordS()}
-	cbNeib := []*Hexagon{}
+	cbNeib := []Hexagon{}
 	for dir := Direction_N; dir <= Direction_NW; dir++ {
 		cc := cubeNeighbor(cb, dir)
 		hx, err := FromCube(&cc)
@@ -290,10 +321,24 @@ func Neighbors(c Cube) ([]*Hexagon, error) {
 	return cbNeib, nil
 }
 
-func Ring(cntr Cube, radius int) ([]*Hexagon, error) {
+func Ring(cntr Cube, radius int) ([]Hexagon, error) {
 	center := cubeCoords{cntr.CoordQ(), cntr.CoordR(), cntr.CoordS()}
 	ringCube := cubeRing(center, radius)
-	output := []*Hexagon{}
+	output := []Hexagon{}
+	for _, cb := range ringCube {
+		hx, err := New(Feed_CUBE, cb.q, cb.r, cb.s)
+		if err != nil {
+			return nil, err
+		}
+		output = append(output, hx)
+	}
+	return output, nil
+}
+
+func Spiral(cntr Cube, radius int) ([]Hexagon, error) {
+	center := cubeCoords{cntr.CoordQ(), cntr.CoordR(), cntr.CoordS()}
+	ringCube := cubeSpiral(center, radius)
+	output := []Hexagon{}
 	for _, cb := range ringCube {
 		hx, err := New(Feed_CUBE, cb.q, cb.r, cb.s)
 		if err != nil {

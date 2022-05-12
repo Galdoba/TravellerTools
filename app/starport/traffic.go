@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Galdoba/TravellerTools/app/modules/trvdb"
-	"github.com/Galdoba/TravellerTools/pkg/astrogation"
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
@@ -34,6 +34,7 @@ func Traffic(c *cli.Context) error {
 		if srchErr != nil {
 			return srchErr
 		}
+
 		if targetWorld.CoordX() == sourceworld.CoordX() && targetWorld.CoordY() == sourceworld.CoordY() {
 			continue
 		}
@@ -163,19 +164,20 @@ func (pi *passengerInfo) addAveragePassengers_MGT1_MP(bpv int) {
 	pi.total = pi.low + pi.basic + pi.middle + pi.high
 }
 
-func searchNeighbours(sourceworld Port, distance int) []astrogation.Coordinates {
-	jcoord := astrogation.JumpMap(sourceworld, distance)
-	coords := []astrogation.Coordinates{}
+func searchNeighbours(sourceworld Port, distance int) []hexagon.Hexagon {
+	//jcoord := astrogation.JumpMap(sourceworld, distance)
+	jcoord, _ := hexagon.Spiral(sourceworld, distance)
+	coords := []hexagon.Hexagon{}
 	for i, v := range jcoord {
 		fmt.Printf("Search %v/%v    \r", i, len(jcoord))
 		neighbour, err := PortByCoordinates(v.HexValues())
 		if err != nil {
 			continue
 		}
-		if neighbour.CoordX() == sourceworld.CoordX() && neighbour.CoordY() == sourceworld.CoordY() {
+		if hexagon.MatchHex(sourceworld, neighbour) {
 			continue
 		}
-		coords = append(coords, astrogation.CoordinatesOf(neighbour))
+		coords = append(coords, hexagon.FromHex(neighbour))
 	}
 	//	utils.ClearScreen()
 	return coords
@@ -205,6 +207,11 @@ type Port interface {
 	Sector() string
 	CoordX() int
 	CoordY() int
+	CoordQ() int
+	CoordR() int
+	CoordS() int
+	hexagon.Cube
+	hexagon.Hex
 }
 
 func TradeCodes(p Port) string {
@@ -223,6 +230,11 @@ func TradeCodes(p Port) string {
 func PortByCoordinates(x, y int) (Port, error) {
 	return survey.SearchByCoordinates(x, y)
 
+}
+
+func Hexagon(p Port) hexagon.Hexagon {
+	hex, _ := hexagon.New(hexagon.Feed_HEX, p.CoordX(), p.CoordY())
+	return hex
 }
 
 func SearchSourcePort(searchKey string) (Port, error) {

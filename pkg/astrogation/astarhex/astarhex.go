@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
@@ -21,7 +22,8 @@ type Config struct {
 	//GridWidth, GridHeight int
 	//InvalidNodes          []Node
 	//WeightedNodes         []Node
-	MaxJumpDistance int
+	MaxJumpDistance    int
+	MaxConseuqnceJumps int
 }
 
 type astar struct {
@@ -54,36 +56,20 @@ func New(config Config) (*astar, error) {
 func (a *astar) H(nodeA Node, nodeB Node) int {
 	//absX := math.Abs(float64(nodeA.X - nodeB.X))
 	//absY := math.Abs(float64(nodeA.Y - nodeB.Y))
-	return Distance(nodeA, nodeB) * 100000
+	return hexagon.Distance(nodeA.Hex, nodeB.Hex) * 100000
 }
 
 // GetNeighborNodes calculates the next neighbors of the given node
 // if a neighbor node is not accessible the node will be ignored
-func (a *astar) GetNeighborNodes(node Node) []Node {
+func (a *astar) GetNeighborNodes(node Node, radius int) []Node {
 	var neighborNodes []Node
-	northNode := Node{Q: node.Q, R: node.R - 1, S: node.S + 1, parent: &node}
-	if a.isAccessible(northNode) {
-		neighborNodes = append(neighborNodes, northNode)
-	}
-	northEastNode := Node{Q: node.Q + 1, R: node.R - 1, S: node.S, parent: &node}
-	if a.isAccessible(northEastNode) {
-		neighborNodes = append(neighborNodes, northEastNode)
-	}
-	southEastNode := Node{Q: node.Q + 1, R: node.R, S: node.S - 1, parent: &node}
-	if a.isAccessible(southEastNode) {
-		neighborNodes = append(neighborNodes, southEastNode)
-	}
-	southNode := Node{Q: node.Q, R: node.R + 1, S: node.S - 1, parent: &node}
-	if a.isAccessible(southNode) {
-		neighborNodes = append(neighborNodes, southNode)
-	}
-	southWestNode := Node{Q: node.Q - 1, R: node.R + 1, S: node.S, parent: &node}
-	if a.isAccessible(southWestNode) {
-		neighborNodes = append(neighborNodes, southWestNode)
-	}
-	northWestNode := Node{Q: node.Q - 1, R: node.R, S: node.S + 1, parent: &node}
-	if a.isAccessible(northWestNode) {
-		neighborNodes = append(neighborNodes, northWestNode)
+	spiral, _ := hexagon.Spiral(&node.Hex, radius)
+	for _, neib := range spiral {
+		neibNode := SetNodeHex(neib)
+		neibNode.parent = &node
+		if a.isAccessible(*neibNode) {
+			neighborNodes = append(neighborNodes, *neibNode)
+		}
 	}
 	return neighborNodes
 }
@@ -109,7 +95,11 @@ func (a *astar) isAccessible(node Node) bool {
 // IsEndNode checks if the given node has
 // equal node coordinates with the end node
 func (a *astar) IsEndNode(checkNode, endNode Node) bool {
-	return checkNode.Q == endNode.Q && checkNode.R == endNode.R && checkNode.S == endNode.S
+	return hexagon.Match(checkNode.Hex, endNode.Hex)
+}
+
+func (a *astar) StartNode() Node {
+	return a.startNode
 }
 
 // FindPath starts the a* algorithm for the given start and end node
@@ -117,20 +107,16 @@ func (a *astar) IsEndNode(checkNode, endNode Node) bool {
 //
 // If no path was found it returns nil and an error
 func (a *astar) FindPath(startNode, endNode Node) ([]Node, error) {
-
 	a.startNode = startNode
 	a.endNode = endNode
-	fmt.Println("Distance:", Distance(startNode, endNode))
-
+	//	fmt.Println("Distance:", hexagon.Distance(startNode.Hex, endNode.Hex))
 	defer func() {
 		a.openList.Clear()
 		a.closedList.Clear()
 	}()
-
 	a.openList.Add(startNode)
 
 	for !a.openList.IsEmpty() {
-
 		currentNode, err := a.openList.GetMinFNode()
 		if err != nil {
 			return nil, fmt.Errorf("cannot get minF node %v", err)
@@ -143,15 +129,12 @@ func (a *astar) FindPath(startNode, endNode Node) ([]Node, error) {
 		if a.IsEndNode(currentNode, endNode) {
 			return a.getNodePath(currentNode), nil
 		}
-
-		neighbors := a.GetNeighborNodes(currentNode)
+		neighbors := a.GetNeighborNodes(currentNode, a.config.MaxJumpDistance)
 		for _, neighbor := range neighbors {
 			if a.closedList.Contains(neighbor) {
 				continue
 			}
-
 			a.calculateNode(&neighbor)
-
 			if !a.openList.Contains(neighbor) {
 				a.openList.Add(neighbor)
 			}
@@ -205,9 +188,9 @@ func (a *astar) getNodePath(currentNode Node) []Node {
 
 func EvaluateMovementWeight(n *Node) int {
 	//coord := NewCoordinates(crd.CoordX(), crd.CoordY())
-	wrld, err := survey.SearchByCoordinates(n.CoordX(), n.CoordY())
+	wrld, err := survey.SearchByCoordinates(n.Hex.CoordX(), n.Hex.CoordY())
 	if err != nil {
-		return 100000
+		return 10000000
 	}
 	wrldWeight := 100000
 	switch wrld.TravelZone() {
@@ -248,4 +231,43 @@ func EvaluateMovementWeight(n *Node) int {
 		wrldWeight -= (ggFactor * 10)
 	}
 	return wrldWeight
+}
+
+func (a *astar) FindPathHex(startHex, endHex hexagon.Hex) ([]Node, error) {
+	strtHX := hexagon.FromHex(startHex)
+	startNode := *SetNodeHex(strtHX)
+	a.startNode = startNode
+	endHX := hexagon.FromHex(endHex)
+	endNode := *SetNodeHex(endHX)
+	a.endNode = endNode
+	return a.FindPath(startNode, endNode)
+	// defer func() {
+	// 	a.openList.Clear()
+	// 	a.closedList.Clear()
+	// }()
+	// a.openList.Add(startNode)
+	// for !a.openList.IsEmpty() {
+	// 	currentNode, err := a.openList.GetMinFNode()
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("cannot get minF node %v", err)
+	// 	}
+	// 	a.openList.Remove(currentNode)
+	// 	a.closedList.Add(currentNode)
+	// 	// we found the path
+	// 	if a.IsEndNode(currentNode, endNode) {
+	// 		return a.getNodePath(currentNode), nil
+	// 	}
+	// 	neighbors := a.GetNeighborNodes(currentNode, a.config.MaxJumpDistance)
+	// 	for _, neighbor := range neighbors {
+	// 		if a.closedList.Contains(neighbor) {
+	// 			continue
+	// 		}
+	// 		a.calculateNode(&neighbor)
+	// 		if !a.openList.Contains(neighbor) {
+	// 			a.openList.Add(neighbor)
+	// 		}
+	// 	}
+	// }
+
+	// return nil, errors.New("No path found")
 }

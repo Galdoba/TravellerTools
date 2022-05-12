@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/pkg/astrogation"
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
@@ -89,7 +89,7 @@ func BaseFreightFactor_MGT2_Core(source, destination mWorld) (int, error) {
 	if destination.TravelZone() == "R" {
 		fMod -= 6
 	}
-	dist := astrogation.DistanceRaw(source.CoordX(), source.CoordY(), destination.CoordX(), destination.CoordY())
+	dist := hexagon.DistanceHex(source, destination)
 	if dist > 1 {
 		fMod = fMod - (dist - 1)
 	}

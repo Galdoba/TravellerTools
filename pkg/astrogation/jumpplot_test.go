@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/astarhex"
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
+/*
 func createField() map[Coordinates]int {
 	field := make(map[Coordinates]int)
 	center := NewCoordinates(-100, -17)
@@ -41,30 +43,29 @@ func createField() map[Coordinates]int {
 
 	return field
 }
+*/
 
 type positions struct {
-	field map[Coordinates]int
-	start Coordinates
-	end   Coordinates
-	path  []Coordinates
+	field map[hexagon.Hexagon]int
+	start hexagon.Hexagon
+	end   hexagon.Hexagon
+	path  []hexagon.Hexagon
 }
 
 func Test_PlotCourse(t *testing.T) {
 
-	ast, err := astarhex.New(astarhex.Config{1})
-	fmt.Println(ast, err)
-	path, err2 := ast.FindPath(*astarhex.SetNodeHex(-103, -16), *astarhex.SetNodeHex(-100, -17))
+	ast, _ := astarhex.New(astarhex.Config{2, 1})
+	start, _ := survey.Search("Drinax")
+	strtHex := hexagon.FromHex(start[0])
+	fmt.Println(start)
+	end, _ := survey.Search("Stohyus")
+	endHex := hexagon.FromHex(end[0])
+	fmt.Println(end)
+	path, err2 := ast.FindPathHex(&strtHex, &endHex)
+	path = append(path, ast.StartNode())
 	fmt.Println(path, err2)
-	for _, node := range path {
-		world, err3 := survey.SearchByCoordinates(node.HexCoords())
-		x, y := node.HexCoords()
-		if world == nil {
-
-			fmt.Println("world.MW_Name()", err3, x, y)
-		} else {
-			fmt.Println(world.MW_Name(), err3, x, y)
-		}
-
+	for _, p := range path {
+		wr, err := survey.SearchByCoordinates(p.Hex.CoordX(), p.Hex.CoordY())
+		fmt.Println(wr, err)
 	}
-
 }

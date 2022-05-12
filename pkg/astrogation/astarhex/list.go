@@ -1,6 +1,10 @@
 package astarhex
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
+)
 
 // List represents a list of nodes
 type List struct {
@@ -35,9 +39,11 @@ func (l *List) Remove(removeNode Node) {
 // if the node is not found the return value is -1
 func (l *List) GetIndex(searchNode Node) int {
 	for index, node := range l.nodes {
-		if node.Q == searchNode.Q && node.R == searchNode.R && node.S == searchNode.S {
+		if hexagon.Match(node.Hex, searchNode.Hex) {
 			return index
+
 		}
+
 	}
 	return -1
 }

@@ -7,7 +7,7 @@ import (
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 	"github.com/Galdoba/TravellerTools/internal/ehex"
-	"github.com/Galdoba/TravellerTools/pkg/astrogation"
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 )
 
 type planet struct {
@@ -15,22 +15,32 @@ type planet struct {
 	currrentUWP string
 	starport    string
 	atrib       map[int]int
+	hex         hexagon.Hexagon
 	coordX      int
 	coordY      int
+	coordQ      int
+	coordR      int
+	coordS      int
 }
 
 type SurveyData interface {
 	MW_Name() string
 	MW_UWP() string
-	CoordX() int
-	CoordY() int
+	// CoordX() int
+	// CoordY() int
+	// CoordQ() int
+	// CoordR() int
+	// CoordS() int
+	hexagon.Hex
+	hexagon.Cube
 }
 
 func createPlanet(name, uwp string, x, y int) (*planet, error) {
 	p := planet{}
 	p.name = name
 	p.currrentUWP = uwp
-	p.coordX, p.coordY = x, y
+	p.hex, _ = hexagon.New(hexagon.Feed_HEX, x, y)
+	//p.coordX, p.coordY = x, y
 	creator := dice.New().SetSeed(fmt.Sprintf("n%vu%vx%vy%v", name, uwp, x, y))
 	p.atrib = make(map[int]int)
 	for _, key := range []int{Solidarity, Wealth, Expansion, Might, Development} {
@@ -139,7 +149,7 @@ func (pl *planet) TradeFactor() float64 {
 
 //TradeRouteValue - return yearly Trade Route Value
 func TradeRouteValue(pl1, pl2 *planet) float64 {
-	dist := astrogation.DistanceRaw(pl1.coordX, pl1.coordY, pl2.coordX, pl2.coordY)
+	dist := hexagon.Distance(pl1.hex, pl2.hex)
 	return (pl1.TradeFactor() + pl2.TradeFactor()) / float64(dist)
 }
 

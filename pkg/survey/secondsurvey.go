@@ -46,6 +46,9 @@ const (
 type SecondSurveyData struct {
 	coordX           int
 	coordY           int
+	coordQ           int
+	coordR           int
+	coordS           int
 	sector           string
 	hex              string
 	mw_Name          string
@@ -231,6 +234,10 @@ func (ssd *SecondSurveyData) verify() {
 		ssd.allegiance = "XXXX"
 		ssd.allegianceExt = calculations.AllegianceFull(ssd.allegiance)
 	}
+
+	ssd.coordQ = ssd.coordX
+	ssd.coordR = ssd.coordY - (ssd.coordX-ssd.coordX%1)/2
+	ssd.coordS = -ssd.coordQ - ssd.coordR
 	switch {
 	default:
 		return
@@ -264,6 +271,8 @@ func (ssd *SecondSurveyData) verify() {
 		ssd.errors = append(ssd.errors, calculations.NobilityErrors(ssd.mw_Nobility, strings.Fields(ssd.mw_Remarks), ssd.mw_ImportanceInt)...)
 	case calculations.AllegianceFull(ssd.allegiance) == "UNKNOWN SHORTFORM":
 		ssd.errors = append(ssd.errors, fmt.Errorf("allegiance unknown"))
+	case ssd.coordQ+ssd.coordR+ssd.coordS != 0:
+		ssd.errors = append(ssd.errors, fmt.Errorf("cube coordinates invalid"))
 	}
 }
 
@@ -444,6 +453,15 @@ func (ssd *SecondSurveyData) CoordX() int {
 }
 func (ssd *SecondSurveyData) CoordY() int {
 	return ssd.coordY
+}
+func (ssd *SecondSurveyData) CoordQ() int {
+	return ssd.coordQ
+}
+func (ssd *SecondSurveyData) CoordR() int {
+	return ssd.coordR
+}
+func (ssd *SecondSurveyData) CoordS() int {
+	return ssd.coordS
 }
 func (ssd *SecondSurveyData) Sector() string {
 	return ssd.sector

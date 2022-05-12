@@ -38,7 +38,7 @@ func Info(c *cli.Context) error {
 				cargoOUT = true
 			}
 		}
-		if (cargoIN || cargoOUT) && astrogation.TradeRouteExist(sourceworld, port, targetWorldsCoordinates) {
+		if (cargoIN || cargoOUT) && astrogation.TradeRouteExist(Hexagon(sourceworld), Hexagon(port), targetWorldsCoordinates) {
 			fmt.Println("Trade route with", port.MW_Name())
 
 		}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/pkg/astrogation"
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
@@ -19,8 +19,8 @@ type mWorld interface {
 	MW_UWP() string
 	TravelZone() string
 	MW_Remarks() string
-	CoordX() int
-	CoordY() int
+	hexagon.Hex
+	hexagon.Cube
 }
 
 type PassengerTrafficData struct {
@@ -96,7 +96,7 @@ func BasePassengerFactor_MGT2_Core(source, destination mWorld) (int, error) {
 	if destination.TravelZone() == "R" {
 		fMod -= 4
 	}
-	dist := astrogation.DistanceRaw(source.CoordX(), source.CoordY(), destination.CoordX(), destination.CoordY())
+	dist := hexagon.DistanceHex(source, destination)
 	if dist > 1 {
 		fMod = fMod - (dist - 1)
 	}

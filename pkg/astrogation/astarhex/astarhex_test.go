@@ -1,5 +1,7 @@
 package astarhex
 
+import "testing"
+
 /*
 func TestAstar_H(t *testing.T) {
 	nodeA := Node{Q: 0, R: 0, S: 0}
@@ -344,3 +346,7 @@ func TestAstar_FindPathNoPath(t *testing.T) {
 
 }
 */
+
+func TestNeibours(t *testing.T) {
+
+}
