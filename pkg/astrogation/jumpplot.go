@@ -10,8 +10,11 @@ import (
 )
 
 func TradeRouteExist(source, destination hexagon.Hexagon, validJumpPoints []hexagon.Hexagon) bool {
+	if hexagon.Match(source, destination) {
+		return false
+	}
 	if hexagon.Distance(source, destination) > 4 {
-		fmt.Println("Distance(source, destination) > 4")
+		//fmt.Println("Distance(source, destination) > 4")
 		return false
 	}
 	destFound := false
@@ -55,12 +58,17 @@ func PlotCource(start, end hexagon.Hex, MaxJumpDistance int, MaxConseuqnceJumps 
 		return pErr.Error()
 	}
 	path = append(path, *astarhex.SetNodeHex(hexagon.FromHex(start)))
+
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
 	pathStr := ""
 	for _, hx := range path {
 		wr, errW := survey.SearchByCoordinates(hx.Hex.HexValues())
 		if errW != nil {
 			return errW.Error()
 		}
+
 		pathStr += wr.MW_Name() + " ---> "
 	}
 	pathStr = strings.TrimSuffix(pathStr, " ---> ")

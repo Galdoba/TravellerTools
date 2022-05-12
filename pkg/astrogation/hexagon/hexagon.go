@@ -63,6 +63,10 @@ type Hex interface {
 	CoordY() int
 }
 
+func (hx *Hexagon) AsHex() Hex {
+	return &hx.hex
+}
+
 func (c *Hexagon) CoordX() int {
 	return c.hex.col
 }
