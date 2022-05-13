@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-func Info(c *cli.Context) error {
+func Info0(c *cli.Context) error {
 	searchKey := c.String("worldname")
 
 	sourceworldMain, err := SearchSourcePort(searchKey)
@@ -26,33 +26,38 @@ func Info(c *cli.Context) error {
 	//fmt.Println(targetWorldsCoordinates)
 	//fmt.Printf("%v have is a part of tra...\n", sourceworldMain.MW_Name())
 	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
-	trafficMap := make(map[string]int)
+	trafficArriving := make(map[string]int)
+	trafficTransit := make(map[string]int)
+	trafficDepart := make(map[string]int)
+	fmt.Println("Evaluating Trade Routes: ")
 	for _, sourceworldHex := range transitWorldsCoordinates {
 		sourceworld, _ := PortByCoordinates(sourceworldHex.HexValues())
 		for _, crds := range targetWorldsCoordinates {
+			fmt.Print("\r                                                                                                    \r")
 			port, _ := PortByCoordinates(crds.HexValues())
-			fmt.Println("Evaluating Trade Route from", sourceworld.MW_Name(), "to", port.MW_Name()) //, port.MW_Name())
+			fmt.Print(sourceworld.MW_Name(), " ------>> ", port.MW_Name(), " ") //, port.MW_Name())
 			if hexagon.DistanceHex(port, sourceworld) == 0 {
-				fmt.Println("REJECTED: self-trade imposibble")
+				fmt.Print("REJECTED: self-trade imposibble")
 				continue
 			}
 			if hexagon.DistanceHex(port, sourceworldMain) > 4 {
-				fmt.Println("REJECTED: not in a Trade Zone of", sourceworldMain.MW_Name())
+				fmt.Print("REJECTED: not in a Trade Zone of", sourceworldMain.MW_Name())
+				continue
 			}
 			if sourceworld.MW_Name() != sourceworldMain.MW_Name() && hexagon.DistanceHex(port, sourceworld) > 2 {
-				fmt.Println("REJECTED:", sourceworldMain.MW_Name(), "is not a transit World")
+				fmt.Print("REJECTED:", sourceworldMain.MW_Name(), "is not a transit World")
 				continue
 			}
-			if hexagon.DistanceHex(sourceworldMain, sourceworld) > 2 {
-				fmt.Println("REJECTED:", sourceworld.MW_Name(), "is not a transit World")
-				continue
-			}
+			// if hexagon.DistanceHex(sourceworldMain, sourceworld) > 2 {
+			// 	fmt.Print("REJECTED:", sourceworld.MW_Name(), "is not a transit World")
+			// 	continue
+			// }
 			if port.TravelZone() == "R" {
-				fmt.Println("REJECTED:", port.MW_Name(), "is a RED ZONE")
+				fmt.Print("REJECTED:", port.MW_Name(), "is a RED ZONE")
 				continue
 			}
 			if sourceworld.TravelZone() == "R" {
-				fmt.Println("REJECTED:", sourceworld.MW_Name(), "is a RED ZONE")
+				fmt.Print("REJECTED:", sourceworld.MW_Name(), "is a RED ZONE")
 				continue
 			}
 			tcodes := strings.Fields(TradeCodes(port))
@@ -66,30 +71,38 @@ func Info(c *cli.Context) error {
 					cargoOUT = true
 				}
 			}
-			if (cargoIN || cargoOUT) && astrogation.TradeRouteExist(Hexagon(sourceworld), Hexagon(port), targetWorldsCoordinates) {
+			if cargoIN || cargoOUT { // && astrogation.TradeRouteExist(Hexagon(sourceworld), Hexagon(port), targetWorldsCoordinates) {
 
 				src := Hexagon(sourceworld)
 				dest := Hexagon(port)
-				path := astrogation.PlotCource(src.AsHex(), dest.AsHex(), 2, 1)
-				fmt.Print(path)
-				if !strings.Contains(path, sourceworldMain.MW_Name()) {
-					fmt.Println(" REJECTED:", sourceworldMain.MW_Name(), "recieves no traffic")
+				path, err := astrogation.PlotCource(src.AsHex(), dest.AsHex(), 2, 1)
+				if path.Cost > 1000000 {
+					fmt.Println(" REJECTED: no jumppoints connection")
 					continue
 				}
-				portNames := strings.Split(path, " ---> ")
-				for _, pn := range portNames {
-					trafficMap[pn]++
+				if err != nil {
+					return err
 				}
-				fmt.Println(" ACCEPTED!")
-				for i := 62; i > -1; i-- {
-					for k, v := range trafficMap {
-						if i == v {
-							fmt.Println(k, v)
-						}
+				fmt.Print("[", path.Path, "]")
+				if !strings.Contains(path.Path, sourceworldMain.MW_Name()) {
+					fmt.Print(" REJECTED:", sourceworldMain.MW_Name(), "recieves no traffic")
+					continue
+				}
+				portNames := strings.Split(path.Path, " ---> ")
+				for pos, pn := range portNames {
+					switch pos {
+					default:
+						trafficTransit[pn]++
+					case 0:
+						trafficDepart[pn]++
+					case len(portNames) - 1:
+						trafficArriving[pn]++
 					}
 				}
+				fmt.Println(" ACCEPTED!")
+
 			} else {
-				fmt.Println("REJECTED: no trade")
+				fmt.Print("REJECTED: no trade")
 			}
 
 			// if cargoIN {
@@ -114,8 +127,25 @@ func Info(c *cli.Context) error {
 		}
 	}
 	fmt.Println("Gathering traffic data:")
+	fmt.Println("Departing Ports:")
 	for i := 62; i > -1; i-- {
-		for k, v := range trafficMap {
+		for k, v := range trafficDepart {
+			if i == v {
+				fmt.Println(k, v)
+			}
+		}
+	}
+	fmt.Println("Transit Ports:")
+	for i := 62; i > -1; i-- {
+		for k, v := range trafficTransit {
+			if i == v {
+				fmt.Println(k, v)
+			}
+		}
+	}
+	fmt.Println("Receiver Ports:")
+	for i := 62; i > -1; i-- {
+		for k, v := range trafficArriving {
 			if i == v {
 				fmt.Println(k, v)
 			}
@@ -123,6 +153,99 @@ func Info(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func Info(c *cli.Context) error {
+	searchKey := c.String("worldname")
+
+	sourceworldMain, err := SearchSourcePort(searchKey)
+	if err != nil {
+		return err
+	}
+	reach := 4
+	sourceWorldHex := hexagon.New_Unsafe(hexagon.Feed_HEX, sourceworldMain.CoordX(), sourceworldMain.CoordY())
+	//////////////////////
+	//Собираем список всех портов и всех координат
+	allPorts := []Port{}
+	//tradeZone, _ := hexagon.Spiral(sourceWorldHex.AsCube(), 4)
+	allWorldsCoordinates := append([]hexagon.Hexagon{sourceWorldHex}, searchNeighbours(sourceworldMain, reach)...)
+	for _, hex := range allWorldsCoordinates {
+		p, _ := PortByCoordinates(hex.HexValues())
+		allPorts = append(allPorts, p)
+	}
+	routes := evaluateTradeRoutes(allPorts)
+	fmt.Println("Trade possible:")
+	for _, tr := range routes {
+		fmt.Printf("%v --> %v\n", tr.source.MW_Name(), tr.destination.MW_Name())
+	}
+	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
+	//состовляем все пары портов и проверяем их на возможность торговли по торговым кодам
+
+	//tradePointCoordinates := append(targetWorldsCoordinates, astrogation.NewCoordinates(sourceworld.CoordX(), sourceworld.CoordY()))
+	//fmt.Println(targetWorldsCoordinates)
+	//fmt.Printf("%v have is a part of tra...\n", sourceworldMain.MW_Name())
+
+	return nil
+}
+
+type tradeRoute struct {
+	source      Port
+	destination Port
+	//tradePossible bool
+}
+
+func evaluateTradeRoutes(ports []Port) []tradeRoute {
+	routes := []tradeRoute{}
+	allChecks := len(ports) * len(ports)
+	checksCompleted := 0
+	trFound := 0
+	for _, src := range ports {
+		for _, dest := range ports {
+			checksCompleted++
+			fmt.Printf("\rChecks completed %v/%v (found: %v)", checksCompleted, allChecks, trFound)
+			switch {
+			case hexagon.Distance(Hexagon(src), Hexagon(dest)) > 4:
+				continue
+			case hexagon.Distance(Hexagon(src), Hexagon(dest)) == 0:
+				continue
+			case src.TravelZone() == "R":
+				continue
+			case dest.TravelZone() == "R":
+				continue
+			case tradePossible(src, dest):
+
+				trFound++
+				routes = append(routes, tradeRoute{src, dest})
+			}
+
+		}
+	}
+	fmt.Println("")
+	return routes
+}
+
+func tradePossible(source, destination Port) bool {
+	sTC := strings.Fields(TradeCodes(source))
+	dTC := strings.Fields(TradeCodes(destination))
+	for _, tcS := range sTC {
+		switch tcS {
+		case "As", "De", "Ic", "Ni":
+			for _, tcD := range dTC {
+				switch tcD {
+				case "In", "Ht":
+					return true
+				}
+			}
+		case "Ag", "Ga", "Wa":
+			for _, tcD := range dTC {
+				switch tcD {
+				case "Hi", "Ri":
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 /*

@@ -94,6 +94,10 @@ type Cube interface {
 	CoordS() int
 }
 
+func (hx *Hexagon) AsCube() Cube {
+	return &hx.cube
+}
+
 func (hx *Hexagon) CoordQ() int {
 	return hx.cube.q
 }

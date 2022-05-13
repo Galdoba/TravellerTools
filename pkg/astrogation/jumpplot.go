@@ -48,31 +48,43 @@ func TradeRouteExist(source, destination hexagon.Hexagon, validJumpPoints []hexa
 	return false
 }
 
-func PlotCource(start, end hexagon.Hex, MaxJumpDistance int, MaxConseuqnceJumps int) string {
+type Plot struct {
+	nodes []astarhex.Node
+	Path  string
+	Cost  int
+}
+
+func PlotCource(start, end hexagon.Hex, MaxJumpDistance int, MaxConseuqnceJumps int) (Plot, error) {
+	jc := Plot{}
 	ast, err := astarhex.New(astarhex.Config{MaxJumpDistance, MaxConseuqnceJumps})
 	if err != nil {
-		return err.Error()
+		return jc, err
 	}
 	path, pErr := ast.FindPathHex(start, end)
 	if pErr != nil {
-		return pErr.Error()
+		return jc, pErr
 	}
 	path = append(path, *astarhex.SetNodeHex(hexagon.FromHex(start)))
 
 	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
 		path[i], path[j] = path[j], path[i]
 	}
+	jc.nodes = path
+	for _, n := range path {
+		jc.Cost += n.Cost()
+	}
 	pathStr := ""
 	for _, hx := range path {
 		wr, errW := survey.SearchByCoordinates(hx.Hex.HexValues())
 		if errW != nil {
-			return errW.Error()
+			return jc, errW
 		}
 
 		pathStr += wr.MW_Name() + " ---> "
 	}
-	pathStr = strings.TrimSuffix(pathStr, " ---> ")
-	return pathStr
+	jc.Path = strings.TrimSuffix(pathStr, " ---> ")
+
+	return jc, nil
 }
 
 /*

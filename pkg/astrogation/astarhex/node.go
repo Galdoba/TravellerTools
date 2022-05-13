@@ -23,3 +23,7 @@ func SetNodeHex(hex hexagon.Hexagon) *Node {
 func (n *Node) String() string {
 	return fmt.Sprintf("Node [q:%d r:%d s:%d - f:%d g:%d h:%d]", n.Hex.CoordQ(), n.Hex.CoordR(), n.Hex.CoordS(), n.f, n.g, n.h)
 }
+
+func (n *Node) Cost() int {
+	return n.g
+}

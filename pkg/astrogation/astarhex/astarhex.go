@@ -121,6 +121,9 @@ func (a *astar) FindPath(startNode, endNode Node) ([]Node, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot get minF node %v", err)
 		}
+		if len(a.getNodePath(currentNode)) >= 5 {
+			return nil, fmt.Errorf("Path have 5+ nodes start:[%v] end:[%v]", startNode, endNode)
+		}
 
 		a.openList.Remove(currentNode)
 		a.closedList.Add(currentNode)
