@@ -163,20 +163,19 @@ func Info(c *cli.Context) error {
 		return err
 	}
 	reach := 4
-	sourceWorldHex := hexagon.New_Unsafe(hexagon.Feed_HEX, sourceworldMain.CoordX(), sourceworldMain.CoordY())
 	//////////////////////
 	//Собираем список всех портов и всех координат
 	allPorts := []Port{}
 	//tradeZone, _ := hexagon.Spiral(sourceWorldHex.AsCube(), 4)
-	allWorldsCoordinates := append([]hexagon.Hexagon{sourceWorldHex}, searchNeighbours(sourceworldMain, reach)...)
+	allWorldsCoordinates := append([]hexagon.Hexagon{Hexagon(sourceworldMain)}, searchNeighbours(sourceworldMain, reach)...)
 	for _, hex := range allWorldsCoordinates {
 		p, _ := PortByCoordinates(hex.HexValues())
 		allPorts = append(allPorts, p)
 	}
-	routes := evaluateTradeRoutes(allPorts)
+	routes := evaluateTradeRoutes(allPorts, sourceworldMain)
 	fmt.Println("Trade possible:")
 	for _, tr := range routes {
-		fmt.Printf("%v --> %v\n", tr.source.MW_Name(), tr.destination.MW_Name())
+		fmt.Printf("%v --> %v (%v)\n", tr.source.MW_Name(), tr.destination.MW_Name(), tr.status)
 	}
 	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
 	//состовляем все пары портов и проверяем их на возможность торговли по торговым кодам
@@ -191,10 +190,11 @@ func Info(c *cli.Context) error {
 type tradeRoute struct {
 	source      Port
 	destination Port
+	status      string
 	//tradePossible bool
 }
 
-func evaluateTradeRoutes(ports []Port) []tradeRoute {
+func evaluateTradeRoutes(ports []Port, portOfInterest Port) []tradeRoute {
 	routes := []tradeRoute{}
 	allChecks := len(ports) * len(ports)
 	checksCompleted := 0
@@ -208,14 +208,32 @@ func evaluateTradeRoutes(ports []Port) []tradeRoute {
 				continue
 			case hexagon.Distance(Hexagon(src), Hexagon(dest)) == 0:
 				continue
-			case src.TravelZone() == "R":
-				continue
-			case dest.TravelZone() == "R":
-				continue
+			// case src.TravelZone() == "R":
+			// 	continue
+			// case dest.TravelZone() == "R":
+			// 	continue
 			case tradePossible(src, dest):
+				jp, _ := astrogation.PlotCource(src, dest, 2, 1)
+				if !strings.Contains(jp.Path, portOfInterest.MW_Name()) {
+					continue
+				}
+				trade := tradeRoute{src, dest, ""}
+				names := strings.Split(jp.Path, " --> ")
+				for i, name := range names {
+					if name == portOfInterest.MW_Name() {
+						switch i {
+						default:
+							trade.status = "Transit"
+						case 0:
+							trade.status = "Export"
+						case len(names) - 1:
+							trade.status = "Import"
+						}
+					}
 
+				}
 				trFound++
-				routes = append(routes, tradeRoute{src, dest})
+				routes = append(routes, trade)
 			}
 
 		}
