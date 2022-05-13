@@ -218,7 +218,7 @@ func evaluateTradeRoutes(ports []Port, portOfInterest Port) []tradeRoute {
 					continue
 				}
 				trade := tradeRoute{src, dest, ""}
-				names := strings.Split(jp.Path, " --> ")
+				names := strings.Split(jp.Path, " ---> ")
 				for i, name := range names {
 					if name == portOfInterest.MW_Name() {
 						switch i {
