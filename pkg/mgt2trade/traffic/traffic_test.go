@@ -49,8 +49,11 @@ func (ti *testInput) MW_Remarks() string {
 
 func input() []inputStruct {
 	inp := []inputStruct{}
-	inp = append(inp, inputStruct{source: testInput{"A43645A-E", "", -107, -17, 0, 0, 0, "Ni"}, dest: testInput{"B867564-6", "", -108, -17, 0, 0, 0, "Ag Ni Ga Pr O:2324"}}) //Drinax ---> Asim
-	//inp = append(inp, inputStruct{source: testInput{"C543487-B", "A", 24, 21, ""}, dest: testInput{"B867564-6", "R", 22, 21, ""}})
+	inp = append(inp, inputStruct{source: testInput{"A43645A-E", "", -107, -17, 0, 0, 0, "Ni"}, dest: testInput{"B867564-6", "", -108, -17, 0, 0, 0, "Ag Ni Ga Pr O:2324"}}) //Drinax ---> Asim T5
+
+	inp = append(inp, inputStruct{source: testInput{"A33645C-F", "", -107, -17, 0, 0, 0, "Ni Ht"}, dest: testInput{"B867564-6", "", -108, -17, 0, 0, 0, "Ag Ni "}})   //Drinax ---> Asim Mgt1
+	inp = append(inp, inputStruct{source: testInput{"A43645A-E", "", -107, -17, 0, 0, 0, "Ni Ht"}, dest: testInput{"B867564-6", "", -108, -17, 0, 0, 0, "Ag Ni Ga"}}) //Drinax ---> Asim Mgt2
+	inp = append(inp, inputStruct{source: testInput{"B867564-6", "", -108, -17, 0, 0, 0, "Ag Ni Ga"}, dest: testInput{"A43645A-E", "", -107, -17, 0, 0, 0, "Ni Ht"}}) //Asim ---> Drinax Mgt2
 	//inp = append(inp, inputStruct{source: testInput{"A894A96-F", "", 32, 35, ""}, dest: testInput{"B552665-B", "", 30, 32, ""}})
 	//inp = append(inp, inputStruct{source: testInput{"A894A96-F", "", 32, 35, ""}, dest: testInput{"C645747-5", "A", 30, 32, ""}})
 	//inp = append(inp, inputStruct{source: testInput{"C645747-5", "A", 30, 32, ""}, dest: testInput{"A894A96-F", "", 12, 35, ""}})
@@ -62,25 +65,25 @@ func Test_PassengerTraffic(t *testing.T) {
 	inp := input()
 	for i, input := range inp {
 		fmt.Println("test", i+1, input.source, input.dest)
-		pf, err := BasePassengerFactor_MGT2_Core(&input.source, &input.dest)
-		if err != nil {
-			t.Errorf("internal error: %v", err.Error())
-			continue
-		}
-		if pf == -1000 {
-			t.Errorf("factor value was not adressed")
-			continue
-		}
-		bf, err := BaseFreightFactor_MGT2_Core(&input.source, &input.dest)
-		if err != nil {
-			t.Errorf("internal error: %v", err.Error())
-			continue
-		}
-		if bf == -1000 {
-			t.Errorf("factor value was not adressed")
-			continue
-		}
-		bfMP, err := BaseFreightFactor_MGT1_MP(&input.source, &input.dest)
+		// pf, err := BasePassengerFactor_MGT2_Core(&input.source, &input.dest)
+		// if err != nil {
+		// 	t.Errorf("internal error: %v", err.Error())
+		// 	continue
+		// }
+		// if pf == -1000 {
+		// 	t.Errorf("factor value was not adressed")
+		// 	continue
+		// }
+		// bf, err := BaseFreightFactor_MGT2_Core(&input.source, &input.dest)
+		// if err != nil {
+		// 	t.Errorf("internal error: %v", err.Error())
+		// 	continue
+		// }
+		// if bf == -1000 {
+		// 	t.Errorf("factor value was not adressed")
+		// 	continue
+		// }
+		bfMP, err := BaseFactor(&input.source, &input.dest, Freight_MGT1_MP)
 		if err != nil {
 			t.Errorf("internal error: %v", err.Error())
 			continue
@@ -90,9 +93,10 @@ func Test_PassengerTraffic(t *testing.T) {
 			continue
 		}
 
-		fmt.Println("MGT2_Core: Passenger Factor =", pf)
-		fmt.Println("MGT2_Core: Freight Factor =", bf)
+		//fmt.Println("MGT2_Core: Passenger Factor =", pf)
+		//fmt.Println("MGT2_Core: Freight Factor =", bf)
 		fmt.Println("MGT1_MP  : Freight Factor =", bfMP)
+		fmt.Println("Base Factor Freight MGT1 MP: ", bfMP)
 		fmt.Println("Test PASS")
 	}
 

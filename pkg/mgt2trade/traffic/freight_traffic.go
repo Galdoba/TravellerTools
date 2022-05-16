@@ -8,6 +8,23 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
+const (
+	Freight_MGT1_MP   = "_fr_mgt1_mp_"
+	Passenger_MGT1_MP = "_ps_mgt1_mp_"
+)
+
+func validFactorInstruction(instr string) bool {
+	for _, check := range []string{
+		Freight_MGT1_MP,
+		Passenger_MGT1_MP,
+	} {
+		if check == instr {
+			return true
+		}
+	}
+	return false
+}
+
 func BaseFreightFactor_MGT2_Core(source, destination mWorld) (int, error) {
 	factor := -1000
 	sUWP, err := uwp.FromString(source.MW_UWP())
@@ -97,6 +114,135 @@ func BaseFreightFactor_MGT2_Core(source, destination mWorld) (int, error) {
 	return factor, nil
 }
 
+func trafficTradeCodes() []string {
+	return []string{"Ag", "As", "Ba", "De", "Fl", "Ga", "Hi", "Ic", "In", "Lo", "Na", "Ni", "Po", "Ri", "Wa", "A", "R"}
+}
+
+func getFreightFactorsMap() map[string]int {
+	trafficTCmap := make(map[string]int)
+	//source freight
+	trafficTCmap["s_fr_mgt1_mp_Ag"] = 2
+	trafficTCmap["s_fr_mgt1_mp_As"] = -3
+	trafficTCmap["s_fr_mgt1_mp_Ba"] = -1000
+	trafficTCmap["s_fr_mgt1_mp_De"] = -3
+	trafficTCmap["s_fr_mgt1_mp_Fl"] = -3
+	trafficTCmap["s_fr_mgt1_mp_Ga"] = 2
+	trafficTCmap["s_fr_mgt1_mp_Hi"] = 2
+	trafficTCmap["s_fr_mgt1_mp_Ic"] = -3
+	trafficTCmap["s_fr_mgt1_mp_In"] = 3
+	trafficTCmap["s_fr_mgt1_mp_Lo"] = -5
+	trafficTCmap["s_fr_mgt1_mp_Na"] = -3
+	trafficTCmap["s_fr_mgt1_mp_Ni"] = -3
+	trafficTCmap["s_fr_mgt1_mp_Po"] = -3
+	trafficTCmap["s_fr_mgt1_mp_Ri"] = 2
+	trafficTCmap["s_fr_mgt1_mp_Wa"] = -3
+	trafficTCmap["s_fr_mgt1_mp_A"] = 5
+	trafficTCmap["s_fr_mgt1_mp_R"] = -5
+	//destination freight
+	trafficTCmap["d_fr_mgt1_mp_Ag"] = 1
+	trafficTCmap["d_fr_mgt1_mp_As"] = 1
+	trafficTCmap["d_fr_mgt1_mp_Ba"] = -5
+	trafficTCmap["d_fr_mgt1_mp_De"] = 0
+	trafficTCmap["d_fr_mgt1_mp_Fl"] = 0
+	trafficTCmap["d_fr_mgt1_mp_Ga"] = 1
+	trafficTCmap["d_fr_mgt1_mp_Hi"] = 0
+	trafficTCmap["d_fr_mgt1_mp_Ic"] = 0
+	trafficTCmap["d_fr_mgt1_mp_In"] = 2
+	trafficTCmap["d_fr_mgt1_mp_Lo"] = 0
+	trafficTCmap["d_fr_mgt1_mp_Na"] = 1
+	trafficTCmap["d_fr_mgt1_mp_Ni"] = 1
+	trafficTCmap["d_fr_mgt1_mp_Po"] = -3
+	trafficTCmap["d_fr_mgt1_mp_Ri"] = 2
+	trafficTCmap["d_fr_mgt1_mp_Wa"] = 0
+	trafficTCmap["d_fr_mgt1_mp_A"] = -5
+	trafficTCmap["d_fr_mgt1_mp_R"] = -1000
+	//source passengers
+	trafficTCmap["s_ps_mgt1_mp_Ag"] = 0
+	trafficTCmap["s_ps_mgt1_mp_As"] = 1
+	trafficTCmap["s_ps_mgt1_mp_Ba"] = -5
+	trafficTCmap["s_ps_mgt1_mp_De"] = -1
+	trafficTCmap["s_ps_mgt1_mp_Fl"] = 0
+	trafficTCmap["s_ps_mgt1_mp_Ga"] = 2
+	trafficTCmap["s_ps_mgt1_mp_Hi"] = 0
+	trafficTCmap["s_ps_mgt1_mp_Ic"] = 1
+	trafficTCmap["s_ps_mgt1_mp_In"] = 2
+	trafficTCmap["s_ps_mgt1_mp_Lo"] = 0
+	trafficTCmap["s_ps_mgt1_mp_Na"] = 0
+	trafficTCmap["s_ps_mgt1_mp_Ni"] = 0
+	trafficTCmap["s_ps_mgt1_mp_Po"] = -2
+	trafficTCmap["s_ps_mgt1_mp_Ri"] = -1
+	trafficTCmap["s_ps_mgt1_mp_Wa"] = 0
+	trafficTCmap["s_ps_mgt1_mp_A"] = 2
+	trafficTCmap["s_ps_mgt1_mp_R"] = 4
+	//destination passengers
+	trafficTCmap["d_ps_mgt1_mp_Ag"] = 0
+	trafficTCmap["d_ps_mgt1_mp_As"] = -1
+	trafficTCmap["d_ps_mgt1_mp_Ba"] = -5
+	trafficTCmap["d_ps_mgt1_mp_De"] = -1
+	trafficTCmap["d_ps_mgt1_mp_Fl"] = 0
+	trafficTCmap["d_ps_mgt1_mp_Ga"] = 2
+	trafficTCmap["d_ps_mgt1_mp_Hi"] = 4
+	trafficTCmap["d_ps_mgt1_mp_Ic"] = -1
+	trafficTCmap["d_ps_mgt1_mp_In"] = 1
+	trafficTCmap["d_ps_mgt1_mp_Lo"] = -4
+	trafficTCmap["d_ps_mgt1_mp_Na"] = 0
+	trafficTCmap["d_ps_mgt1_mp_Ni"] = -1
+	trafficTCmap["d_ps_mgt1_mp_Po"] = -1
+	trafficTCmap["d_ps_mgt1_mp_Ri"] = 2
+	trafficTCmap["d_ps_mgt1_mp_Wa"] = 0
+	trafficTCmap["d_ps_mgt1_mp_A"] = -2
+	trafficTCmap["d_ps_mgt1_mp_R"] = -4
+	return trafficTCmap
+}
+
+func differenceTL(s, d mWorld) (int, error) {
+	sUWP, err := uwp.FromString(s.MW_UWP())
+	if err != nil {
+		return 0, err
+	}
+	dUWP, err := uwp.FromString(d.MW_UWP())
+	if err != nil {
+		return 0, err
+	}
+	sTL := sUWP.TL()
+	dTL := dUWP.TL()
+	tMod := sTL - dTL
+	if tMod > 0 {
+		tMod = tMod * -1
+	}
+	if tMod < -5 {
+		tMod = -5
+	}
+	return tMod, nil
+}
+
+func BaseFactor(source, destination mWorld, FactorType string) (int, error) {
+	if !validFactorInstruction(FactorType) {
+		return 0, fmt.Errorf("unknown FactorType instruction '%v'", FactorType)
+	}
+	sTC := strings.Fields(source.MW_Remarks())
+	factorsToAplly := []string{}
+	for _, tc := range sTC {
+		factorsToAplly = append(factorsToAplly, "s"+FactorType+tc)
+	}
+	dTC := strings.Fields(destination.MW_Remarks())
+	for _, tc := range dTC {
+		factorsToAplly = append(factorsToAplly, "d"+FactorType+tc)
+	}
+	fmt.Println("DEBUG: factors =", factorsToAplly)
+	baseFactor, err := differenceTL(source, destination)
+	if err != nil {
+		return baseFactor, err
+	}
+	trafficTCmap := getFreightFactorsMap()
+	for _, fctr := range factorsToAplly {
+		baseFactor = baseFactor + trafficTCmap[fctr]
+		fmt.Printf("DEBUG: factor '%v' applyed (%v) - total base factor is now %v\n", fctr, trafficTCmap[fctr], baseFactor)
+	}
+	fmt.Printf("DEBUG: factor total is %v\n", baseFactor)
+	return baseFactor, nil
+}
+
 func BaseFreightFactor_MGT1_MP(source, destination mWorld) (int, error) {
 	factor := -1000
 	sUWP, err := uwp.FromString(source.MW_UWP())
@@ -129,93 +275,123 @@ func BaseFreightFactor_MGT1_MP(source, destination mWorld) (int, error) {
 
 	//applying uwp factors for noth S and D:
 	if sliceContains(sTC, "Ag") {
+		fmt.Println("Applying factor sTC Ag - fMod += 2")
 		fMod += 2
 	}
 	if sliceContains(dTC, "Ag") {
+		fmt.Println("Applying factor dTC Ag - fMod += 1")
 		fMod += 1
 	}
 	if sliceContains(sTC, "As") {
+		fmt.Println("Applying factor sTC As - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(dTC, "As") {
+		fmt.Println("Applying factor dTC As - fMod += 1")
 		fMod += 1
 	}
 	if sliceContains(sTC, "Ba") {
+		fmt.Println("Applying factor sTC Ba - fMod += -100000")
 		fMod += -100000
 	}
 	if sliceContains(dTC, "Ba") {
+		fmt.Println("Applying factor dTC Ba - fMod += -5")
 		fMod += -5
 	}
 	if sliceContains(sTC, "De") {
+		fmt.Println("Applying factor sTC De - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(dTC, "De") {
+		fmt.Println("Applying factor dTC De - fMod += 0")
 		fMod += 0
 	}
 	if sliceContains(sTC, "Fl") {
+		fmt.Println("Applying factor sTC Fl - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(dTC, "Fl") {
+		fmt.Println("Applying factor dTC Fl - fMod += 0")
 		fMod += 0
 	}
 	if sliceContains(sTC, "Ga") {
+		fmt.Println("Applying factor sTC Ga - fMod += 2")
 		fMod += 2
 	}
 	if sliceContains(dTC, "Ga") {
+		fmt.Println("Applying factor dTC Ga - fMod += 1")
 		fMod += 1
 	}
 	if sliceContains(sTC, "Hi") {
+		fmt.Println("Applying factor sTC Hi - fMod += 2")
 		fMod += 2
 	}
 	if sliceContains(dTC, "Hi") {
+		fmt.Println("Applying factor dTC Hi - fMod += 0")
 		fMod += 0
 	}
 	if sliceContains(sTC, "Ic") {
+		fmt.Println("Applying factor sTC Ic - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(dTC, "Ic") {
+		fmt.Println("Applying factor dTC Ic - fMod += 0")
 		fMod += 0
 	}
 	if sliceContains(sTC, "In") {
+		fmt.Println("Applying factor sTC In - fMod += 3")
 		fMod += 3
 	}
 	if sliceContains(dTC, "In") {
+		fmt.Println("Applying factor dTC In - fMod += 2")
 		fMod += 2
 	}
 	if sliceContains(sTC, "Lo") {
+		fmt.Println("Applying factor sTC Lo - fMod += -5")
 		fMod += -5
 	}
 	if sliceContains(dTC, "Lo") {
+		fmt.Println("Applying factor dTC Lo - fMod += 0")
 		fMod += 0
 	}
 	if sliceContains(sTC, "Na") {
+		fmt.Println("Applying factor sTC Na - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(dTC, "Na") {
+		fmt.Println("Applying factor dTC Na - fMod += 1")
 		fMod += 1
 	}
 	if sliceContains(sTC, "Ni") {
+		fmt.Println("Applying factor sTC Ni - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(dTC, "Ni") {
+		fmt.Println("Applying factor dTC Ni - fMod += 1")
 		fMod += 1
 	}
 	if sliceContains(sTC, "Po") {
+		fmt.Println("Applying factor sTC Po - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(dTC, "Po") {
+		fmt.Println("Applying factor dTC Po - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(sTC, "Ri") {
+		fmt.Println("Applying factor sTC Ri - fMod += 2")
 		fMod += 2
 	}
 	if sliceContains(dTC, "Ri") {
+		fmt.Println("Applying factor dTC Ri - fMod += 2")
 		fMod += 2
 	}
 	if sliceContains(sTC, "Wa") {
+		fmt.Println("Applying factor sTC Wa - fMod += -3")
 		fMod += -3
 	}
 	if sliceContains(dTC, "Wa") {
+		fmt.Println("Applying factor dTC Wa - fMod += 0")
 		fMod += 0
 	}
 	if source.TravelZone() == "A" {

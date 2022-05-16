@@ -458,3 +458,7 @@ func (u *uwp) Describe(aspect string) string {
 		return str
 	}
 }
+
+func (u *uwp) Decode(data string) (string, int, string, error) {
+	return "", 0, "", fmt.Errorf("abstract method - shouldnot be used %v", data)
+}
