@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
+	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
@@ -218,29 +219,75 @@ func differenceTL(s, d mWorld) (int, error) {
 
 func BaseFactor(source, destination mWorld, FactorType string) (int, error) {
 	if !validFactorInstruction(FactorType) {
-		return 0, fmt.Errorf("unknown FactorType instruction '%v'", FactorType)
+		return -1000, fmt.Errorf("unknown FactorType instruction '%v'", FactorType)
 	}
-	sTC := strings.Fields(source.MW_Remarks())
+	sTC, err := tradecodes.FromUWPstr(source.MW_UWP())
+	if err != nil {
+		return -1000, fmt.Errorf("source trade codes: %v", err.Error())
+	}
 	factorsToAplly := []string{}
 	for _, tc := range sTC {
 		factorsToAplly = append(factorsToAplly, "s"+FactorType+tc)
 	}
-	dTC := strings.Fields(destination.MW_Remarks())
+	dTC, err := tradecodes.FromUWPstr(destination.MW_UWP())
+	if err != nil {
+		return -1000, fmt.Errorf("destination trade codes: %v", err.Error())
+	}
 	for _, tc := range dTC {
 		factorsToAplly = append(factorsToAplly, "d"+FactorType+tc)
 	}
-	fmt.Println("DEBUG: factors =", factorsToAplly)
 	baseFactor, err := differenceTL(source, destination)
 	if err != nil {
 		return baseFactor, err
 	}
+
+	add, err := applyMGT2_DMs(source, destination)
+	if err != nil {
+		return -1000, fmt.Errorf("applyMGT2_DMs(source, destination): %v", err.Error())
+	}
+	baseFactor += add
+
 	trafficTCmap := getFreightFactorsMap()
 	for _, fctr := range factorsToAplly {
 		baseFactor = baseFactor + trafficTCmap[fctr]
-		fmt.Printf("DEBUG: factor '%v' applyed (%v) - total base factor is now %v\n", fctr, trafficTCmap[fctr], baseFactor)
 	}
-	fmt.Printf("DEBUG: factor total is %v\n", baseFactor)
 	return baseFactor, nil
+}
+
+func applyMGT2_DMs(source, destination mWorld) (int, error) {
+	add := (hexagon.DistanceHex(source, destination) - 1) * -1
+	for _, world := range []mWorld{source, destination} {
+		uwp, err := uwp.FromString(world.MW_UWP())
+		if err != nil {
+			return -1000, fmt.Errorf("world uwp: %v", err.Error())
+		}
+		switch uwp.Starport() {
+		case "A":
+			add += 2
+		case "B":
+			add += 1
+		case "E":
+			add += -1
+		case "X":
+			add += -3
+		}
+		if uwp.Pops() <= 1 {
+			add += -4
+		}
+		if uwp.Pops() == 6 || uwp.Pops() == 7 {
+			add += 2
+		}
+		if uwp.Pops() >= 8 {
+			add += 4
+		}
+		if uwp.TL() <= 6 {
+			add += -1
+		}
+		if uwp.TL() >= 9 {
+			add += 2
+		}
+	}
+	return add, nil
 }
 
 func BaseFreightFactor_MGT1_MP(source, destination mWorld) (int, error) {

@@ -28,13 +28,13 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 		fmt.Print("State your quary: ")
 		searchKey, _ = user.InputStr()
 	}
-	if len(searchKey) < 3 {
-		return nil, fmt.Errorf("quarry must me at least 3 characters [%v]", searchKey)
-	}
+	// if len(searchKey) < 3 {
+	// 	return nil, fmt.Errorf("quarry must me at least 3 characters [%v]", searchKey)
+	// }
 	matches := []string{}
 	db := utils.LinesFromTXT(dataBase)
 	for _, line := range db {
-		if strings.Contains(strings.ToUpper(line), strings.ToUpper(searchKey)) {
+		if strings.Contains(strings.ToUpper(line), "|"+strings.ToUpper(searchKey)+"|") {
 			matches = append(matches, line)
 		}
 	}
@@ -50,7 +50,7 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 	potentialWorlds := []*survey.SecondSurveyData{}
 	for _, match := range matches {
 		testWorld := survey.Parse(match)
-		if strings.Contains(strings.ToUpper(testWorld.String()), strings.ToUpper(searchKey)) {
+		if strings.ToUpper(testWorld.MW_Name()) == strings.ToUpper(searchKey) {
 			potentialWorlds = append(potentialWorlds, testWorld)
 		}
 	}

@@ -6,6 +6,8 @@ import (
 
 	"github.com/Galdoba/TravellerTools/pkg/astrogation"
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
+	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic"
+	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/urfave/cli"
 )
 
@@ -60,7 +62,11 @@ func Info0(c *cli.Context) error {
 				fmt.Print("REJECTED:", sourceworld.MW_Name(), "is a RED ZONE")
 				continue
 			}
-			tcodes := strings.Fields(TradeCodes(port))
+			//tcodes := strings.Fields(TradeCodes(port))
+			tcodes, err := tradecodes.FromUWPstr(port.MW_UWP())
+			if err != nil {
+				return err
+			}
 			cargoIN := false
 			cargoOUT := false
 			for _, tc := range tcodes {
@@ -165,6 +171,7 @@ func Info(c *cli.Context) error {
 	reach := 4
 	//////////////////////
 	//Собираем список всех портов и всех координат
+	fmt.Println("Constructing J-4 map...")
 	allPorts := []Port{}
 	//tradeZone, _ := hexagon.Spiral(sourceWorldHex.AsCube(), 4)
 	allWorldsCoordinates := append([]hexagon.Hexagon{Hexagon(sourceworldMain)}, searchNeighbours(sourceworldMain, reach)...)
@@ -172,10 +179,13 @@ func Info(c *cli.Context) error {
 		p, _ := PortByCoordinates(hex.HexValues())
 		allPorts = append(allPorts, p)
 	}
+	fmt.Println("Evaluating Trade Routes...")
 	routes := evaluateTradeRoutes(allPorts, sourceworldMain)
 	fmt.Println("Trade possible:")
 	for _, tr := range routes {
-		fmt.Printf("%v --> %v (%v)\n", tr.source.MW_Name(), tr.destination.MW_Name(), tr.status)
+		traf, _ := traffic.BaseFactor(tr.source, tr.destination, traffic.Freight_MGT1_MP)
+		fmt.Printf("%v --> %v (%v %v)\n", tr.source.MW_Name(), tr.destination.MW_Name(), tr.status, traf)
+		fmt.Println(tr.jp.Path)
 	}
 	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
 	//состовляем все пары портов и проверяем их на возможность торговли по торговым кодам
@@ -191,6 +201,7 @@ type tradeRoute struct {
 	source      Port
 	destination Port
 	status      string
+	jp          astrogation.Plot
 	//tradePossible bool
 }
 
@@ -214,23 +225,20 @@ func evaluateTradeRoutes(ports []Port, portOfInterest Port) []tradeRoute {
 			// 	continue
 			case tradePossible(src, dest):
 				jp, _ := astrogation.PlotCource(src, dest, 2, 1)
-				if !strings.Contains(jp.Path, portOfInterest.MW_Name()) {
+				if !portVisited(portOfInterest, jp.Path) {
 					continue
 				}
-				trade := tradeRoute{src, dest, ""}
+				trade := tradeRoute{src, dest, "Transit", jp}
 				names := strings.Split(jp.Path, " ---> ")
 				for i, name := range names {
 					if name == portOfInterest.MW_Name() {
 						switch i {
-						default:
-							trade.status = "Transit"
 						case 0:
 							trade.status = "Export"
 						case len(names) - 1:
 							trade.status = "Import"
 						}
 					}
-
 				}
 				trFound++
 				routes = append(routes, trade)
@@ -242,9 +250,18 @@ func evaluateTradeRoutes(ports []Port, portOfInterest Port) []tradeRoute {
 	return routes
 }
 
+func portVisited(p Port, path string) bool {
+	for _, poi := range strings.Split(path, " ---> ") {
+		if poi == p.MW_Name() {
+			return true
+		}
+	}
+	return false
+}
+
 func tradePossible(source, destination Port) bool {
-	sTC := strings.Fields(TradeCodes(source))
-	dTC := strings.Fields(TradeCodes(destination))
+	sTC, _ := tradecodes.FromUWPstr(source.MW_UWP())
+	dTC, _ := tradecodes.FromUWPstr(destination.MW_UWP())
 	for _, tcS := range sTC {
 		switch tcS {
 		case "As", "De", "Ic", "Ni":

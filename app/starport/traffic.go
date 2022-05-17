@@ -238,5 +238,7 @@ func Hexagon(p Port) hexagon.Hexagon {
 }
 
 func SearchSourcePort(searchKey string) (Port, error) {
-	return trvdb.WorldByName(searchKey)
+	world, err := trvdb.WorldByName(searchKey)
+	fmt.Println(world)
+	return world, err
 }
