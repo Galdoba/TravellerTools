@@ -25,9 +25,10 @@ func (i *input) PBG() string {
 
 func setInput() []input {
 	return []input{
-		{"seed", "uwp", ""},
-		{"seed", "C555555-5", "555"},
+		{"Htalrea", "E767610-1", "103"},
+		{"Ea", "C7586AA-7", "214"},
 		{"Oihoiei", "A8558A8-C", "214"},
+		{"Carrill", "A0009AE-E", "613"},
 	}
 }
 
@@ -45,5 +46,29 @@ func Test_Portsec(t *testing.T) {
 			t.Errorf("func returned error: %v", err.Error())
 		}
 		fmt.Println(ssf)
+		if ssf.basePersonal < 1 {
+			t.Errorf("base personal not defined")
+		}
+		if ssf.organisation == "" {
+			t.Errorf("organisation not defined")
+		}
+		if ssf.funding == "" {
+			t.Errorf("funding not defined")
+		}
+		if ssf.equipment == "" {
+			t.Errorf("equipment not defined")
+		}
+		if ssf.competence == "" {
+			t.Errorf("competence not defined")
+		}
+		if ssf.response == "" {
+			t.Errorf("response not defined")
+		}
+		if ssf.checksDM == -5 {
+			t.Errorf("checksDM not defined")
+		}
+		if ssf.fiascoTN == -1 {
+			t.Errorf("fiascoTN not defined")
+		}
 	}
 }
