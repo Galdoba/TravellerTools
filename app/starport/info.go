@@ -6,7 +6,6 @@ import (
 
 	"github.com/Galdoba/TravellerTools/pkg/astrogation"
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
-	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/starport/portsec"
 	"github.com/urfave/cli"
@@ -185,12 +184,31 @@ func Info(c *cli.Context) error {
 	}
 	fmt.Println("Evaluating Trade Routes...")
 	routes := evaluateTradeRoutes(allPorts, sourceworldMain)
-	fmt.Println("Trade possible:")
-	for _, tr := range routes {
-		traf, _ := traffic.BaseFactor(tr.source, tr.destination, traffic.Freight_MGT1_MP)
-		fmt.Printf("%v --> %v (%v %v)\n", tr.source.MW_Name(), tr.destination.MW_Name(), tr.status, traf)
-		fmt.Println(tr.jp.Path)
+	arrive := 0
+	depart := 0
+	transit := 0
+	if len(routes) > 0 {
+		fmt.Println("Trade Routes Detected:")
+		for _, tr := range routes {
+			//traf, _ := traffic.BaseFactor(tr.source, tr.destination, traffic.Freight_MGT1_MP)
+			fmt.Printf("%v: %v \n", tr.status, tr.jp.Path)
+			if strings.Contains(tr.jp.Path, sourceworldMain.MW_Name()+" --->") {
+				depart++
+			}
+			if strings.Contains(tr.jp.Path, "---> "+sourceworldMain.MW_Name()) {
+				arrive++
+			}
+			if strings.Contains(tr.jp.Path, "---> "+sourceworldMain.MW_Name()+" --->") {
+				transit++
+				arrive--
+				depart--
+			}
+		}
+		fmt.Printf("Arrive/Depart/Transit cargo traffic: %v/%v/%v\n", arrive, depart, transit)
+
+		fmt.Printf("Average Ships in Port at any given point: %v", ((arrive+depart+transit+transit)*3)*7/2)
 	}
+
 	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
 	//состовляем все пары портов и проверяем их на возможность торговли по торговым кодам
 

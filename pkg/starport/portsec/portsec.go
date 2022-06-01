@@ -152,12 +152,12 @@ func (ssf *StarportSecurityForces) String() string {
 		str += fmt.Sprintf(" %v of personnel undertake most normal tasks such as standing guard, patrolling an area, carrying out customs searches and the like. Routine personnel tend to be equipped for the possibility of trouble, such as a patrol officer carrying a sidearm, perhaps with access to more powerful weapons at need.\n", ssf.rout)
 		str += fmt.Sprintf(" While %v are equipped to back up their routine colleagues with heavy firepower or specialist capabilities. In a society that has considerable numbers of psions, this might mean the possession of psionic shielding equipment or personnel may be psionically adept in their own right.\n", ssf.resp)
 		if ssf.elite > 0 {
-			str += fmt.Sprintf(" There %v personnel are equipped as best as possible for the worst situations. These may be heavy elements of the ruler's personal guard or a specialist security formation, perhaps even a 'bodyguard' regiment of the planetary army.\n", ssf.elite)
+			str += fmt.Sprintf(" There %v personnel are equipped as best as possible for the worst situations. These may be heavy elements of the ruler's personal guard or a specialist security formation, perhaps even a 'bodyguard' regiment of the planetary army.", ssf.elite)
 		}
 	} else {
-		str += fmt.Sprintf(" Security personnel is not separeted on any grades due to lack of professional training")
+		str += fmt.Sprintf(" Security personnel is not separeted on any grades due to lack of professional training.")
 	}
-	str += underline
+	str += "\n" + underline
 
 	return str
 }
