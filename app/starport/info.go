@@ -8,6 +8,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/starport/portsec"
+	"github.com/Galdoba/TravellerTools/pkg/starport/sai"
 	"github.com/urfave/cli"
 )
 
@@ -182,31 +183,24 @@ func Info(c *cli.Context) error {
 		p, _ := PortByCoordinates(hex.HexValues())
 		allPorts = append(allPorts, p)
 	}
+
 	fmt.Println("Evaluating Trade Routes...")
 	routes := evaluateTradeRoutes(allPorts, sourceworldMain)
-	arrive := 0
-	depart := 0
-	transit := 0
 	if len(routes) > 0 {
 		fmt.Println("Trade Routes Detected:")
 		for _, tr := range routes {
-			//traf, _ := traffic.BaseFactor(tr.source, tr.destination, traffic.Freight_MGT1_MP)
-			fmt.Printf("%v: %v \n", tr.status, tr.jp.Path)
-			if strings.Contains(tr.jp.Path, sourceworldMain.MW_Name()+" --->") {
-				depart++
-			}
-			if strings.Contains(tr.jp.Path, "---> "+sourceworldMain.MW_Name()) {
-				arrive++
-			}
-			if strings.Contains(tr.jp.Path, "---> "+sourceworldMain.MW_Name()+" --->") {
-				transit++
-				arrive--
-				depart--
-			}
-		}
-		fmt.Printf("Arrive/Depart/Transit cargo traffic: %v/%v/%v\n", arrive, depart, transit)
 
-		fmt.Printf("Average Ships in Port at any given point: %v", ((arrive+depart+transit+transit)*3)*7/2)
+			fmt.Printf("%v: %v \n", tr.status, tr.jp.Path)
+
+		}
+		shipping := shippingActivityBase(sourceworldMain.MW_Name(), routes)
+		fmt.Printf("Arrive/Depart/Transit cargo traffic: %v/%v/%v\n", shipping[0], shipping[1], shipping[2])
+		sa, err := sai.NewShippingActivity(sourceworldMain, shipping)
+		if err != nil {
+			return err
+		}
+		fmt.Println(sa)
+		//fmt.Printf("Average Ships in Port at any given point: %v", ((arrive+depart+transit+transit)*3)*7/2)
 	}
 
 	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
@@ -270,6 +264,26 @@ func evaluateTradeRoutes(ports []Port, portOfInterest Port) []tradeRoute {
 	}
 	fmt.Println("")
 	return routes
+}
+
+func shippingActivityBase(mw_name string, routes []tradeRoute) []int {
+	arrive := 0
+	depart := 0
+	transit := 0
+	for _, tr := range routes {
+		if strings.Contains(tr.jp.Path, mw_name+" --->") {
+			depart++
+		}
+		if strings.Contains(tr.jp.Path, "---> "+mw_name) {
+			arrive++
+		}
+		if strings.Contains(tr.jp.Path, "---> "+mw_name+" --->") {
+			transit++
+			arrive--
+			depart--
+		}
+	}
+	return []int{arrive, depart, transit}
 }
 
 func portVisited(p Port, path string) bool {
