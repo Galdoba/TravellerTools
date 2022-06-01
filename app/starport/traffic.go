@@ -242,3 +242,8 @@ func SearchSourcePort(searchKey string) (Port, error) {
 	fmt.Println(world)
 	return world, err
 }
+
+func WorldFrom(p Port) *survey.SecondSurveyData {
+	world, _ := trvdb.WorldByName(p.MW_Name())
+	return world
+}

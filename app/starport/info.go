@@ -8,6 +8,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
+	"github.com/Galdoba/TravellerTools/pkg/starport/portsec"
 	"github.com/urfave/cli"
 )
 
@@ -162,6 +163,7 @@ func Info0(c *cli.Context) error {
 }
 
 func Info(c *cli.Context) error {
+
 	searchKey := c.String("worldname")
 
 	sourceworldMain, err := SearchSourcePort(searchKey)
@@ -170,6 +172,8 @@ func Info(c *cli.Context) error {
 	}
 	reach := 4
 	//////////////////////
+	portSecurity, err := portsec.GenerateSecurityForces(WorldFrom(sourceworldMain))
+	fmt.Println(portSecurity)
 	//Собираем список всех портов и всех координат
 	fmt.Println("Constructing J-4 map...")
 	allPorts := []Port{}

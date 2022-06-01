@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	org_No                 = "No security force"
+	org_No                 = "Not organised force"
 	org_SmallPT            = "Small, part-time security force"
 	org_SmallProf          = "Small professional security force"
 	org_Modest             = "Modest-sized professional security force"
@@ -140,14 +140,24 @@ func (ssf *StarportSecurityForces) String() string {
 	str += fmt.Sprintf("Competence   : %v\n", ssf.competence)
 	str += fmt.Sprintf("Response     : %v\n", ssf.response)
 	str += underline
-	str += fmt.Sprintf("\n %v is defended by total of %v personel in police, military, navy and/or other types of security forces. ", ssf.portName, ssf.rout+ssf.resp+ssf.elite)
+	str += fmt.Sprintf("\n With a total population of %v, starport of %v is defended by total of %v security personel. ", int(ssf.worldPopulation), ssf.portName, ssf.rout+ssf.resp+ssf.elite)
 	str += fmt.Sprintf("Local security are mostly equiped with %v ", describe(ssf.equipment))
-	str += fmt.Sprintf("\n DM: %v is applyed on all checks made by Security Force. ", ssf.checksDM)
+	str += fmt.Sprintf("\n %v gives [DM: %v] on all checks made by Security Force. ", ssf.competence, ssf.checksDM)
 	if ssf.fiascoTN > 0 {
 		str += fmt.Sprintf("\n Every check has a potential of a Fiasco (%v+ on strait 2D roll). ", ssf.fiascoTN)
 	}
 	str += fmt.Sprintf("\n %v indicates that %v", ssf.corruption, describe(ssf.corruption))
 	str += fmt.Sprintf("\n If incident arise local Security will feel %v", describe(ssf.response))
+	if ssf.resp > 0 {
+		str += fmt.Sprintf(" %v of personnel undertake most normal tasks such as standing guard, patrolling an area, carrying out customs searches and the like. Routine personnel tend to be equipped for the possibility of trouble, such as a patrol officer carrying a sidearm, perhaps with access to more powerful weapons at need.\n", ssf.rout)
+		str += fmt.Sprintf(" While %v are equipped to back up their routine colleagues with heavy firepower or specialist capabilities. In a society that has considerable numbers of psions, this might mean the possession of psionic shielding equipment or personnel may be psionically adept in their own right.\n", ssf.resp)
+		if ssf.elite > 0 {
+			str += fmt.Sprintf(" There %v personnel are equipped as best as possible for the worst situations. These may be heavy elements of the ruler's personal guard or a specialist security formation, perhaps even a 'bodyguard' regiment of the planetary army.\n", ssf.elite)
+		}
+	} else {
+		str += fmt.Sprintf(" Security personnel is not separeted on any grades due to lack of professional training")
+	}
+	str += underline
 
 	return str
 }
