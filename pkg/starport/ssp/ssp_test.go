@@ -2,7 +2,12 @@ package ssp
 
 import (
 	"fmt"
+	"strings"
 	"testing"
+	"time"
+
+	"github.com/Galdoba/TravellerTools/pkg/survey"
+	"github.com/Galdoba/utils"
 )
 
 type input struct {
@@ -38,19 +43,27 @@ func inputList() []input {
 		{"", "", "", "", "", ""},
 		{"Sarrad", "D88A300-8", "A", "", "Lo Wa Da", "000"},
 		{"Earlo", "D542102-7", "A", "", "He Lo Po Da Asla7", "214"},
+		{"Drinax", "A4355AA-E", "", "", "Ht Lo", "214"},
+		{"Asim", "A43557A-8", "", "", "Ht Lo", "214"},
 	}
 }
 
 func Test(t *testing.T) {
-	for i, planet := range inputList() {
-		sp, err := NewSecurityProfile(&planet)
-		fmt.Println(i, planet, "==>", sp, err)
+
+	for i, line := range utils.LinesFromTXT("C:/Users/Public/TrvData/cleanedData.txt") {
+		if !strings.Contains(line, "Reaver") {
+			continue
+		}
+		planet := survey.Parse(line)
+		sp, err := NewSecurityProfile(planet)
+
 		if sp == nil {
 			t.Errorf("func returned no object")
 			continue
 		}
 		if err != nil {
 			t.Errorf("func returned error: %v", err.Error())
+			fmt.Println(line)
 		}
 		if sp.name == "UNSET" {
 			t.Errorf("sp.name is not addressed ")
@@ -77,5 +90,9 @@ func Test(t *testing.T) {
 				t.Errorf("sp.value[%v] is not addressed", n)
 			}
 		}
+		fmt.Printf("%v (%v)\n", planet.MW_Name(), planet.MW_Remarks())
+		fmt.Printf("%v: %v - %v:	%v\n", i, planet.NameByConvention(), planet.MW_UWP(), sp.String())
+		fmt.Println(sp.Describe())
+		time.Sleep(time.Second)
 	}
 }
