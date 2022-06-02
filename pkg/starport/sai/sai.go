@@ -160,13 +160,16 @@ func NewShippingActivity(port Port, traffic []int) (*ShippingActivity, error) {
 	if sa.averageShips < 0 {
 		sa.averageShips = 0
 	}
+	if sa.maximumShips < 0 {
+		sa.maximumShips = 0
+	}
 
 	return &sa, err
 }
 
 func (sa *ShippingActivity) String() string {
 	str := fmt.Sprintf("Shipping Activity on %v:\n", sa.portName)
-	str += fmt.Sprintf("At any given moment port have %v-%v ships (%v average). Of them:\n", sa.minmumShips, sa.maximumShips, sa.averageShips)
+	str += fmt.Sprintf("At any given moment port expected have %v-%v ships (%v average). Of them:\n", sa.minmumShips, sa.maximumShips, sa.averageShips)
 	for i, ton := range []int{tonnage_Bulk, tonnage_Large, tonnage_Medium, tonnage_Small, tonnage_Minor} {
 		ships := sa.averageShips * sa.shipsByTonnage[ton] / 100
 		if ships > 0 {

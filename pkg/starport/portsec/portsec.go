@@ -140,7 +140,17 @@ func (ssf *StarportSecurityForces) String() string {
 	str += fmt.Sprintf("Competence   : %v\n", ssf.competence)
 	str += fmt.Sprintf("Response     : %v\n", ssf.response)
 	str += underline
-	str += fmt.Sprintf("\n With a total population of %v, starport of %v is defended by total of %v security personel. ", int(ssf.worldPopulation), ssf.portName, ssf.rout+ssf.resp+ssf.elite)
+	routineG, respG, eliteG := ssf.rout, ssf.resp, ssf.elite
+	if routineG > 50000 {
+		routineG = 50000
+	}
+	if respG > 7000 {
+		respG = 7000
+	}
+	if eliteG > 3000 {
+		eliteG = 3000
+	}
+	str += fmt.Sprintf("\n Starport of %v is defended by total of %v security personel. ", ssf.portName, routineG+respG+eliteG)
 	str += fmt.Sprintf("Local security are mostly equiped with %v ", describe(ssf.equipment))
 	str += fmt.Sprintf("\n %v gives [DM: %v] on all checks made by Security Force. ", ssf.competence, ssf.checksDM)
 	if ssf.fiascoTN > 0 {
@@ -149,13 +159,13 @@ func (ssf *StarportSecurityForces) String() string {
 	str += fmt.Sprintf("\n %v indicates that %v", ssf.corruption, describe(ssf.corruption))
 	str += fmt.Sprintf("\n If incident arise local Security will feel %v", describe(ssf.response))
 	if ssf.resp > 0 {
-		str += fmt.Sprintf(" %v of personnel undertake most normal tasks such as standing guard, patrolling an area, carrying out customs searches and the like. Routine personnel tend to be equipped for the possibility of trouble, such as a patrol officer carrying a sidearm, perhaps with access to more powerful weapons at need.\n", ssf.rout)
-		str += fmt.Sprintf(" While %v are equipped to back up their routine colleagues with heavy firepower or specialist capabilities. In a society that has considerable numbers of psions, this might mean the possession of psionic shielding equipment or personnel may be psionically adept in their own right.\n", ssf.resp)
+		str += fmt.Sprintf("\n %v of personnel undertake most normal tasks such as standing guard, patrolling an area, carrying out customs searches and the like. Routine personnel tend to be equipped for the possibility of trouble, such as a patrol officer carrying a sidearm, perhaps with access to more powerful weapons at need.\n", routineG)
+		str += fmt.Sprintf(" While %v are equipped to back up their routine colleagues with heavy firepower or specialist capabilities. In a society that has considerable numbers of psions, this might mean the possession of psionic shielding equipment or personnel may be psionically adept in their own right.\n", respG)
 		if ssf.elite > 0 {
-			str += fmt.Sprintf(" There %v personnel are equipped as best as possible for the worst situations. These may be heavy elements of the ruler's personal guard or a specialist security formation, perhaps even a 'bodyguard' regiment of the planetary army.", ssf.elite)
+			str += fmt.Sprintf(" There %v personnel are equipped as best as possible for the worst situations. These may be heavy elements of the ruler's personal guard or a specialist security formation, perhaps even a 'bodyguard' regiment of the planetary army.", eliteG)
 		}
 	} else {
-		str += fmt.Sprintf(" Security personnel is not separeted on any grades due to lack of professional training.")
+		str += fmt.Sprintf("\n Security personnel is not separeted on any grades due to lack of professional training.")
 	}
 	str += "\n" + underline
 

@@ -186,6 +186,7 @@ func Info(c *cli.Context) error {
 
 	fmt.Println("Evaluating Trade Routes...")
 	routes := evaluateTradeRoutes(allPorts, sourceworldMain)
+	shipping := []int{0, 0, 0}
 	if len(routes) > 0 {
 		fmt.Println("Trade Routes Detected:")
 		for _, tr := range routes {
@@ -193,15 +194,19 @@ func Info(c *cli.Context) error {
 			fmt.Printf("%v: %v \n", tr.status, tr.jp.Path)
 
 		}
-		shipping := shippingActivityBase(sourceworldMain.MW_Name(), routes)
+		shipping = shippingActivityBase(sourceworldMain.MW_Name(), routes)
 		fmt.Printf("Arrive/Depart/Transit cargo traffic: %v/%v/%v\n", shipping[0], shipping[1], shipping[2])
-		sa, err := sai.NewShippingActivity(sourceworldMain, shipping)
-		if err != nil {
-			return err
-		}
-		fmt.Println(sa)
+
 		//fmt.Printf("Average Ships in Port at any given point: %v", ((arrive+depart+transit+transit)*3)*7/2)
+	} else {
+		fmt.Printf("%v have no constant trade with neighbour worlds.\n", sourceworldMain.MW_Name())
 	}
+	fmt.Println("--------------------------------------------------------------------------------")
+	sa, err := sai.NewShippingActivity(sourceworldMain, shipping)
+	if err != nil {
+		return err
+	}
+	fmt.Println(sa)
 
 	/////////////////ПРОВЕРЯЕМ ТОРГОВЫЕ ПУТИ:
 	//состовляем все пары портов и проверяем их на возможность торговли по торговым кодам
