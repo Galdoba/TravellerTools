@@ -166,13 +166,11 @@ func Info(c *cli.Context) error {
 
 	searchKey := c.String("worldname")
 
-	sourceworldMain, err := SearchSourcePort(searchKey)
-	if err != nil {
-		return err
-	}
+	sourceworldMain := WorldFrom(searchKey)
+
 	reach := 4
 	//////////////////////
-	portSecurity, err := portsec.GenerateSecurityForces(WorldFrom(sourceworldMain))
+	portSecurity, err := portsec.GenerateSecurityForces(sourceworldMain)
 	fmt.Println(portSecurity)
 	//Собираем список всех портов и всех координат
 	fmt.Println("Constructing J-4 map...")

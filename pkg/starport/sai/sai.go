@@ -153,6 +153,9 @@ func NewShippingActivity(port Port, traffic []int) (*ShippingActivity, error) {
 	dp := dice.New().SetSeed(port.MW_Name() + port.MW_Remarks() + port.MW_UWP() + port.TravelZone())
 	sa.minmumShips = dp.Roll(strconv.Itoa(dices) + "d1").DM(dices * sa.traffDm).Sum()
 	sa.maximumShips = dp.Roll(strconv.Itoa(dices) + "d1").DM((dices * sa.traffDm) + (5 * dices)).Sum()
+	if sa.minmumShips > sa.maximumShips {
+		sa.minmumShips, sa.maximumShips = sa.maximumShips, sa.minmumShips
+	}
 	sa.averageShips = (sa.minmumShips + sa.maximumShips) / 2
 	if sa.minmumShips < 0 {
 		sa.minmumShips = 0

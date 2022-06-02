@@ -14,10 +14,10 @@ import (
 func Traffic(c *cli.Context) error {
 	searchKey := c.String("worldname")
 
-	sourceworld, err := SearchSourcePort(searchKey)
-	if err != nil {
-		return err
-	}
+	sourceworld := WorldFrom(searchKey)
+	// if err != nil {
+	// 	return err
+	// }
 
 	reach := processReach(c.Int("reach"), sourceworld.MW_UWP())
 	fmt.Printf("Sourceworld [%v] detected...\nChecking for neighbours within a reach of %v parsecs...\n", sourceworld.MW_Name(), reach)
@@ -243,7 +243,7 @@ func SearchSourcePort(searchKey string) (Port, error) {
 	return world, err
 }
 
-func WorldFrom(p Port) *survey.SecondSurveyData {
-	world, _ := trvdb.WorldByName(p.MW_Name())
+func WorldFrom(p string) *survey.SecondSurveyData {
+	world, _ := trvdb.WorldByName(p)
 	return world
 }
