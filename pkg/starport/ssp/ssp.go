@@ -501,7 +501,7 @@ func (sp *securityProfile) Describe() string {
 	if sp.wsp == "No Security Profile" {
 		return "No Security Profile"
 	}
-	str := "Security Profile: " + sp.String()
+	str := "Security Profile: " + sp.String() + "\n"
 	str += fmt.Sprintf("• Planetary presence: %v\n", sp.value[presense_planetary])
 	str += fmt.Sprintf("• Orbital presence  : %v\n", sp.value[presense_orbital])
 	str += fmt.Sprintf("• System presence   : %v\n", sp.value[presense_system])
