@@ -43,6 +43,11 @@ type securityProfile struct {
 	balkanised bool
 }
 
+type SecurityProfile interface {
+	String() string
+	Describe() string
+}
+
 func NewSecurityProfile(world spData) (*securityProfile, error) {
 	sp := securityProfile{}
 	sp.name = "UNSET"
@@ -88,6 +93,7 @@ func NewSecurityProfile(world spData) (*securityProfile, error) {
 	if gov == 0 || law == 0 {
 		return individualResponsibility(), nil
 	}
+
 	ppDM := planetaryPresenceDM(size, gov, tc)
 	sp.value[presense_planetary] = dp.Roll("2d6").DM(law + ppDM - 7).Sum()
 	if sp.value[presense_planetary] < 0 {
@@ -496,7 +502,6 @@ func (sp *securityProfile) Describe() string {
 		return "No Security Profile"
 	}
 	str := "Security Profile: " + sp.String()
-	str += "\n--------------------------------------------------------------------------------\n"
 	str += fmt.Sprintf("• Planetary presence: %v\n", sp.value[presense_planetary])
 	str += fmt.Sprintf("• Orbital presence  : %v\n", sp.value[presense_orbital])
 	str += fmt.Sprintf("• System presence   : %v\n", sp.value[presense_system])

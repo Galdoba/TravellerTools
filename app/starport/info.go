@@ -9,6 +9,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/starport/portsec"
 	"github.com/Galdoba/TravellerTools/pkg/starport/sai"
+	"github.com/Galdoba/TravellerTools/pkg/starport/ssp"
 	"github.com/urfave/cli"
 )
 
@@ -167,11 +168,14 @@ func Info(c *cli.Context) error {
 	searchKey := c.String("worldname")
 
 	sourceworldMain := WorldFrom(searchKey)
-
+	fmt.Println(sourceworldMain.String())
 	reach := 4
 	//////////////////////
+	securityProfile, err := ssp.NewSecurityProfile(sourceworldMain)
+	fmt.Println(securityProfile.Describe())
 	portSecurity, err := portsec.GenerateSecurityForces(sourceworldMain)
-	fmt.Println(portSecurity)
+	fmt.Println(portSecurity.String())
+
 	//Собираем список всех портов и всех координат
 	fmt.Println("Constructing J-4 map...")
 	allPorts := []Port{}

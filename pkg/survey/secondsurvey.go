@@ -389,6 +389,25 @@ func (ssd *SecondSurveyData) String() string {
 	return rep
 }
 
+func (ssd *SecondSurveyData) T5TabDelimitedFormat() string {
+	str := ssd.hex + "	"
+	str += ssd.mw_Name + "	"
+	str += ssd.mw_UWP + "	"
+	str += ssd.bases + "	"
+	str += ssd.mw_Remarks + "	"
+	str += ssd.travelZone + "	"
+	str += ssd.pbg + "	"
+	str += ssd.allegiance + "	"
+	str += ssd.stellar + "	"
+	str += ssd.mw_Importance + "	"
+	str += ssd.mw_Economic + "	"
+	str += ssd.mw_Cultural + "	"
+	str += ssd.mw_Nobility + "	"
+	str += strconv.Itoa(ssd.worlds)
+	return str
+
+}
+
 func ListOf(ssds []*SecondSurveyData) []string {
 	if len(ssds) < 1 {
 		return nil

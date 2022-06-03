@@ -127,12 +127,11 @@ func GenerateSecurityForces(port Port) (*StarportSecurityForces, error) {
 }
 
 func (ssf *StarportSecurityForces) String() string {
-	str := fmt.Sprintf("Security Forces at %v:\n", ssf.portName)
+	str := fmt.Sprintf("Security Forces at %v starport:\n", ssf.portName)
 	underline := ""
 	for len(underline) < 80 {
 		underline += "-"
 	}
-	str += underline + "\n"
 
 	str += fmt.Sprintf("Organisation : %v\n", ssf.organisation)
 	str += fmt.Sprintf("Funding      : %v\n", ssf.funding)
