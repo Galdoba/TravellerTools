@@ -10,8 +10,12 @@ import (
 -3   -2 -1  0  1  2  3
 */
 
+type Source interface {
+}
+
 type TradeGood struct {
 	code         string
+	market       string
 	goodsType    string
 	availability []string
 	tonsDice     int
@@ -23,12 +27,39 @@ type TradeGood struct {
 }
 
 func NewTradeGood(code string) (*TradeGood, error) {
+
 	for _, tg := range goodsMap() {
 		if tg.code == code {
 			return &tg, nil
 		}
 	}
 	return nil, fmt.Errorf("invalid code '%v'", code)
+}
+
+func AllCodes() []string {
+	return []string{
+		"11", "12", "13", "14", "15", "16",
+		"21", "22", "23", "24", "25", "26",
+		"31", "32", "33", "34", "35", "36",
+		"41", "42", "43", "44", "45", "46",
+		"51", "52", "53", "54", "55", "56",
+		"61", "62", "63", "64", "65", "66",
+	}
+}
+
+func CommonMarketCodes() []string {
+	return []string{
+		"11", "12", "13", "14", "15", "16",
+	}
+}
+
+func TradeMarketCodes() []string {
+	return []string{
+		"21", "22", "23", "24", "25", "26",
+		"31", "32", "33", "34", "35", "36",
+		"41", "42", "43", "44", "45", "46",
+		"51", "52", "53", "54", "55", "56",
+	}
 }
 
 func goodsMap() []TradeGood {

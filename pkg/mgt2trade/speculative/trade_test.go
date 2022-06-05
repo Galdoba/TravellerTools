@@ -95,6 +95,13 @@ func TestTrade(t *testing.T) {
 		if err != nil {
 			t.Errorf("FindSuplier() returned error: '%v'", err.Error())
 		}
+		avGoods, err := DetermineGoodsAvailable(wrld)
+		if err != nil {
+			t.Errorf("DetermineGoodsAvailable() returned error: '%v'", err.Error())
+		}
+		for _, tGood := range avGoods {
+			fmt.Println(tGood.GoodsType())
+		}
 
 	}
 

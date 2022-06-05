@@ -31,6 +31,7 @@ type suplier struct {
 type World interface {
 	MW_Name() string
 	MW_UWP() string
+	TravelZone() string
 }
 
 func FindSuplier(world World) (*suplier, error) {
@@ -39,10 +40,50 @@ func FindSuplier(world World) (*suplier, error) {
 	return &s, nil
 }
 
-func DetermineGoodsAvailable(world World) []*tradegoods.TradeGood {
-	tradeCodes, err := tradecodes.FromUWPstr(world.MW_UWP())
-	for i, tc := range tradeCodes {
-
+func DetermineExport(world World) ([]*tradegoods.TradeGood, error) {
+	availableGoods := []*tradegoods.TradeGood{}
+	worldTradeCodes, err := tradecodes.FromUWPstr(world.MW_UWP())
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	worldTradeCodes = append(worldTradeCodes, world.TravelZone())
+	for _, code := range tradegoods.AllCodes() {
+		if tg, err := tradegoods.NewTradeGood(code); err == nil {
+			if tradeCodesOverlap(tg.Availability(), worldTradeCodes) {
+				availableGoods = append(availableGoods, tg)
+			}
+		}
+	}
+	return availableGoods, nil
+}
+
+func DetermineGoodsAvailable(world World) ([]*tradegoods.TradeGood, error) {
+	availableGoods := []*tradegoods.TradeGood{}
+	worldTradeCodes, err := tradecodes.FromUWPstr(world.MW_UWP())
+	if err != nil {
+		return nil, err
+	}
+	worldTradeCodes = append(worldTradeCodes, world.TravelZone())
+	for _, code := range tradegoods.AllCodes() {
+		if tg, err := tradegoods.NewTradeGood(code); err == nil {
+			if tradeCodesOverlap(tg.Availability(), worldTradeCodes) {
+				availableGoods = append(availableGoods, tg)
+			}
+		}
+	}
+	return availableGoods, nil
+}
+
+func tradeCodesOverlap(sl1, sl2 []string) bool {
+	for _, s1 := range sl1 {
+		for _, s2 := range sl2 {
+			if s1 == s2 {
+				return true
+			}
+			if s1 == "All" || s2 == "All" {
+				return true
+			}
+		}
+	}
+	return false
 }
