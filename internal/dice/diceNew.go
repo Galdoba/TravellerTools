@@ -235,6 +235,12 @@ func (d *Dicepool) Pick(slice []interface{}) (int, interface{}) {
 	return r, slice[r]
 }
 
+func (d *Dicepool) PickStr(slice []string) (int, string) {
+	l := fmt.Sprintf("%v", len(slice))
+	r := d.Roll("1d" + l).DM(-1).Sum()
+	return r, slice[r]
+}
+
 /*
 чего ку
 амиксин

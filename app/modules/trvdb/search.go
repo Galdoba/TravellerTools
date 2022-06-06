@@ -7,6 +7,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/survey"
 	"github.com/Galdoba/devtools/cli/user"
 	"github.com/Galdoba/utils"
+	"github.com/manifoldco/promptui"
 )
 
 const (
@@ -47,6 +48,9 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 	if len(matches) < 1 {
 		return nil, fmt.Errorf("no matches on '%v' in database", searchKey)
 	}
+	//////////
+
+	////////////
 	potentialWorlds := []*survey.SecondSurveyData{}
 	for _, match := range matches {
 		testWorld := survey.Parse(match)
@@ -58,10 +62,21 @@ func WorldByName(quarry ...string) (*survey.SecondSurveyData, error) {
 	for _, sWorld := range potentialWorlds {
 		names = append(names, fmt.Sprintf("%v (%v)/%v %v", sWorld.MW_Name(), sWorld.MW_UWP(), sWorld.Sector(), sWorld.Hex()))
 	}
-	sel := 0
-	if len(names) > 1 {
-		sel, _ = user.ChooseOne("Select quary:", names)
+	prompt := promptui.Select{
+		Label: "Select Supplier",
+		Items: names,
 	}
+
+	sel, result, err := prompt.Run()
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Println(res, result, err)
+
+	fmt.Printf("You choose %q\n", result)
+	// if len(names) > 1 {
+	// 	sel, _ = user.ChooseOne("Select quary:", names)
+	// }
 	sw := potentialWorlds[sel]
 	return sw, nil
 }

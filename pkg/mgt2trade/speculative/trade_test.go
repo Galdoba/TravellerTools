@@ -86,22 +86,31 @@ func TestTrade(t *testing.T) {
 	} {
 
 		wrld := survey.Parse(line)
+		fmt.Println(" ")
 		fmt.Println("test world:")
 		fmt.Println(wrld.String())
-		s, err := FindSuplier(wrld)
+		s, err := FindSuplier(wrld, Market_Legal)
 		if s == nil {
 			t.Errorf("FindSuplier() return no object")
 		}
 		if err != nil {
 			t.Errorf("FindSuplier() returned error: '%v'", err.Error())
 		}
-		avGoods, err := DetermineGoodsAvailable(wrld)
-		if err != nil {
-			t.Errorf("DetermineGoodsAvailable() returned error: '%v'", err.Error())
+		s.RollQuantity()
+		for _, tg := range s.tradeGoodsAvailable {
+			fmt.Println(tg.GoodsType(), tg.Stored())
+			if tg.Stored() < 1 {
+				t.Errorf("must not be strored %v tons", tg.Stored())
+			}
 		}
-		for _, tGood := range avGoods {
-			fmt.Println(tGood.GoodsType())
-		}
+
+		// avGoods, err := DetermineGoodsAvailable(wrld)
+		// if err != nil {
+		// 	t.Errorf("DetermineGoodsAvailable() returned error: '%v'", err.Error())
+		// }
+		// for _, tGood := range avGoods {
+		// 	fmt.Println(tGood.GoodsType())
+		// }
 
 	}
 

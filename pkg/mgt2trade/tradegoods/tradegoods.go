@@ -24,6 +24,7 @@ type TradeGood struct {
 	purchaseDM   map[string]int
 	saleDM       map[string]int
 	example      string
+	storedTons   int
 }
 
 func NewTradeGood(code string) (*TradeGood, error) {
@@ -62,6 +63,22 @@ func TradeMarketCodes() []string {
 	}
 }
 
+func LegalMarketCodes() []string {
+	return []string{
+		"11", "12", "13", "14", "15", "16",
+		"21", "22", "23", "24", "25", "26",
+		"31", "32", "33", "34", "35", "36",
+		"41", "42", "43", "44", "45", "46",
+		"51", "52", "53", "54", "55", "56",
+	}
+}
+
+func IllegalMarketCodes() []string {
+	return []string{
+		"61", "62", "63", "64", "65", "66",
+	}
+}
+
 func goodsMap() []TradeGood {
 	tgList := []TradeGood{}
 	for _, code := range []string{
@@ -88,7 +105,7 @@ func goodsMap() []TradeGood {
 		case "12":
 			tgList = append(tgList, TradeGood{
 				code:         code,
-				goodsType:    "Common In Goods",
+				goodsType:    "Common Industrial Goods",
 				availability: []string{"All"},
 				tonsDice:     2,
 				tonsFactor:   10,
@@ -436,7 +453,7 @@ func goodsMap() []TradeGood {
 		case "61":
 			tgList = append(tgList, TradeGood{
 				code:         code,
-				goodsType:    "Illegal Biochemicals",
+				goodsType:    "Biochemicals (Illegal)",
 				availability: []string{"Ag", "Wa"},
 				tonsDice:     1,
 				tonsFactor:   5,
@@ -448,7 +465,7 @@ func goodsMap() []TradeGood {
 		case "62":
 			tgList = append(tgList, TradeGood{
 				code:         code,
-				goodsType:    "Cybernetics, Illegal",
+				goodsType:    "Cybernetics (Illegal)",
 				availability: []string{"Ht"},
 				tonsDice:     1,
 				tonsFactor:   1,
@@ -534,4 +551,14 @@ func (tg *TradeGood) SaleDM() map[string]int {
 }
 func (tg *TradeGood) Example() string {
 	return tg.example
+}
+func (tg *TradeGood) Stored() int {
+	return tg.storedTons
+}
+
+func (tg *TradeGood) AddQuantity(tons int) {
+	tg.storedTons = tg.storedTons + tons
+	if tg.storedTons < 0 {
+		tg.storedTons = 0
+	}
 }

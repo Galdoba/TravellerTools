@@ -6,7 +6,21 @@ import (
 
 	"github.com/Galdoba/TravellerTools/internal/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
+
+func FromWorldData(world *survey.SecondSurveyData) ([]string, error) {
+	uwp, err := uwp.FromString(world.MW_UWP())
+	if err != nil {
+		return []string{}, err
+	}
+	codes, err := parceCodes(uwp)
+	if err != nil {
+		return []string{}, err
+	}
+	codes = append(codes, world.TravelZone())
+	return codes, nil
+}
 
 func FromUWPstr(uwpCode string) ([]string, error) {
 	uwp, err := uwp.FromString(uwpCode)
