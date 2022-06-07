@@ -89,19 +89,24 @@ func TestTrade(t *testing.T) {
 		fmt.Println(" ")
 		fmt.Println("test world:")
 		fmt.Println(wrld.String())
-		s, err := FindSuplier(wrld, Market_Legal)
+		s, err := FindSuplier(wrld, Market_ALL)
 		if s == nil {
 			t.Errorf("FindSuplier() return no object")
 		}
 		if err != nil {
 			t.Errorf("FindSuplier() returned error: '%v'", err.Error())
 		}
-		s.RollQuantity()
-		for _, tg := range s.tradeGoodsAvailable {
-			fmt.Println(tg.GoodsType(), tg.Stored())
-			if tg.Stored() < 1 {
-				t.Errorf("must not be strored %v tons", tg.Stored())
-			}
+		//s.RollQuantity()
+		//for _, tg := range s.tradeGoodsAvailable {
+		//	purchPrice := PricePurchaseAverage(s.world, tg)
+		//	salePrice := PriceSaleAverage(s.world, tg)
+		//	fmt.Println(tg.GoodsType(), tg.Stored(), purchPrice, salePrice, tg.BasePrice())
+		//	if tg.Stored() < 1 {
+		//		t.Errorf("must not be strored %v tons", tg.Stored())
+		//	}
+		//}
+		for k, v := range ListPrices(s.world) {
+			fmt.Printf("TG code %v, cost:%v\n", k, v)
 		}
 
 		// avGoods, err := DetermineGoodsAvailable(wrld)

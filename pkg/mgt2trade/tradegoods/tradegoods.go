@@ -15,7 +15,6 @@ type Source interface {
 
 type TradeGood struct {
 	code         string
-	market       string
 	goodsType    string
 	availability []string
 	tonsDice     int

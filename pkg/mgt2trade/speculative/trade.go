@@ -19,6 +19,8 @@ Trade Checklist
 5. Travel to another market
 6. Find a buyer or local broker
 7. Determine sale price
+
+TODO: потенциальная проблема: купить на одной планете товар можно дешевле чем продать его же на этой же планете
 */
 
 const (
@@ -28,11 +30,18 @@ const (
 	Market_Black
 	Market_ALL
 	Market_UserChose
+	operationPurchase
+	operationSale
 )
+
+type trader struct {
+	brokerSkill int
+}
 
 type suplier struct {
 	world               World
 	market              int
+	brokerSkill         int
 	previousAttempts    int
 	tradeGoodsAvailable map[string]*tradegoods.TradeGood
 }
@@ -47,6 +56,7 @@ func FindSuplier(world World, suplierType int) (*suplier, error) {
 	//chose suplier type if needed
 	s := suplier{}
 	s.world = world
+	s.brokerSkill = 2
 	s.tradeGoodsAvailable = make(map[string]*tradegoods.TradeGood)
 	switch suplierType {
 	default:
@@ -141,13 +151,21 @@ func (s *suplier) RollQuantity() {
 	s.previousAttempts++
 }
 
-func DetermineExport(world World) ([]*tradegoods.TradeGood, error) {
-	availableGoods := []*tradegoods.TradeGood{}
+func tradeCodes(world World) ([]string, error) {
 	worldTradeCodes, err := tradecodes.FromUWPstr(world.MW_UWP())
 	if err != nil {
 		return nil, err
 	}
 	worldTradeCodes = append(worldTradeCodes, world.TravelZone())
+	return worldTradeCodes, nil
+}
+
+func DetermineExport(world World) ([]*tradegoods.TradeGood, error) {
+	availableGoods := []*tradegoods.TradeGood{}
+	worldTradeCodes, err := tradeCodes(world)
+	if err != nil {
+		return nil, err
+	}
 	for _, code := range tradegoods.AllCodes() {
 		if tg, err := tradegoods.NewTradeGood(code); err == nil {
 			if tradeCodesOverlap(tg.Availability(), worldTradeCodes) {
@@ -187,4 +205,115 @@ func tradeCodesOverlap(sl1, sl2 []string) bool {
 		}
 	}
 	return false
+}
+
+func PricePurchaseAverage(wrld World, tg *tradegoods.TradeGood) int {
+	tc, _ := tradeCodes(wrld)
+
+	purchDM := maxDM(tg.PurchaseDM(), tc)
+	saleDM := maxDM(tg.SaleDM(), tc)
+	dm := purchDM - saleDM
+	index1 := dm + 10
+	index2 := dm + 11
+	price1, _ := modifiedPrice(operationPurchase, index1, tg.BasePrice())
+	price2, _ := modifiedPrice(operationPurchase, index2, tg.BasePrice())
+	return (price1 + price2) / 2
+}
+
+func PriceSaleAverage(wrld World, tg *tradegoods.TradeGood) int {
+	tc, _ := tradeCodes(wrld)
+	purchDM := maxDM(tg.PurchaseDM(), tc)
+	saleDM := maxDM(tg.SaleDM(), tc)
+	dm := saleDM - purchDM
+	index1 := dm + 10
+	index2 := dm + 11
+	price1, _ := modifiedPrice(operationSale, index1, tg.BasePrice())
+	price2, _ := modifiedPrice(operationSale, index2, tg.BasePrice())
+	return (price1 + price2) / 2
+}
+
+func ListPrices(w World) map[string][]int {
+	s, _ := FindSuplier(w, Market_ALL)
+	priceMap := make(map[string][]int)
+	for _, code := range tradegoods.AllCodes() {
+		s.tradeGoodsAvailable[code], _ = tradegoods.NewTradeGood(code)
+		priceMap[code] = []int{s.tradeGoodsAvailable[code].BasePrice(), PricePurchaseAverage(s.world, s.tradeGoodsAvailable[code]), PriceSaleAverage(s.world, s.tradeGoodsAvailable[code])}
+	}
+	return priceMap
+}
+
+func modifiedPrice(operation, index, basePrise int) (int, error) {
+	mod := []int{}
+	modMap := make(map[int][]int)
+	modMap[-2] = []int{250, 20}
+	modMap[-1] = []int{200, 30}
+	modMap[0] = []int{175, 40}
+	modMap[1] = []int{150, 45}
+	modMap[2] = []int{135, 50}
+	modMap[3] = []int{125, 55}
+	modMap[4] = []int{120, 60}
+	modMap[5] = []int{115, 65}
+	modMap[6] = []int{110, 70}
+	modMap[7] = []int{105, 75}
+	modMap[8] = []int{100, 80}
+	modMap[9] = []int{95, 85}
+	modMap[10] = []int{90, 90}
+	modMap[11] = []int{85, 100}
+	modMap[12] = []int{80, 105}
+	modMap[13] = []int{75, 110}
+	modMap[14] = []int{70, 115}
+	modMap[15] = []int{65, 120}
+	modMap[16] = []int{60, 125}
+	modMap[17] = []int{55, 130}
+	modMap[18] = []int{50, 140}
+	modMap[19] = []int{45, 150}
+	modMap[20] = []int{40, 160}
+	modMap[21] = []int{35, 175}
+	modMap[22] = []int{30, 200}
+	modMap[23] = []int{25, 250}
+	modMap[24] = []int{20, 300}
+	mod = modMap[index]
+	if index <= -3 {
+		mod = []int{300, 10}
+	}
+	if index >= 25 {
+		mod = []int{15, 400}
+	}
+	pct := 0
+	switch operation {
+	default:
+		return 0, fmt.Errorf("modifiedPrice(): unknown operation '%v'", operation)
+	case operationPurchase:
+		pct = mod[0]
+	case operationSale:
+		pct = mod[1]
+	}
+	return (basePrise * pct) / 100, nil
+
+}
+
+func maxDM(dmMap map[string]int, tags []string) int {
+	//matched := []int{}
+	dm := 0
+	for _, tc := range tags {
+		if val, ok := dmMap[tc]; ok {
+			//matched = append(matched, val)
+			dm += val
+		}
+	}
+	//return maxFromSl(matched)
+	return dm
+}
+
+func maxFromSl(sl []int) int {
+	if len(sl) == 0 {
+		return 0
+	}
+	m := -999999
+	for _, i := range sl {
+		if i > m {
+			m = i
+		}
+	}
+	return m
 }
