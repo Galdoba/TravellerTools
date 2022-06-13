@@ -22,6 +22,7 @@ type Dicepool struct {
 	destructive bool
 	src         rand.Source
 	rand        rand.Rand
+	vocal       bool
 	err         error
 }
 
@@ -100,7 +101,21 @@ func (dp *Dicepool) Roll(code string) *Dicepool {
 	for d := 0; d < dp.dice; d++ {
 		dp.result = append(dp.result, dp.rand.Intn(dp.edges)+1)
 	}
+	if dp.vocal {
+		fmt.Printf("Rolled [%v + %v]: result is %v\n", code, dp.modTotal, dp.result)
+	}
 	return dp
+}
+
+func (dp *Dicepool) Vocal() {
+	if dp.vocal == true {
+		dp.vocal = false
+		return
+	}
+	if dp.vocal == false {
+		dp.vocal = true
+		return
+	}
 }
 
 //DrawData - возвращает количество дайсов и их грани

@@ -160,20 +160,62 @@ func tradeCodes(world World) ([]string, error) {
 	return worldTradeCodes, nil
 }
 
-func DetermineExport(world World) ([]*tradegoods.TradeGood, error) {
-	availableGoods := []*tradegoods.TradeGood{}
-	worldTradeCodes, err := tradeCodes(world)
+func DetermineOffer(world World) ([]*tradegoods.TradeGood, error) {
+	suggestedGoods := []*tradegoods.TradeGood{}
+	worldTradeCodes, err := tradecodes.FromUWPstr(world.MW_UWP())
 	if err != nil {
 		return nil, err
 	}
+	worldTradeCodes = append(worldTradeCodes, world.TravelZone())
 	for _, code := range tradegoods.AllCodes() {
 		if tg, err := tradegoods.NewTradeGood(code); err == nil {
-			if tradeCodesOverlap(tg.Availability(), worldTradeCodes) {
-				availableGoods = append(availableGoods, tg)
+			dm := 0
+			for k, v := range tg.PurchaseDM() {
+				for i := range worldTradeCodes {
+					switch {
+					case worldTradeCodes[i] == k:
+						dm += v
+					}
+				}
 			}
+			if dm > 0 {
+				suggestedGoods = append(suggestedGoods, tg)
+			}
+		} else {
+			return nil, fmt.Errorf("tradegoods.NewTradeGood(code) error: %v", err.Error())
 		}
+
 	}
-	return availableGoods, nil
+	return suggestedGoods, nil
+}
+
+func DetermineDemand(world World) ([]*tradegoods.TradeGood, error) {
+	requestedGoods := []*tradegoods.TradeGood{}
+	worldTradeCodes, err := tradecodes.FromUWPstr(world.MW_UWP())
+	if err != nil {
+		return nil, err
+	}
+	worldTradeCodes = append(worldTradeCodes, world.TravelZone())
+	for _, code := range tradegoods.AllCodes() {
+		if tg, err := tradegoods.NewTradeGood(code); err == nil {
+			dm := 0
+			for k, v := range tg.SaleDM() {
+				for i := range worldTradeCodes {
+					switch {
+					case worldTradeCodes[i] == k:
+						dm += v
+					}
+				}
+			}
+			if dm > 0 {
+				requestedGoods = append(requestedGoods, tg)
+			}
+		} else {
+			return nil, fmt.Errorf("tradegoods.NewTradeGood(code) error: %v", err.Error())
+		}
+
+	}
+	return requestedGoods, nil
 }
 
 func DetermineGoodsAvailable(world World) ([]*tradegoods.TradeGood, error) {
@@ -192,6 +234,36 @@ func DetermineGoodsAvailable(world World) ([]*tradegoods.TradeGood, error) {
 	}
 	return availableGoods, nil
 }
+
+func TradeGoodsFlow(origin, destination World) ([]*tradegoods.TradeGood, error) {
+	offerList, err := DetermineGoodsAvailable(origin)
+	if err != nil {
+		return nil, err
+	}
+	demandList, err := DetermineDemand(destination)
+	if err != nil {
+		return nil, err
+	}
+	tradeList := []*tradegoods.TradeGood{}
+	for _, tgOffer := range offerList {
+		for _, tgDemand := range demandList {
+			if tgDemand.GoodsType() == tgOffer.GoodsType() {
+				tradeList = append(tradeList, tgOffer)
+			}
+		}
+	}
+	return tradeList, nil
+}
+
+/*
+Asim ---> Drinax
+TG1
+Tg2
+...
+TGn
+
+
+*/
 
 func tradeCodesOverlap(sl1, sl2 []string) bool {
 	for _, s1 := range sl1 {
