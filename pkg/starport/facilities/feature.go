@@ -7,21 +7,41 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
+const (
+	Highport = iota
+	Military
+	Naval
+	Scout
+	Corsair
+	//Security Aspects
+	LawLevel
+	LawEnforcement
+	Defences
+	//Instalations
+	ArmyBase
+	DefenceBase
+	MaintainanceFacilities
+	NavalBase
+	NavalDepot
+	ResearchInstallation
+	ScoutBase
+	Shipyard
+	WayStation
+)
+
 type World interface {
 	MW_Name() string
 	MW_UWP() string
 }
 
-type features struct {
-	highport bool
-	military bool
-	naval    bool
-	scout    bool
-	corsair  bool
+type facilities struct {
+	ByType map[int]bool
+	Rating map[int]int
 }
 
-func GenerateFeatures(world World) (*features, error) {
-	ft := features{}
+func GenerateFacilities(world World) (*facilities, error) {
+	ft := facilities{}
+	ft.ByType = make(map[int]bool)
 	uwp, err := uwp.FromString(world.MW_UWP())
 	if err != nil {
 		return &ft, err
@@ -30,16 +50,16 @@ func GenerateFeatures(world World) (*features, error) {
 	pop := uwp.Pops()
 	law := uwp.Laws()
 	tl := uwp.TL()
-	featureDM := featuresDM(tl, pop, law)
+	featureDM := facilitiesDM(tl, pop, law)
 	dp := dice.New().SetSeed(world.MW_Name() + world.MW_UWP())
-	featuresTNmap := make(map[string][]int)
-	featuresTNmap["A"] = []int{6, 8, 8, 10, 99}
-	featuresTNmap["B"] = []int{8, 8, 8, 9, 99}
-	featuresTNmap["C"] = []int{10, 99, 10, 9, 99}
-	featuresTNmap["D"] = []int{12, 99, 99, 8, 12}
-	featuresTNmap["E"] = []int{99, 99, 99, 99, 10}
-	featuresTNmap["X"] = []int{99, 99, 99, 99, 10}
-	for k, tnList := range featuresTNmap {
+	facilitiesTNmap := make(map[string][]int)
+	facilitiesTNmap["A"] = []int{6, 8, 8, 10, 99}
+	facilitiesTNmap["B"] = []int{8, 8, 8, 9, 99}
+	facilitiesTNmap["C"] = []int{10, 99, 10, 9, 99}
+	facilitiesTNmap["D"] = []int{12, 99, 99, 8, 12}
+	facilitiesTNmap["E"] = []int{99, 99, 99, 99, 10}
+	facilitiesTNmap["X"] = []int{99, 99, 99, 99, 10}
+	for k, tnList := range facilitiesTNmap {
 		if k != st {
 			continue
 		}
@@ -49,33 +69,50 @@ func GenerateFeatures(world World) (*features, error) {
 				present = true
 			}
 			switch i {
-			case 0:
-				ft.highport = present
-			case 1:
-				ft.military = present
-			case 2:
-				ft.naval = present
-			case 3:
-				ft.scout = present
-			case 4:
-				ft.corsair = present
+			default:
+				return &ft, fmt.Errorf("unknown facility type code %v", i)
+			case Highport, Military, Naval, Scout, Corsair:
+				ft.ByType[i] = present
 			}
+		}
+	}
+	ft.Rating = make(map[int]int)
+	for _, aspect := range []int{LawLevel, LawEnforcement, Defences} {
+		rr := dp.Roll("2d6").Sum()
+		dm := 0
+		switch aspect {
+		case LawLevel:
+			switch st {
+			case "A":
+				dm = 7
+			case "B":
+				dm = 5
+			case "C":
+				dm = 3
+			case "D":
+				dm = 1
+			}
+			ft.Rating[LawLevel] = rr + dm - law
+			if ft.Rating[LawLevel] < 0 {
+				ft.Rating[LawLevel] = 0
+			}
+			fmt.Println(ft.Rating[LawLevel])
 		}
 	}
 	return &ft, nil
 }
 
-func (ft *features) String() string {
+func (ft *facilities) String() string {
 	str := ""
-	str += "highport =" + fmt.Sprint(ft.highport) + "\n"
-	str += "military =" + fmt.Sprint(ft.military) + "\n"
-	str += "naval =" + fmt.Sprint(ft.naval) + "\n"
-	str += "scout =" + fmt.Sprint(ft.scout) + "\n"
-	str += "corsair =" + fmt.Sprint(ft.corsair) + "\n"
+	str += "highport =" + fmt.Sprint(ft.ByType[Highport]) + "\n"
+	str += "military =" + fmt.Sprint(ft.ByType[Military]) + "\n"
+	str += "naval =" + fmt.Sprint(ft.ByType[Naval]) + "\n"
+	str += "scout =" + fmt.Sprint(ft.ByType[Scout]) + "\n"
+	str += "corsair =" + fmt.Sprint(ft.ByType[Corsair]) + "\n"
 	return str
 }
 
-func featuresDM(tl, pop, law int) []int {
+func facilitiesDM(tl, pop, law int) []int {
 	dms := []int{}
 	dms = append(dms, stdValDM(tl)+stdValDM(pop))
 	dms = append(dms, 0)
