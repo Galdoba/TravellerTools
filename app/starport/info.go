@@ -13,8 +13,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-
-
 func Info(c *cli.Context) error {
 
 	searchKey := c.String("worldname")
@@ -46,7 +44,6 @@ func Info(c *cli.Context) error {
 		for _, tr := range routes {
 
 			fmt.Printf("%v: %v \n", tr.status, tr.jp.Path)
-			
 
 		}
 		shipping = shippingActivityBase(sourceworldMain.MW_Name(), routes)
@@ -95,10 +92,10 @@ func evaluateTradeRoutes(ports []Port, portOfInterest Port) []tradeRoute {
 				continue
 			case hexagon.Distance(Hexagon(src), Hexagon(dest)) == 0:
 				continue
-			// case src.TravelZone() == "R":
-			// 	continue
-			// case dest.TravelZone() == "R":
-			// 	continue
+			case src.TravelZone() == "R":
+				continue
+			case dest.TravelZone() == "R":
+				continue
 			case tradePossible(src, dest):
 				jp, _ := astrogation.PlotCource(src, dest, 2, 1)
 				if !portVisited(portOfInterest, jp.Path) {
