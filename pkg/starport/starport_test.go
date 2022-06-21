@@ -1,4 +1,4 @@
-package facilities
+package starport
 
 import (
 	"fmt"
@@ -7,8 +7,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
-func TestStarportFeature(t *testing.T) {
-	//var world World
+func Test(t *testing.T) {
 	for _, data := range []string{
 		"|Gash|2116|DAF8573-7|112|||NaHu|M1 V|G|{ -3 }|-3|(741-5)|[2224]|B|10|-140|6|1|-44|56|Ni||Reaver's Deep|Caledon|Reav|Non-Aligned, Human-dominated",
 		"|Rock|2214|B400364-A|601|A||NaHu|F8 V M8 V|G|{ +1 }|1|(621-1)|[1438]|B|8|-12|6|1|-43|54|Lo Va Da O:2313||Reaver's Deep|Caledon|Reav|Non-Aligned, Human-dominated",
@@ -136,10 +135,14 @@ func TestStarportFeature(t *testing.T) {
 			t.Errorf("Null")
 		}
 		fmt.Println(world)
-		feat, err := GenerateFacilities(world)
+		feat, err := New(world)
 		if err != nil {
 			t.Errorf("func retrned error: %v", err.Error())
 		}
-		fmt.Println(feat)
+		fmt.Println("+++")
+		fmt.Println(feat.String())
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
 	}
 }

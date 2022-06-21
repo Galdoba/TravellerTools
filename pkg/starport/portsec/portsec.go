@@ -133,11 +133,11 @@ func (ssf *StarportSecurityForces) String() string {
 		underline += "-"
 	}
 
-	str += fmt.Sprintf("Organisation : %v\n", ssf.organisation)
-	str += fmt.Sprintf("Funding      : %v\n", ssf.funding)
-	str += fmt.Sprintf("Equipment    : %v\n", ssf.equipment)
-	str += fmt.Sprintf("Competence   : %v\n", ssf.competence)
-	str += fmt.Sprintf("Response     : %v\n", ssf.response)
+	str += fmt.Sprintf("•Organisation : %v\n", ssf.organisation)
+	str += fmt.Sprintf("•Funding      : %v\n", ssf.funding)
+	str += fmt.Sprintf("•Equipment    : %v\n", ssf.equipment)
+	str += fmt.Sprintf("•Competence   : %v\n", ssf.competence)
+	str += fmt.Sprintf("•Response     : %v\n", ssf.response)
 	str += underline
 	routineG, respG, eliteG := ssf.rout, ssf.resp, ssf.elite
 	if routineG > 50000 {
