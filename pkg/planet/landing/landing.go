@@ -1,6 +1,12 @@
 package landing
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Galdoba/TravellerTools/internal/dice"
+	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+	"gopkg.in/AlecAivazis/survey.v1"
+)
 
 const (
 	speedStationary = iota
@@ -13,6 +19,11 @@ const (
 	speedTransit
 	speedFastTransit
 	speedExtreme
+	worldStarport
+	worldSize
+	worldAtmo
+	weather
+	shiptype
 )
 
 type speed struct {
@@ -86,9 +97,22 @@ func setSpeed(val int) speed {
 type Landing struct {
 	uwp        string
 	speed      speed
-	weather    string
 	pilotDM    map[int]int
 	severityDM int
+	difficulty string
+}
+
+func (l *Landing) String() string {
+	dm := 0
+	for _, v := range l.pilotDM {
+		dm += v
+	}
+	dif := 8
+	switch l.difficulty {
+	case "Easy":
+		dif = 4
+	}
+	return fmt.Sprintf("test: Pilot(Agility) %v, DM[%v]", dif, dm)
 }
 
 type Port interface {
@@ -98,7 +122,71 @@ type Port interface {
 
 func Preapare(port Port) (*Landing, error) {
 	l := Landing{}
+	l.uwp = port.MW_UWP()
 	l.pilotDM = make(map[int]int)
+	l.pilotDM[shiptype] = shipTypeDM()
+	l.evaluatePlanetaryConditions()
 
 	return &l, nil
+}
+
+func (l *Landing) evaluatePlanetaryConditions() {
+	uwp, _ := uwp.FromString(l.uwp)
+	st := uwp.Starport()
+	sz := uwp.Size()
+	at := uwp.Atmo()
+	hd := uwp.Hydr()
+	stDM := 0
+	switch st {
+	case "A", "B":
+		stDM = 2
+	case "E", "X":
+		stDM = -2
+	}
+	l.pilotDM[worldStarport] = stDM
+	sizeDM := (-1 * sz) + 9
+	if sz >= 0 {
+		sizeDM = 0
+	}
+	l.pilotDM[worldSize] = sizeDM
+	atmDM := 0
+	switch at {
+	case 6, 7:
+		atmDM = -1
+	case 8, 9:
+		atmDM = -2
+	case 13:
+		atmDM = -3
+	}
+	l.pilotDM[worldAtmo] = atmDM
+	wx := 0
+	if at > 0 {
+		wx = (at * hd) / sz
+	}
+	if wx > 2 {
+		dp := dice.New()
+		r := dp.Roll("2d6").DM(-1 * wx).Sum()
+		if r < 0 {
+			l.pilotDM[weather] = r / 2
+		}
+	}
+
+}
+
+func shipTypeDM() int {
+	answer := ""
+	prompt := &survey.Select{
+		Message: "Starship Streamlined?",
+		Options: []string{"Yes      (DM:  0)", "Partialy (DM: -2)", "No       (DM: -4)"},
+	}
+	valid := survey.ComposeValidators()
+	survey.AskOne(prompt, &answer, valid)
+	dm := 0
+	switch answer {
+	case "Partialy (DM: -2)":
+		dm = -2
+	case "No       (DM: -4)":
+		dm = -4
+	}
+	return dm
 }

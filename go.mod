@@ -9,4 +9,5 @@ require (
 	github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb
 	github.com/mxschmitt/golang-combinations v1.1.0
 	github.com/urfave/cli v1.22.5
+	gopkg.in/AlecAivazis/survey.v1 v1.8.8
 )
