@@ -99,7 +99,8 @@ type Landing struct {
 	speed      speed
 	pilotDM    map[int]int
 	severityDM int
-	difficulty string
+	difficulty int
+	descr      string
 }
 
 func (l *Landing) String() string {
@@ -107,12 +108,8 @@ func (l *Landing) String() string {
 	for _, v := range l.pilotDM {
 		dm += v
 	}
-	dif := 8
-	switch l.difficulty {
-	case "Easy":
-		dif = 4
-	}
-	return fmt.Sprintf("test: Pilot(Agility) %v, DM[%v]", dif, dm)
+
+	return fmt.Sprintf("%v, DM[%v]", newTask(l.descr, l.difficulty).String(), dm)
 }
 
 type Port interface {
@@ -124,10 +121,35 @@ func Preapare(port Port) (*Landing, error) {
 	l := Landing{}
 	l.uwp = port.MW_UWP()
 	l.pilotDM = make(map[int]int)
-	l.pilotDM[shiptype] = shipTypeDM()
 	l.evaluatePlanetaryConditions()
+	l.pilotDM[shiptype] = shipTypeDM()
+
+	l.setDifficulty()
 
 	return &l, nil
+}
+
+func (l *Landing) setDifficulty() {
+	answer := ""
+	prompt := &survey.Select{
+		Message: "This is",
+		Options: []string{"Emergency crash-landing", "Heavy landing", "Standard landing", "Smooth landing", "Perfect landing"},
+	}
+	valid := survey.ComposeValidators()
+	survey.AskOne(prompt, &answer, valid)
+	l.descr = answer
+	switch answer {
+	case "Emergency crash-landing":
+		l.difficulty = 4
+	case "Heavy landing":
+		l.difficulty = 6
+	case "Standard landing":
+		l.difficulty = 8
+	case "Smooth landing":
+		l.difficulty = 10
+	case "Perfect landing":
+		l.difficulty = 12
+	}
 }
 
 func (l *Landing) evaluatePlanetaryConditions() {
@@ -140,23 +162,31 @@ func (l *Landing) evaluatePlanetaryConditions() {
 	switch st {
 	case "A", "B":
 		stDM = 2
+		fmt.Println("Starport Guidence System ACTIVE (+2)")
+	case "C", "D":
+		fmt.Println("Starport Guidence System PASSIVE (+0)")
 	case "E", "X":
 		stDM = -2
+		fmt.Println("Starport Guidence System ABSENT (-2)")
 	}
 	l.pilotDM[worldStarport] = stDM
 	sizeDM := (-1 * sz) + 9
 	if sz >= 0 {
 		sizeDM = 0
 	}
+	fmt.Printf("World Size (%v)\n", sizeDM)
 	l.pilotDM[worldSize] = sizeDM
 	atmDM := 0
 	switch at {
 	case 6, 7:
 		atmDM = -1
+		fmt.Println("Standard Atmosphere (-1)")
 	case 8, 9:
 		atmDM = -2
+		fmt.Println("Dense Atmosphere (-2)")
 	case 13:
 		atmDM = -3
+		fmt.Println("Very Dense Atmosphere (-3)")
 	}
 	l.pilotDM[worldAtmo] = atmDM
 	wx := 0
@@ -169,8 +199,24 @@ func (l *Landing) evaluatePlanetaryConditions() {
 		if r < 0 {
 			l.pilotDM[weather] = r / 2
 		}
+		if l.pilotDM[weather] > 0 {
+			l.pilotDM[weather] = 0
+		}
 	}
-
+	switch l.pilotDM[weather] {
+	case 0:
+		fmt.Println("Weather is good or not affecting the landing...")
+	case -1:
+		fmt.Println("Some Minor Weather Conditions... (-1)")
+	case -2:
+		fmt.Println("Some Serious Weather Conditions... (-2)")
+	case -3:
+		fmt.Println("Some Violent Weather Conditions... (-3)")
+	case -4:
+		fmt.Println("Some Extereme Weather Conditions... (-4)")
+	default:
+		fmt.Printf("Some DEADLY Weather Conditions... (%v)", l.pilotDM[weather])
+	}
 }
 
 func shipTypeDM() int {
@@ -189,4 +235,36 @@ func shipTypeDM() int {
 		dm = -4
 	}
 	return dm
+}
+
+type task struct {
+	name  string
+	skill string
+	atr   string
+	dif   int
+}
+
+func newTask(name string, dif int) task {
+	t := task{}
+	t.name = name
+	t.dif = dif
+	return t
+}
+
+func (t task) String() string {
+	difDsc := ""
+	switch t.dif {
+	case 4:
+		difDsc = "Easy (4+)"
+	case 6:
+		difDsc = "Routine (6+)"
+	case 8:
+		difDsc = "Average (8+)"
+	case 10:
+		difDsc = "Difficult (10+)"
+	case 12:
+		difDsc = "Very Difficult (12+)"
+
+	}
+	return fmt.Sprintf("%v: %v Pilot check (1D minutes, DEX)", t.name, difDsc)
 }
