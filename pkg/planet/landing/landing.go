@@ -109,7 +109,7 @@ func (l *Landing) String() string {
 		dm += v
 	}
 
-	return fmt.Sprintf("%v, DM[%v]", newTask(l.descr, l.difficulty).String(), dm)
+	return fmt.Sprintf("\n%v, DM[%v]", newTask(l.descr, l.difficulty).String(), dm)
 }
 
 type Port interface {
