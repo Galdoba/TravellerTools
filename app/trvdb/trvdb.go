@@ -95,12 +95,20 @@ func main() {
 
 /*RESULT DATA
 
-World  : Regina (Spinward Marches 1910)
+World  : Regina / Spinward Marches 1910
 UWP    : A788899-C
 TC/Rem : Ri Pa Ph An Cp (Green Zone)
 ---------------------------------------
 Spaceport Traffic Report:
 There are 20 worlds in 4 parsecs radius. [&WORLD_NAME] is not located on a Trade Route.
+
+
+World  : Mirak / Ea / Reaver's Deep 1127
+UWP    : C766763-8
+TC/Rem : Ag Ga Ri Pz Mr (Amber Zone)
+---------------------------------------
+Spaceport Traffic Report:
+There are 17 worlds in 4 parsecs radius. [&WORLD_NAME] is not located on a Trade Route.
 
 
 */
