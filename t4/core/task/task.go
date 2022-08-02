@@ -54,6 +54,7 @@ func checkMod(m mod) error {
 	//testChange
 	//testChange2
 	//testChange3
+	//testChange4
 	if m.modType == "" {
 		return fmt.Errorf("Modifier description is not set")
 	}
