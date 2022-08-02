@@ -51,6 +51,7 @@ func New(descr string, diff, tn int, mods ...mod) (*Task, error) {
 }
 
 func checkMod(m mod) error {
+	//testChange
 	if m.modType == "" {
 		return fmt.Errorf("Modifier description is not set")
 	}
