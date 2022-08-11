@@ -25,7 +25,7 @@ func testPlanets() []plInput {
 }
 
 func parsedInput() []SurveyData {
-	lines := utils.LinesFromTXT("d:\\IN\\IN_testInput\\planetTest.txt")
+	lines := utils.LinesFromTXT(`C:\Users\Public\TrvData\testSector.txt`)
 	sd := []SurveyData{}
 	for _, ln := range lines {
 		sd = append(sd, survey.Parse(ln))
@@ -36,6 +36,9 @@ func parsedInput() []SurveyData {
 func TestPlanet(t *testing.T) {
 	planets := []*planet{}
 	for v, inp := range parsedInput() {
+		if v > 5 {
+			//break
+		}
 		fmt.Printf("Test planet %v  \r", v)
 		pl, err := ImportPlanet(inp)
 		planets = append(planets, pl)
@@ -51,6 +54,7 @@ func TestPlanet(t *testing.T) {
 			}
 		}
 		for key, val := range pl.atrib {
+			continue
 			if val > 10 {
 				switch key {
 				case Solidarity:

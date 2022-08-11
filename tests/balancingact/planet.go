@@ -3,6 +3,7 @@ package balancingact
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
@@ -21,11 +22,25 @@ type planet struct {
 	coordQ      int
 	coordR      int
 	coordS      int
+	iX          string
+	eX          string
+	cX          string
+	pbg         string
+	/*
+		Solidarity - measure of how united the populance (T5 = -Heterogenety)
+		Wealth = Amount of resources and amount of economic power (T5 = Resources+Labor)
+		Expantion = A measure of desire to expand (T5 = Strangeness or Importance)
+		Might = measure of how strong militarises and passionate populance is (T5 = -Acceptance)
+	*/
 }
 
 type SurveyData interface {
 	MW_Name() string
 	MW_UWP() string
+	MW_Importance() string
+	MW_Economic() string
+	MW_Cultural() string
+	PBG() string
 	// CoordX() int
 	// CoordY() int
 	// CoordQ() int
@@ -35,23 +50,72 @@ type SurveyData interface {
 	hexagon.Cube
 }
 
-func createPlanet(name, uwp string, x, y int) (*planet, error) {
+func createPlanet(name, uwp, iX, eX, cX, pbg string, x, y int) (*planet, error) {
 	p := planet{}
 	p.name = name
 	p.currrentUWP = uwp
+	p.iX = iX
+	p.eX = eX
+	p.cX = cX
+	p.pbg = pbg
 	p.hex, _ = hexagon.New(hexagon.Feed_HEX, x, y)
 	//p.coordX, p.coordY = x, y
 	creator := dice.New().SetSeed(fmt.Sprintf("n%vu%vx%vy%v", name, uwp, x, y))
 	p.atrib = make(map[int]int)
-	for _, key := range []int{Solidarity, Wealth, Expansion, Might, Development} {
+	for _, key := range []int{ /*Solidarity, Wealth, Expansion, Might, Development, */ Solidarity, Wealth, Expansion, Might, Development} {
 		atr := creator.Roll("2d6").DM(-2).Sum()
-		if key == Development && atr > p.atrib[Wealth] {
-			atr = p.atrib[Wealth]
+		switch key {
+		case Solidarity:
+			atr = p.heterogenity()
+		case Wealth:
+			atr = p.wealth()
+		case Expansion:
+			atr = 3 + p.expansion()
+		case Might:
+			atr = p.might()
+		case Development:
+			atr = p.development()
 		}
 		p.atrib[key] = atr
+
+		if string(uwp[4]) == "0" {
+			p.atrib[key] = 0
+		}
+
+	}
+	if p.atrib[Development] > p.atrib[Wealth] {
+		p.atrib[Development] = p.atrib[Wealth]
 	}
 	p.updateUWP(p.currrentUWP)
 	return &p, nil
+}
+
+func (p *planet) heterogenity() int {
+	het := ehex.New().Set(string(p.cX[1]))
+	return 20 - het.Value()
+}
+
+func (p *planet) wealth() int {
+	res := ehex.New().Set(string(p.eX[1]))
+	lab := ehex.New().Set(string(p.eX[2]))
+	return res.Value() + lab.Value()
+}
+
+func (p *planet) expansion() int {
+	data := strings.Fields(p.iX)
+	i, _ := strconv.Atoi(data[1])
+	return i
+}
+
+func (p *planet) might() int {
+	acc := ehex.New().Set(string(p.cX[2]))
+	return acc.Value()
+}
+
+func (p *planet) development() int {
+	inf := ehex.New().Set(string(p.eX[3]))
+	lab := ehex.New().Set(string(p.eX[2]))
+	return inf.Value() + lab.Value()
 }
 
 func (pl *planet) updateUWP(newUWP string) {
@@ -91,6 +155,7 @@ func (pl *planet) updateUWP(newUWP string) {
 func (pl *planet) String() string {
 	str := fmt.Sprintf("Planet %v - %v (%v,%v)\n", pl.name, pl.currrentUWP, pl.coordX, pl.coordY)
 	str += fmt.Sprintf("SOL %v  WLT %v  EXP %v  MGT %v  DEV %v\n", pl.atrib[Solidarity], pl.atrib[Wealth], pl.atrib[Expansion], pl.atrib[Might], pl.atrib[Development])
+	//str += fmt.Sprintf("///\nSOL %v  WLT %v  EXP %v  MGT %v\n///\n", pl.atrib[T5_Solidarity], pl.atrib[T5_Wealth], pl.atrib[T5_Expansion], pl.atrib[T5_Might])
 	str += fmt.Sprintf("Global Planetary Product: %v/%v\n", pl.GPP(), roundFl64(pl.GPP()/52.0, 1))
 	str += fmt.Sprintf("Planetary Market : %v/%v\n", pl.PM(), roundFl64(pl.PM()/52, 1))
 	str += fmt.Sprintf("Goverment Ship Building Budget : %v\n", pl.ShipBuildingBudget())
@@ -99,7 +164,7 @@ func (pl *planet) String() string {
 }
 
 func ImportPlanet(sd SurveyData) (*planet, error) {
-	pl, err := createPlanet(sd.MW_Name(), sd.MW_UWP(), sd.CoordX(), sd.CoordY())
+	pl, err := createPlanet(sd.MW_Name(), sd.MW_UWP(), sd.MW_Importance(), sd.MW_Economic(), sd.MW_Cultural(), sd.PBG(), sd.CoordX(), sd.CoordY())
 	return pl, err
 }
 

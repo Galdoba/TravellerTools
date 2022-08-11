@@ -18,6 +18,10 @@ const (
 	Expansion
 	Might
 	Development
+	T5_Solidarity
+	T5_Wealth
+	T5_Expansion
+	T5_Might
 	Starport
 	Population
 	Govr
