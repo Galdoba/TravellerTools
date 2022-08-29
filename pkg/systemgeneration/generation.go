@@ -33,6 +33,12 @@ const (
 	StarPopulationTrinary    = "Trinary Star System"
 	StarPopulationQuatenary  = "Quatenary Star System"
 	StarPopulationQuintenary = "Quintenary Star System"
+	StarDistancePrimary      = "Primary"
+	StarDistanceContact      = "Contact"
+	StarDistanceClose        = "Close"
+	StarDistanceNear         = "Near"
+	StarDistanceFar          = "Far"
+	StarDistanceDistant      = "Distant"
 )
 
 type GenerationState struct {
@@ -80,13 +86,17 @@ type StarSystem struct {
 	starPopulation string
 	ObjectType     string
 	Stars          []star
+	GasGigants     int
+	Belts          int
 }
 
 type star struct {
-	class     string
-	num       int
-	size      string
-	generated bool
+	class        string
+	num          int
+	size         string
+	generated    bool
+	distanceType string
+	distanceAU   float64
 }
 
 func (gs *GenerationState) GenerateData() error {
@@ -108,6 +118,14 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step05()
 		case 6:
 			err = gs.Step06()
+		case 7:
+			err = gs.Step07()
+		case 8:
+			err = gs.Step08()
+		case 9:
+			err = gs.Step09()
+		case 10:
+			err = gs.Step10()
 		case 20:
 			err = gs.Step20()
 			if err == nil {
@@ -319,6 +337,10 @@ func (gs *GenerationState) Step06() error {
 	lumRoll1 := gs.Dice.Roll("1d100").Sum()
 	lumRoll2 := gs.Dice.Roll("1d10").Sum()
 	for i, star := range gs.System.Stars {
+		switch star.class {
+		case "L", "T", "Y":
+			continue
+		}
 		if star.size != "" {
 			continue
 		}
@@ -377,13 +399,15 @@ func (gs *GenerationState) Step07() error {
 	default:
 		return fmt.Errorf("star population unexpected")
 	case StarPopulationSolo, StarPopulationBinary, StarPopulationTrinary, StarPopulationQuatenary, StarPopulationQuintenary:
-		gs.ConcludedStep = 7
-		for i := range gs.System.Stars {
-			if gs.System.Stars[i].num == -1 || gs.System.Stars[i].class == "" {
-				gs.NextStep = 4
-			}
+		fmt.Printf("System: %v, have %v, want %v\n", gs.System.starPopulation, len(gs.System.Stars), strSystToNum(gs.System.starPopulation))
+		if len(gs.System.Stars) < strSystToNum(gs.System.starPopulation) {
+			gs.NextStep = 4
+			return nil
 		}
-	case "":
+		gs.ConcludedStep = 7
+		gs.NextStep = 8
+		gs.System.Stars = sortStars(gs.System.Stars)
+	case StarPopulationUNKNOWN:
 		tn := []int{}
 		switch gs.System.Stars[0].class {
 		case "O", "B", "A":
@@ -406,6 +430,7 @@ func (gs *GenerationState) Step07() error {
 		case strComposRoll <= tn[4]:
 			gs.System.starPopulation = StarPopulationQuintenary
 		}
+		return nil
 	}
 	switch gs.NextStep {
 	case 4, 8:
@@ -414,6 +439,216 @@ func (gs *GenerationState) Step07() error {
 	}
 	fmt.Println("END Step 07")
 	return nil
+}
+
+func (gs *GenerationState) Step08() error {
+	fmt.Println("START Step 08")
+	if gs.NextStep != 8 {
+		return fmt.Errorf("not actual step")
+	}
+	switch gs.System.starPopulation {
+	default:
+		return fmt.Errorf("imposible population at step 08")
+
+	case StarPopulationSolo, StarPopulationBinary, StarPopulationTrinary, StarPopulationQuatenary, StarPopulationQuintenary:
+		for i, _ := range gs.System.Stars {
+			if i == 0 {
+				gs.System.Stars[0].distanceType = "Primary"
+				gs.System.Stars[0].distanceAU = 0.0
+				fmt.Println(gs.System.Stars[i])
+				continue
+			}
+			for gs.System.Stars[i].distanceAU <= gs.System.Stars[i-1].distanceAU {
+				dist, au := rollDistance(gs.Dice)
+				gs.System.Stars[i].distanceType = dist
+				gs.System.Stars[i].distanceAU = au
+				if dist == StarDistanceContact {
+					gs.System.Stars[i].distanceAU = gs.System.Stars[i-1].distanceAU
+				}
+
+			}
+			fmt.Println(gs.System.Stars[i])
+		}
+		gs.ConcludedStep = 8
+		gs.NextStep = 9
+	}
+	switch gs.NextStep {
+	case 9:
+	default:
+		return fmt.Errorf("gs.NextStep imposible")
+	}
+	fmt.Println("END Step 08")
+	return nil
+}
+
+func (gs *GenerationState) Step09() error {
+	fmt.Println("START Step 09")
+	if gs.NextStep != 9 {
+		return fmt.Errorf("not actual step")
+	}
+	switch gs.System.Stars[0].class {
+	case "O", "B", "A", "F", "G", "K", "M":
+		gs.System.GasGigants = gs.Dice.Roll("1d6").DM(-2).Sum()
+	case "L":
+		gs.System.GasGigants = gs.Dice.Roll("1d6").DM(-4).Sum()
+	case "T":
+		gs.System.GasGigants = gs.Dice.Roll("1d6").DM(-5).Sum()
+	case "Y":
+		gs.System.GasGigants = gs.Dice.Roll("1d6").DM(-6).Sum()
+	}
+	if gs.System.GasGigants < 0 {
+		gs.System.GasGigants = 0
+	}
+	fmt.Println("Gas Gigants:", gs.System.GasGigants)
+	gs.ConcludedStep = 9
+	gs.NextStep = 10
+	switch gs.NextStep {
+	case 10:
+	default:
+		return fmt.Errorf("gs.NextStep imposible")
+	}
+	fmt.Println("END Step 09")
+	return nil
+}
+
+func (gs *GenerationState) Step10() error {
+	fmt.Println("START Step 10")
+	if gs.NextStep != 10 {
+		return fmt.Errorf("not actual step")
+	}
+	gs.System.Belts = gs.Dice.Roll("1d6").DM(-3).Sum()
+	if gs.System.Belts < 0 {
+		gs.System.Belts = 0
+	}
+	fmt.Println("Belts:", gs.System.Belts)
+	gs.ConcludedStep = 9
+	gs.NextStep = 10
+	switch gs.NextStep {
+	case 11:
+	default:
+		return fmt.Errorf("gs.NextStep imposible")
+	}
+	fmt.Println("END Step 10")
+	return nil
+}
+
+func rollDistance(dp *dice.Dicepool) (string, float64) {
+	r1 := dp.Roll("1d100").Sum()
+	r2 := dp.Roll("1d100").Sum()
+	dist := distChart(r1)
+	au := auChart(r2, dist)
+	return dist, au
+}
+
+func distChart(i int) string {
+	distChart := []int{10, 30, 50, 80, 100}
+	switch {
+	case i <= distChart[0]:
+		return StarDistanceContact
+	case i <= distChart[1]:
+		return StarDistanceClose
+	case i <= distChart[2]:
+		return StarDistanceNear
+	case i <= distChart[3]:
+		return StarDistanceFar
+	case i <= distChart[4]:
+		return StarDistanceDistant
+	}
+	return "DISTANCE UNDEFINED"
+}
+
+func auChart(i int, dType string) float64 {
+	distChart := []float64{}
+	switch dType {
+	case StarDistanceContact:
+		return -1
+	case StarDistanceClose:
+		distChart = []float64{0.5, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5}
+	case StarDistanceNear:
+		distChart = []float64{10, 20, 30, 40, 50, 60, 70, 80, 90, 100}
+	case StarDistanceFar:
+		distChart = []float64{100, 150, 200, 250, 300, 350, 400, 450, 500, 550}
+	case StarDistanceDistant:
+		distChart = []float64{600, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000}
+	}
+	fmt.Println(i, "*---", dType)
+	switch {
+	case i <= 9:
+		return distChart[0]
+	case i <= 19:
+		return distChart[1]
+	case i <= 29:
+		return distChart[2]
+	case i <= 39:
+		return distChart[3]
+	case i <= 49:
+		return distChart[4]
+	case i <= 59:
+		return distChart[5]
+	case i <= 69:
+		return distChart[6]
+	case i <= 79:
+		return distChart[7]
+	case i <= 89:
+		return distChart[8]
+	case i <= 100:
+		return distChart[9]
+	}
+	return 0.0
+}
+
+func strSystToNum(str string) int {
+	switch str {
+	case StarPopulationSolo:
+		return 1
+	case StarPopulationBinary:
+		return 2
+	case StarPopulationTrinary:
+		return 3
+	case StarPopulationQuatenary:
+		return 4
+	case StarPopulationQuintenary:
+		return 5
+	default:
+		return -1
+	}
+}
+
+func sortStars(stars []star) []star {
+	strSizes := []int{}
+	for _, str := range stars {
+		strSizes = append(strSizes, setSize(str))
+	}
+	newOrder := []star{}
+	for i := 1000; i > -10; i-- {
+		for v, num := range strSizes {
+			if i != num {
+				continue
+			}
+			newOrder = append(newOrder, stars[v])
+		}
+	}
+	return newOrder
+}
+
+func setSize(s star) int {
+	ss := 0
+	for _, scl := range []string{"L", "T", "Y", "M", "K", "G", "F", "A", "B", "O"} {
+		if s.class != scl {
+			ss += 10
+			continue
+		}
+		ss -= s.num
+		break
+	}
+	for _, scl := range []string{"Ia", "Ib", "II", "III", "IV", "V", "VI", ""} {
+		if s.class != scl {
+			ss += 100
+			continue
+		}
+		break
+	}
+	return ss
 }
 
 func (gs *GenerationState) Step20() error {

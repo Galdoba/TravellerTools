@@ -7,10 +7,11 @@ import (
 
 func TestGeneration(t *testing.T) {
 	for _, name := range []string{
-		"Sol",
-		"Alpha Centaury",
-		"Deneb",
-		"Antares",
+		"S1",
+		"S2",
+		"S3",
+		"S5",
+		"S8o7dsf",
 	} {
 		gen, _ := NewGenerator(name)
 		if gen.NextStep != 1 {
