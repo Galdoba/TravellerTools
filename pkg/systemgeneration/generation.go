@@ -644,6 +644,7 @@ func setSize(s star) int {
 	for _, scl := range []string{"Ia", "Ib", "II", "III", "IV", "V", "VI", ""} {
 		if s.class != scl {
 			ss += 100
+			// вса
 			continue
 		}
 		break
