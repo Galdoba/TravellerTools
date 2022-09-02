@@ -2,6 +2,7 @@ package systemgeneration
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 )
@@ -91,12 +92,20 @@ type StarSystem struct {
 }
 
 type star struct {
-	class        string
-	num          int
-	size         string
-	generated    bool
-	distanceType string
-	distanceAU   float64
+	class                 string
+	num                   int
+	size                  string
+	generated             bool
+	distanceType          string
+	distanceFromPrimaryAU float64
+	temperature           int
+	mass                  float64
+	luminocity            float64
+	innerLimit            float64
+	habitableLow          float64
+	habitableHigh         float64
+	snowLine              float64
+	outerLimit            float64
 }
 
 func (gs *GenerationState) GenerateData() error {
@@ -126,6 +135,8 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step09()
 		case 10:
 			err = gs.Step10()
+		case 11:
+			err = gs.Step11()
 		case 20:
 			err = gs.Step20()
 			if err == nil {
@@ -354,24 +365,25 @@ func (gs *GenerationState) Step06() error {
 		case lumRoll1 <= 99:
 			gs.System.Stars[i].size = "III"
 		case lumRoll1 <= 100:
-			gs.System.Stars[i].size = ""
+			switch {
+			case lumRoll2 <= 4:
+				gs.System.Stars[i].size = "II"
+			case lumRoll2 <= 6:
+				gs.System.Stars[i].size = "VI"
+			case lumRoll2 <= 8:
+				gs.System.Stars[i].size = "Ia"
+			case lumRoll2 <= 10:
+				gs.System.Stars[i].size = "Ib"
+			}
 		}
 		if gs.System.Stars[i].size == "D" {
-			gs.System.Stars[i].class = ""
+			gs.System.Stars[i].class = "D"
+			gs.System.Stars[i].size = ""
 		}
-		if gs.System.Stars[i].size != "" {
-			continue
-		}
-		switch {
-		case lumRoll2 <= 4:
-			gs.System.Stars[i].size = "II"
-		case lumRoll2 <= 6:
-			gs.System.Stars[i].size = "VI"
-		case lumRoll2 <= 8:
-			gs.System.Stars[i].size = "Ia"
-		case lumRoll2 <= 10:
-			gs.System.Stars[i].size = "Ib"
-		}
+		// if gs.System.Stars[i].size != "" {
+		// 	continue
+		// }
+
 		switch gs.System.Stars[i].size {
 		case "O", "B", "A", "F":
 			if gs.System.Stars[i].size == "VI" {
@@ -454,16 +466,16 @@ func (gs *GenerationState) Step08() error {
 		for i, _ := range gs.System.Stars {
 			if i == 0 {
 				gs.System.Stars[0].distanceType = "Primary"
-				gs.System.Stars[0].distanceAU = 0.0
+				gs.System.Stars[0].distanceFromPrimaryAU = 0.0
 				fmt.Println(gs.System.Stars[i])
 				continue
 			}
-			for gs.System.Stars[i].distanceAU <= gs.System.Stars[i-1].distanceAU {
+			for gs.System.Stars[i].distanceFromPrimaryAU <= gs.System.Stars[i-1].distanceFromPrimaryAU {
 				dist, au := rollDistance(gs.Dice)
 				gs.System.Stars[i].distanceType = dist
-				gs.System.Stars[i].distanceAU = au
+				gs.System.Stars[i].distanceFromPrimaryAU = au
 				if dist == StarDistanceContact {
-					gs.System.Stars[i].distanceAU = gs.System.Stars[i-1].distanceAU
+					gs.System.Stars[i].distanceFromPrimaryAU = gs.System.Stars[i-1].distanceFromPrimaryAU
 				}
 
 			}
@@ -521,10 +533,30 @@ func (gs *GenerationState) Step10() error {
 		gs.System.Belts = 0
 	}
 	fmt.Println("Belts:", gs.System.Belts)
-	gs.ConcludedStep = 9
-	gs.NextStep = 10
+	gs.ConcludedStep = 10
+	gs.NextStep = 11
 	switch gs.NextStep {
 	case 11:
+	default:
+		return fmt.Errorf("gs.NextStep imposible")
+	}
+	fmt.Println("END Step 10")
+	return nil
+}
+
+func (gs *GenerationState) Step11() error {
+	fmt.Println("START Step 11")
+	if gs.NextStep != 11 {
+		return fmt.Errorf("not actual step")
+	}
+	for i := range gs.System.Stars {
+		gs.System.Stars[i].LoadValues()
+	}
+
+	gs.ConcludedStep = 11
+	gs.NextStep = 12
+	switch gs.NextStep {
+	case 12:
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
@@ -641,7 +673,7 @@ func setSize(s star) int {
 		ss -= s.num
 		break
 	}
-	for _, scl := range []string{"Ia", "Ib", "II", "III", "IV", "V", "VI", ""} {
+	for _, scl := range []string{"", "VI", "V", "IV", "III", "II", "Ib", "Ia"} {
 		if s.class != scl {
 			ss += 100
 			// вса
@@ -670,6 +702,12 @@ func (gs *GenerationState) debug(str string) {
 
 func (gs *GenerationState) trackStatus() {
 	fmt.Printf("generation steps %v/%v\n", gs.ConcludedStep, gs.NextStep)
+}
+
+func (s *star) Code() string {
+	code := fmt.Sprintf("%v%v %v", s.class, s.num, s.size)
+	code = strings.TrimSpace(code)
+	return code
 }
 
 /*
