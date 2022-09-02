@@ -541,6 +541,7 @@ func (gs *GenerationState) Step10() error {
 		return fmt.Errorf("gs.NextStep imposible")
 	}
 	fmt.Println("END Step 10")
+	//test
 	return nil
 }
 
