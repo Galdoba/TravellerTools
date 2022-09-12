@@ -2,6 +2,7 @@ package systemgeneration
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
@@ -40,6 +41,8 @@ const (
 	StarDistanceNear         = "Near"
 	StarDistanceFar          = "Far"
 	StarDistanceDistant      = "Distant"
+	GasGigantNeptunian       = "Neptunian"
+	GasGigantJovian          = "Jovian"
 )
 
 type GenerationState struct {
@@ -88,6 +91,7 @@ type StarSystem struct {
 	ObjectType     string
 	Stars          []star
 	GasGigants     int
+	GG             []ggiant
 	Belts          int
 }
 
@@ -106,6 +110,13 @@ type star struct {
 	habitableHigh         float64
 	snowLine              float64
 	outerLimit            float64
+}
+
+type ggiant struct {
+	size         int
+	descr        string
+	spawnedAtAU  float64
+	migratedToAU float64
 }
 
 func (gs *GenerationState) GenerateData() error {
@@ -137,6 +148,10 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step10()
 		case 11:
 			err = gs.Step11()
+		case 12:
+			err = gs.Step12()
+		case 13:
+			err = gs.Step13()
 		case 20:
 			err = gs.Step20()
 			if err == nil {
@@ -553,7 +568,9 @@ func (gs *GenerationState) Step11() error {
 	for i := range gs.System.Stars {
 		gs.System.Stars[i].LoadValues()
 	}
-
+	if err := gs.adjustStarValues(); err != nil {
+		return err
+	}
 	gs.ConcludedStep = 11
 	gs.NextStep = 12
 	switch gs.NextStep {
@@ -561,7 +578,189 @@ func (gs *GenerationState) Step11() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	fmt.Println("END Step 10")
+	fmt.Println("END Step 11")
+	return nil
+}
+
+func (gs *GenerationState) Step12() error {
+	fmt.Println("START Step 12")
+	if gs.NextStep != 12 {
+		return fmt.Errorf("not actual step")
+	}
+	//ЗАРЕЗЕРВИРОВАНО
+	gs.ConcludedStep = 12
+	gs.NextStep = 13
+	switch gs.NextStep {
+	case 13:
+	default:
+		return fmt.Errorf("gs.NextStep imposible")
+	}
+	//fmt.Println("END Step 12")
+	return nil
+}
+
+func (gs *GenerationState) Step13() error {
+	fmt.Println("START Step 13")
+	if gs.NextStep != 13 {
+		return fmt.Errorf("not actual step")
+	}
+	if gs.System.Stars[0].snowLine == -999 {
+		gs.System.GasGigants = 0
+		fmt.Println("DEBUG: Remove Gas Gigants")
+	}
+	for i := 0; i < gs.System.GasGigants; i++ {
+		gg := ggiant{}
+		switch gs.Dice.Roll("1d6").Sum() {
+		case 1, 2, 3:
+			gg.descr = GasGigantNeptunian
+		case 4, 5, 6:
+			gg.descr = GasGigantJovian
+		}
+		gg.size = sizeOfGG(gs.Dice, gg.descr)
+		if gs.Dice.Roll("1d6").Sum() == 6 {
+			fmt.Println("DEBUG: Gas Gigant Migrated")
+			gg.migratedToAU = float64(gs.Dice.Roll("1d100").Sum())
+		}
+		gs.System.GG = append(gs.System.GG, gg)
+	}
+	gs.ConcludedStep = 13
+	gs.NextStep = 14
+	switch gs.NextStep {
+	case 14:
+	default:
+		return fmt.Errorf("gs.NextStep imposible")
+	}
+	//fmt.Println("END Step 12")
+	return nil
+}
+
+func (gs *GenerationState) Step14() error {
+	fmt.Println("START Step 14")
+	if gs.NextStep != 14 {
+		return fmt.Errorf("not actual step")
+	}
+
+	gs.ConcludedStep = 14
+	gs.NextStep = 15
+	switch gs.NextStep {
+	case 15:
+	default:
+		return fmt.Errorf("gs.NextStep imposible")
+	}
+	//fmt.Println("END Step 12")
+	return nil
+}
+
+func roundFloat(f float64, unit float64) float64 {
+	return math.Trunc(f/unit) * unit
+}
+
+func sizeOfGG(dp *dice.Dicepool, descr string) int {
+	switch descr {
+	case GasGigantNeptunian:
+		switch dp.Roll("2d6").Sum() {
+		case 2:
+			return 30
+		case 3:
+			return 32
+		case 4:
+			return 35
+		case 5:
+			return 37
+		case 6:
+			return 40
+		case 7:
+			return 42
+		case 8:
+			return 45
+		case 9:
+			return 47
+		case 10:
+			return 50
+		case 11:
+			return 55
+		case 12:
+			return 57
+		}
+	case GasGigantJovian:
+		switch dp.Roll("2d6").Sum() {
+		case 2:
+			return 60
+		case 3:
+			return 70
+		case 4:
+			return 80
+		case 5:
+			return 90
+		case 6:
+			return 100
+		case 7:
+			return 110
+		case 8:
+			return 120
+		case 9:
+			return 130
+		case 10:
+			return 140
+		case 11:
+			return 150
+		case 12:
+			return 160
+		case 13:
+			return 170
+		case 14:
+			return 180
+		case 15:
+			return 190
+		case 16:
+			return 200
+		case 17:
+			return 210
+		case 18:
+			return 220
+		case 19:
+			return 230
+		case 20:
+			return 240
+		}
+	}
+	return -99
+}
+
+func (gs *GenerationState) adjustStarValues() error {
+	switch len(gs.System.Stars) {
+	default:
+		return fmt.Errorf("not implemented %v stars\n%v", len(gs.System.Stars), gs.System.Stars)
+	case 0, 1:
+		fmt.Println("DEBUG: habitable zone not adjusting")
+		return nil
+	case 2:
+		fmt.Println("DEBUG: habitable zone to be adjusted!!!!!!!!!!")
+		switch gs.System.Stars[1].distanceType {
+		default: // стабильность орбит 0,3 от максимальной
+			fmt.Println("DEBUG: две звезды далеко: стабильность орбит 0,3 от максимальной")
+			outerSum := gs.System.Stars[1].distanceFromPrimaryAU * 0.3
+			if outerSum < gs.System.Stars[0].outerLimit {
+				gs.System.Stars[0].outerLimit = outerSum
+			}
+			if outerSum < gs.System.Stars[1].outerLimit {
+				gs.System.Stars[1].outerLimit = outerSum
+			}
+		case StarDistanceContact: //две звезды в контакте жарят как одна
+			fmt.Println("DEBUG: две звезды в контакте жарят как одна")
+			innerSum := gs.System.Stars[0].innerLimit + gs.System.Stars[1].innerLimit
+			gs.System.Stars[0].innerLimit = innerSum
+			gs.System.Stars[1].innerLimit = innerSum
+			outerSum := gs.System.Stars[0].outerLimit + gs.System.Stars[1].outerLimit
+			gs.System.Stars[0].outerLimit = outerSum
+			gs.System.Stars[1].outerLimit = outerSum
+		case StarDistanceClose: //две звезды в близко и разрывают близкие к ним планеты
+			fmt.Println("DEBUG: две звезды в близко и разрывают близкие к ним планеты")
+			innerSum := gs.System.Stars[1].distanceFromPrimaryAU * 2.5
+			gs.System.Stars[0].innerLimit = innerSum
+			gs.System.Stars[1].innerLimit = innerSum
+		}
+	}
 	return nil
 }
 
