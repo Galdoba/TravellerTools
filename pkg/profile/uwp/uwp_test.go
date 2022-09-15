@@ -67,3 +67,13 @@ func TestUWPfromString(t *testing.T) {
 	fmt.Println(u)
 	fmt.Println(err)
 }
+
+func TestAddValue(t *testing.T) {
+	u, err := FromString("A555555-A")
+	fmt.Println(u)
+	fmt.Println(err)
+	fmt.Println("Adding 3 to TL:")
+	err = u.AddValue(TL, 3)
+	fmt.Println(u)
+	fmt.Println(err)
+}

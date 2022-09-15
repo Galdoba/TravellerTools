@@ -462,3 +462,25 @@ func (u *uwp) Describe(aspect string) string {
 func (u *uwp) Decode(data string) (string, int, string, error) {
 	return "", 0, "", fmt.Errorf("abstract method - shouldnot be used %v", data)
 }
+
+func (u *uwp) callData(data string) ehex.Ehex {
+	return u.dataType[data]
+}
+
+func (u *uwp) AddValue(data string, val int) error {
+	switch data {
+	default:
+		return fmt.Errorf("unknown data type '%v'", data)
+	case Size, Atmo, Hydr, Pops, Govr, Laws, TL:
+		oldVal := u.callData(data)
+		newValInt := oldVal.Value() + val
+		newVal := ehex.New().Set(newValInt)
+		err := u.Encode(data, newVal)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//err := u.Encode(Size, ehex.New().Set(hex))

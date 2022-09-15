@@ -2,10 +2,11 @@ package systemgeneration
 
 import (
 	"fmt"
-	"math"
+	"sort"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
+	"github.com/Galdoba/utils"
 )
 
 const (
@@ -60,7 +61,7 @@ type Generator interface {
 func NewGenerator(name string) (*GenerationState, error) {
 	gs := GenerationState{}
 	gs.Dice = dice.New().SetSeed(name)
-	gs.Dice.Vocal()
+	//gs.Dice.Vocal()
 	gs.vocal = true
 	gs.SystemName = name
 	gs.debug(fmt.Sprintf("SystemName set as %v", name))
@@ -89,16 +90,21 @@ type StarSystem struct {
 	starSystemType string
 	starPopulation string
 	ObjectType     string
-	Stars          []star
+	Stars          []*star
 	GasGigants     int
-	GG             []ggiant
+	GG             []*ggiant
 	Belts          int
+	BeltData       []*belt
+	body           []StellarBody
+	MW_UWP         string
+	RockyPlanets   int
 }
 
 type star struct {
 	class                 string
 	num                   int
 	size                  string
+	rank                  string
 	generated             bool
 	distanceType          string
 	distanceFromPrimaryAU float64
@@ -112,11 +118,53 @@ type star struct {
 	outerLimit            float64
 }
 
+func (s *star) Describe() string {
+	return fmt.Sprintf("%v: %v", s.rank, s.Code())
+}
+
 type ggiant struct {
 	size         int
 	descr        string
 	spawnedAtAU  float64
 	migratedToAU float64
+	num          int
+	comment      string
+}
+
+func (g *ggiant) Describe() string {
+	orbit := g.spawnedAtAU
+	if g.migratedToAU != 0 {
+		orbit = g.migratedToAU
+	}
+	return fmt.Sprintf("%v AU	Gas Gigant %v	         	%v	%v", orbit, g.num, g.descr, g.comment)
+}
+
+type rockyPlanet struct {
+	//stellarBody
+	num      int
+	star     string
+	orbit    float64
+	localUWP string
+	sizeType string
+	comment  string
+}
+
+func (rp *rockyPlanet) Describe() string {
+	return fmt.Sprintf("%v AU	Planet %v	%v	%v	%v", rp.orbit, rp.num, rp.localUWP, rp.sizeType, rp.comment)
+}
+
+type belt struct {
+	//stellarBody
+	num      int
+	star     string
+	orbit    float64
+	localUWP string
+	sizeType string
+	comment  string
+}
+
+func (b *belt) Describe() string {
+	return fmt.Sprintf("%v AU	Belt %v	%v			%v", b.orbit, b.num, b.localUWP, b.comment)
 }
 
 func (gs *GenerationState) GenerateData() error {
@@ -152,6 +200,8 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step12()
 		case 13:
 			err = gs.Step13()
+		case 14:
+			err = gs.Step14()
 		case 20:
 			err = gs.Step20()
 			if err == nil {
@@ -262,7 +312,7 @@ func (gs *GenerationState) Step03() error {
 	case dwarfTypeRoll <= 100:
 		starType = "Y"
 	}
-	str := star{class: starType, num: -1, size: ""}
+	str := &star{class: starType, num: -1, size: ""}
 	gs.System.Stars = append(gs.System.Stars, str)
 	gs.debug("starType is " + starType)
 	gs.NextStep = 5
@@ -311,7 +361,7 @@ func (gs *GenerationState) Step04() error {
 	case starTypeRoll <= tn[6]:
 		starType = "O"
 	}
-	str := star{class: starType, num: -1, size: ""}
+	str := &star{class: starType, num: -1, size: ""}
 	gs.System.Stars = append(gs.System.Stars, str)
 	gs.debug("starType is " + starType)
 	gs.NextStep = 5
@@ -478,23 +528,35 @@ func (gs *GenerationState) Step08() error {
 		return fmt.Errorf("imposible population at step 08")
 
 	case StarPopulationSolo, StarPopulationBinary, StarPopulationTrinary, StarPopulationQuatenary, StarPopulationQuintenary:
-		for i, _ := range gs.System.Stars {
+		for i, star := range gs.System.Stars {
+			switch i {
+			case 0:
+				star.rank = "Primary"
+			case 1:
+				star.rank = "Secondary"
+			case 2:
+				star.rank = "Tretiary"
+			case 3:
+				star.rank = "Quatenary"
+			case 4:
+				star.rank = "Quintenary"
+			}
 			if i == 0 {
 				gs.System.Stars[0].distanceType = "Primary"
 				gs.System.Stars[0].distanceFromPrimaryAU = 0.0
 				fmt.Println(gs.System.Stars[i])
 				continue
 			}
-			for gs.System.Stars[i].distanceFromPrimaryAU <= gs.System.Stars[i-1].distanceFromPrimaryAU {
+			for star.distanceFromPrimaryAU <= gs.System.Stars[i-1].distanceFromPrimaryAU {
 				dist, au := rollDistance(gs.Dice)
-				gs.System.Stars[i].distanceType = dist
-				gs.System.Stars[i].distanceFromPrimaryAU = au
+				star.distanceType = dist
+				star.distanceFromPrimaryAU = au
 				if dist == StarDistanceContact {
-					gs.System.Stars[i].distanceFromPrimaryAU = gs.System.Stars[i-1].distanceFromPrimaryAU
+					star.distanceFromPrimaryAU = gs.System.Stars[i-1].distanceFromPrimaryAU
 				}
 
 			}
-			fmt.Println(gs.System.Stars[i])
+			fmt.Println(star)
 		}
 		gs.ConcludedStep = 8
 		gs.NextStep = 9
@@ -617,12 +679,20 @@ func (gs *GenerationState) Step13() error {
 			gg.descr = GasGigantJovian
 		}
 		gg.size = sizeOfGG(gs.Dice, gg.descr)
-		if gs.Dice.Roll("1d6").Sum() == 6 {
-			fmt.Println("DEBUG: Gas Gigant Migrated")
-			gg.migratedToAU = float64(gs.Dice.Roll("1d100").Sum())
-		}
-		gs.System.GG = append(gs.System.GG, gg)
+		gs.System.GG = append(gs.System.GG, &gg)
 	}
+	gs.System.GG = sortGGiantsBySize(gs.System.GG)
+	if gs.Dice.Roll("1d6").Sum() == 6 {
+		fmt.Println("DEBUG: Gas Gigant Migrated")
+		gs.System.GG[0].migratedToAU = float64(gs.Dice.Roll("1d100").Sum())
+		gs.System.GG[0].descr = "Hot " + gs.System.GG[0].descr
+		gs.System.GG[0].comment = "Migrated"
+	}
+	for i, gg := range gs.System.GG {
+		gg.num = i + 1
+		gs.System.body = append(gs.System.body, gs.System.GG[i])
+	}
+
 	gs.ConcludedStep = 13
 	gs.NextStep = 14
 	switch gs.NextStep {
@@ -634,12 +704,55 @@ func (gs *GenerationState) Step13() error {
 	return nil
 }
 
+func sortGGiantsBySize(gg []*ggiant) []*ggiant {
+	presentSizes := []int{}
+	sortedGG := []*ggiant{}
+	for _, gg := range gg {
+		presentSizes = append(presentSizes, gg.size)
+	}
+	sort.Sort(sort.Reverse(sort.IntSlice(presentSizes)))
+	for _, s := range presentSizes {
+		for _, gg := range gg {
+			if gg.size == s {
+				sortedGG = append(sortedGG, gg)
+			}
+		}
+	}
+
+	return sortedGG
+}
+
+type stellarBody struct {
+	//orbit map[float64]string
+	num      int
+	star     string
+	orbit    float64
+	localUWP string
+	sizeType string
+	comment  string
+}
+
+type StellarBody interface {
+	Describe() string
+}
+
 func (gs *GenerationState) Step14() error {
 	fmt.Println("START Step 14")
 	if gs.NextStep != 14 {
 		return fmt.Errorf("not actual step")
 	}
-
+	for _, star := range gs.System.Stars {
+		gs.System.body = append(gs.System.body, star) //   .orbit[star.distanceFromPrimaryAU] = star.orbitData()
+	}
+	gs.System.RockyPlanets = gs.Dice.Roll("1d6").DM(1).Sum()
+	for i := 1; i < gs.System.RockyPlanets+1; i++ {
+		gs.System.body = append(gs.System.body, &rockyPlanet{num: i})
+	}
+	for i := 1; i < gs.System.Belts+1; i++ {
+		gs.System.body = append(gs.System.body, &belt{num: i})
+	}
+	gs.System.printSystemSheet()
+	gs.setOrbitSpots()
 	gs.ConcludedStep = 14
 	gs.NextStep = 15
 	switch gs.NextStep {
@@ -651,8 +764,47 @@ func (gs *GenerationState) Step14() error {
 	return nil
 }
 
+func (gs *GenerationState) setOrbitSpots() error {
+	orbit := make(map[float64]int)
+	orb := 0
+	for i, star := range gs.System.Stars {
+		fmt.Println("Star", i)
+		fmt.Println("-------")
+		fmt.Println(star.innerLimit)
+		fmt.Println(star.habitableLow)
+		fmt.Println(star.habitableHigh)
+		fmt.Println(star.snowLine)
+		fmt.Println(star.outerLimit)
+		fmt.Println("-------")
+		currentPoint := star.innerLimit
+		for currentPoint < star.outerLimit {
+			au := roundFloat(currentPoint, 2)
+
+			orbit[au] = i
+			orb++
+			fmt.Println("Add", au, "AU", orb)
+
+			d := gs.Dice.Roll("1d10").Sum()
+			multiplicator := 1.0 + float64(d)/10
+			currentPoint = currentPoint * multiplicator
+
+		}
+		fmt.Println(currentPoint, "<", star.outerLimit)
+	}
+	return nil
+}
+
+func (sys *StarSystem) printSystemSheet() {
+	for i, bod := range sys.body {
+		fmt.Println("--", i, "--", bod.Describe())
+	}
+}
+
 func roundFloat(f float64, unit float64) float64 {
-	return math.Trunc(f/unit) * unit
+
+	return utils.RoundFloat64(f, int(unit))
+	//
+	// return math.Trunc(f/unit) * unit
 }
 
 func sizeOfGG(dp *dice.Dicepool, descr string) int {
@@ -727,38 +879,62 @@ func sizeOfGG(dp *dice.Dicepool, descr string) int {
 	return -99
 }
 
+func starDistanceToClosest(stars []*star, i int) float64 {
+	l := len(stars)
+	dist1 := 0.0
+	dist2 := 0.0
+	if i > 0 {
+		dist1 = stars[i].distanceFromPrimaryAU - stars[i-1].distanceFromPrimaryAU
+	}
+	if i+1 < l {
+		dist2 = stars[i+1].distanceFromPrimaryAU - stars[i].distanceFromPrimaryAU
+	}
+	d := dist1 - dist2
+	if d < 0 {
+		d = d * -1
+	}
+	return d
+}
+
 func (gs *GenerationState) adjustStarValues() error {
 	switch len(gs.System.Stars) {
 	default:
 		return fmt.Errorf("not implemented %v stars\n%v", len(gs.System.Stars), gs.System.Stars)
 	case 0, 1:
-		fmt.Println("DEBUG: habitable zone not adjusting")
+		gs.debug("DEBUG: habitable zone not adjusting")
 		return nil
-	case 2:
-		fmt.Println("DEBUG: habitable zone to be adjusted!!!!!!!!!!")
-		switch gs.System.Stars[1].distanceType {
-		default: // стабильность орбит 0,3 от максимальной
-			fmt.Println("DEBUG: две звезды далеко: стабильность орбит 0,3 от максимальной")
-			outerSum := gs.System.Stars[1].distanceFromPrimaryAU * 0.3
-			if outerSum < gs.System.Stars[0].outerLimit {
-				gs.System.Stars[0].outerLimit = outerSum
+	case 2, 3, 4, 5:
+		gs.debug("DEBUG: habitable zone to be adjusted!!!!!!!!!!")
+		for st := 0; st < len(gs.System.Stars); st++ {
+			switch gs.System.Stars[st].distanceType {
+			default:
+				outerSum := starDistanceToClosest(gs.System.Stars, st) * 0.3
+				//outerSum := gs.System.Stars[st].distanceFromPrimaryAU * 0.3
+				if outerSum < gs.System.Stars[st].outerLimit {
+					gs.debug("DEBUG: модифицируем дальний лимит для первой звезды")
+
+					gs.System.Stars[st].outerLimit = outerSum
+
+				}
+			case StarDistanceContact:
+				innerSum := gs.System.Stars[st-1].innerLimit + gs.System.Stars[st].innerLimit
+				gs.System.Stars[st-1].innerLimit = innerSum
+				gs.System.Stars[1].innerLimit = innerSum
+				outerSum := gs.System.Stars[st-1].outerLimit + gs.System.Stars[st].outerLimit
+				gs.System.Stars[st-1].outerLimit = outerSum
+				gs.System.Stars[st].outerLimit = outerSum
+				habLow := gs.System.Stars[st-1].habitableLow + gs.System.Stars[st].habitableLow
+				gs.System.Stars[st-1].habitableLow = habLow
+				gs.System.Stars[st].habitableLow = habLow
+				habHi := gs.System.Stars[st-1].habitableHigh + gs.System.Stars[st].habitableHigh
+				gs.System.Stars[st-1].habitableHigh = habHi
+				gs.System.Stars[st].habitableHigh = habHi
+			case StarDistanceClose: //две звезды в близко и разрывают близкие к ним планеты
+				gs.debug("DEBUG: две звезды в близко и разрывают близкие к ним планеты")
+				innerSum := gs.System.Stars[st].distanceFromPrimaryAU * 2.5
+				gs.System.Stars[st-1].innerLimit = innerSum
+				gs.System.Stars[st].innerLimit = innerSum
 			}
-			if outerSum < gs.System.Stars[1].outerLimit {
-				gs.System.Stars[1].outerLimit = outerSum
-			}
-		case StarDistanceContact: //две звезды в контакте жарят как одна
-			fmt.Println("DEBUG: две звезды в контакте жарят как одна")
-			innerSum := gs.System.Stars[0].innerLimit + gs.System.Stars[1].innerLimit
-			gs.System.Stars[0].innerLimit = innerSum
-			gs.System.Stars[1].innerLimit = innerSum
-			outerSum := gs.System.Stars[0].outerLimit + gs.System.Stars[1].outerLimit
-			gs.System.Stars[0].outerLimit = outerSum
-			gs.System.Stars[1].outerLimit = outerSum
-		case StarDistanceClose: //две звезды в близко и разрывают близкие к ним планеты
-			fmt.Println("DEBUG: две звезды в близко и разрывают близкие к ним планеты")
-			innerSum := gs.System.Stars[1].distanceFromPrimaryAU * 2.5
-			gs.System.Stars[0].innerLimit = innerSum
-			gs.System.Stars[1].innerLimit = innerSum
 		}
 	}
 	return nil
@@ -803,7 +979,6 @@ func auChart(i int, dType string) float64 {
 	case StarDistanceDistant:
 		distChart = []float64{600, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000}
 	}
-	fmt.Println(i, "*---", dType)
 	switch {
 	case i <= 9:
 		return distChart[0]
@@ -846,12 +1021,12 @@ func strSystToNum(str string) int {
 	}
 }
 
-func sortStars(stars []star) []star {
+func sortStars(stars []*star) []*star {
 	strSizes := []int{}
 	for _, str := range stars {
-		strSizes = append(strSizes, setSize(str))
+		strSizes = append(strSizes, setSize(*str))
 	}
-	newOrder := []star{}
+	newOrder := []*star{}
 	for i := 1000; i > -10; i-- {
 		for v, num := range strSizes {
 			if i != num {
@@ -902,6 +1077,9 @@ func (gs *GenerationState) debug(str string) {
 
 func (gs *GenerationState) trackStatus() {
 	fmt.Printf("generation steps %v/%v\n", gs.ConcludedStep, gs.NextStep)
+	fmt.Println("SYSTEM SO FAR:")
+	gs.System.printSystemSheet()
+	fmt.Println(" ")
 }
 
 func (s *star) Code() string {

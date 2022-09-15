@@ -7,9 +7,9 @@ import (
 
 func TestGeneration(t *testing.T) {
 	for _, name := range []string{
-		"Sol 7",
-		"Sol 10",
-		"Sol 11",
+		"Solo star 1",
+		"Sol 102",
+		//"Sol 11",
 		//"Sol 9",
 	} {
 		gen, _ := NewGenerator(name)
