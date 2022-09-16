@@ -116,6 +116,19 @@ type star struct {
 	habitableHigh         float64
 	snowLine              float64
 	outerLimit            float64
+	orbit                 map[float64]StellarBody
+}
+
+type bodyHolder struct {
+	comment string
+}
+
+func (bh *bodyHolder) Describe() string {
+	return fmt.Sprintf("TEMPLATE: %v", bh.comment)
+}
+
+func (bh *bodyHolder) setComment(s string) {
+	bh.comment = s
 }
 
 func (s *star) Describe() string {
@@ -722,15 +735,15 @@ func sortGGiantsBySize(gg []*ggiant) []*ggiant {
 	return sortedGG
 }
 
-type stellarBody struct {
-	//orbit map[float64]string
-	num      int
-	star     string
-	orbit    float64
-	localUWP string
-	sizeType string
-	comment  string
-}
+// type stellarBody struct {
+// 	//orbit map[float64]string
+// 	num      int
+// 	star     string
+// 	orbit    float64
+// 	localUWP string
+// 	sizeType string
+// 	comment  string
+// }
 
 type StellarBody interface {
 	Describe() string
@@ -751,8 +764,8 @@ func (gs *GenerationState) Step14() error {
 	for i := 1; i < gs.System.Belts+1; i++ {
 		gs.System.body = append(gs.System.body, &belt{num: i})
 	}
-	gs.System.printSystemSheet()
 	gs.setOrbitSpots()
+	gs.System.printSystemSheet()
 	gs.ConcludedStep = 14
 	gs.NextStep = 15
 	switch gs.NextStep {
@@ -765,9 +778,10 @@ func (gs *GenerationState) Step14() error {
 }
 
 func (gs *GenerationState) setOrbitSpots() error {
-	orbit := make(map[float64]int)
-	orb := 0
+
 	for i, star := range gs.System.Stars {
+		orb := 0
+		star.orbit = make(map[float64]StellarBody)
 		fmt.Println("Star", i)
 		fmt.Println("-------")
 		fmt.Println(star.innerLimit)
@@ -779,24 +793,54 @@ func (gs *GenerationState) setOrbitSpots() error {
 		currentPoint := star.innerLimit
 		for currentPoint < star.outerLimit {
 			au := roundFloat(currentPoint, 2)
-
-			orbit[au] = i
+			star.orbit[au] = &bodyHolder{fmt.Sprintf("empty orbit %v", orb)}
 			orb++
-			fmt.Println("Add", au, "AU", orb)
-
-			d := gs.Dice.Roll("1d10").Sum()
-			multiplicator := 1.0 + float64(d)/10
+			d := gs.Dice.Flux()
+			multiplicator := 1.0 + float64(d+5)/10
 			currentPoint = currentPoint * multiplicator
-
 		}
-		fmt.Println(currentPoint, "<", star.outerLimit)
+		star.markClosestToSnowLine()
 	}
 	return nil
+}
+
+func (s *star) markClosestToSnowLine() {
+	sl := s.snowLine
+	if sl == -999 {
+		return
+	}
+	lowest := 999999.0
+	candidate := 0.0
+	candidateVal := ""
+	for k, v := range s.orbit {
+		dist := k - sl
+		if dist < 0 {
+			dist = dist * -1
+		}
+		if dist < lowest {
+			lowest = dist
+			candidate = k
+			candidateVal = v.Describe()
+		}
+	}
+	if candidate == 0.0 {
+		return
+	}
+	s.orbit[candidate] = &bodyHolder{candidateVal + " CSN"}
 }
 
 func (sys *StarSystem) printSystemSheet() {
 	for i, bod := range sys.body {
 		fmt.Println("--", i, "--", bod.Describe())
+	}
+	for _, star := range sys.Stars {
+		fmt.Println("star.orbit")
+		for i := 0; i < 640001; i++ {
+			fl := float64(i) / 100
+			if v, ok := star.orbit[fl]; ok == true {
+				fmt.Printf("Orbit %v = %v\n", fl, v)
+			}
+		}
 	}
 }
 
