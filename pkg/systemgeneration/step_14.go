@@ -14,7 +14,7 @@ func (gs *GenerationState) Step14() error {
 	for _, star := range gs.System.Stars {
 		gs.System.body = append(gs.System.body, star) //   .orbit[star.distanceFromPrimaryAU] = star.orbitData()
 	}
-	gs.System.RockyPlanets = gs.Dice.Roll("1d6").DM(1).Sum()
+	gs.System.RockyPlanets = gs.Dice.Roll("2d6").DM(0).Sum()
 	for i := 1; i < gs.System.RockyPlanets+1; i++ {
 		gs.System.body = append(gs.System.body, &rockyPlanet{num: i})
 	}
@@ -32,6 +32,10 @@ func (gs *GenerationState) Step14() error {
 	}
 	fmt.Println(gg, "|", canPutGGIn)
 	gs.placeGG(canPutGGIn)
+	pl := gs.System.RockyPlanets
+	planetMarkers := gs.canPlacePlanets()
+	fmt.Println(pl, "|", planetMarkers)
+	gs.placePlanets()
 	gs.ConcludedStep = 14
 	gs.NextStep = 15
 	switch gs.NextStep {
@@ -43,42 +47,95 @@ func (gs *GenerationState) Step14() error {
 	return nil
 }
 
+func (gs *GenerationState) placePlanets() error {
+	pl := gs.System.RockyPlanets
+	planetMarkers := gs.canPlacePlanets()
+	if pl > freeSlots(planetMarkers) {
+		return fmt.Errorf("cannot suport so many planets %v | %v", pl, len(planetMarkers))
+	}
+	return nil
+}
+
+func (gs *GenerationState) canPlacePlanets() [][]orbMarker {
+	om := [][]orbMarker{}
+	for s, star := range gs.System.Stars {
+		om = append(om, []orbMarker{})
+		for i := int(star.innerLimit * 1000); i < int(star.outerLimit*1000); i-- {
+			orb := float64(i) / 1000
+			if v, ok := star.orbit[orb]; ok == true {
+				if strings.Contains(v.Describe(), "empty orbit") {
+					om[s] = append(om[s], orbMarker{s, orb})
+				}
+			}
+		}
+	}
+	return om
+}
+
+func freeSlots(om [][]orbMarker) int {
+	sl := 0
+	for _, arr := range om {
+		sl = sl + len(arr)
+	}
+	return sl
+}
+
 func (gs *GenerationState) placeGG(markers []orbMarker) error {
 	if len(gs.System.GG) > len(markers) {
 		return fmt.Errorf("can't place all GGs %v/%v", len(gs.System.GG), len(markers))
 	}
-
-	for p, gg := range gs.System.GG {
-		fmt.Println("Placing", p, ". . .")
+	gs.debug(fmt.Sprintf("Placing %v Gas Gigants...", len(gs.System.GG)))
+	for n, gg := range gs.System.GG {
+		gs.debug(fmt.Sprintf("Placing Gas Gigant %v...", n+1))
 		placed := false
 		try := 0
 		for !placed {
 			try++
-			fmt.Println("try", try)
 			r := gs.Dice.Roll("1d" + fmt.Sprintf("%v", len(gs.System.Stars))).DM(-1).Sum()
-			for n, m := range markers {
+			for _, m := range markers {
 				fmt.Println("GO:", m)
 				if m.starPos != r {
-					fmt.Println("WRONG STAR")
 					continue
 				}
 				fmt.Println(gs.System.Stars[r].orbit[m.orbRad].Describe())
 				if !strings.Contains(gs.System.Stars[r].orbit[m.orbRad].Describe(), " ggPossible") {
-					fmt.Println("ORBIT NOT FREE")
 					continue
 				}
 				gg.spawnedAtAU = m.orbRad
-				gs.System.Stars[r].orbit[m.orbRad] = gg
-				fmt.Println("PLACE!")
-				fmt.Println(markers[n])
-				//markers = removeMarker(markers, n)
+				if gg.migratedToAU != 0.0 {
+					starInner := gs.System.Stars[r].innerLimit
+					placeTo := gg.spawnedAtAU - gg.migratedToAU
+					if placeTo < starInner {
+						placeTo = starInner
+					}
+					gg.spawnedAtAU = roundFloat(placeTo, 2)
+					for i := 0; i < 10000000; i++ {
+						orbFl := float64(i) / 1000
+						if _, ok := gs.System.Stars[r].orbit[orbFl]; ok == true {
+							if orbFl < starInner {
+								continue
+							}
+							if orbFl > m.orbRad {
+								break
+							}
+							delete(gs.System.Stars[r].orbit, orbFl)
+						}
+					}
+				}
+				gs.System.Stars[r].orbit[gg.spawnedAtAU] = gg
 				placed = true
 				break
 			}
 		}
-		fmt.Println("done")
 	}
-
+	for s, _ := range gs.System.Stars {
+		for k, v := range gs.System.Stars[s].orbit {
+			if !strings.Contains(v.Describe(), "empty orbit") {
+				continue
+			}
+			gs.System.Stars[s].orbit[k] = &bodyHolder{strings.TrimSuffix(v.Describe(), " ggPossible")}
+		}
+	}
 	return nil
 }
 

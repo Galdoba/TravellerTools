@@ -123,7 +123,7 @@ type bodyHolder struct {
 }
 
 func (bh *bodyHolder) Describe() string {
-	return fmt.Sprintf("TEMPLATE: %v", bh.comment)
+	return fmt.Sprintf("%v", bh.comment)
 }
 
 func (bh *bodyHolder) setComment(s string) {

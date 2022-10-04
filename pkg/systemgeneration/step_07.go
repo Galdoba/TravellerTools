@@ -26,10 +26,11 @@ func (gs *GenerationState) Step07() error {
 			tn = []int{10, 90, 98, 99, 100}
 		case "F", "G", "K":
 			tn = []int{45, 99, 100, 599, 999}
-		case "M", "L", "T", "Y", "":
+		case "M", "L", "T", "Y", "", "D":
 			tn = []int{69, 98, 100, 200, 300}
 		}
 		strComposRoll := gs.Dice.Roll("1d100").Sum()
+		fmt.Println("strComposRoll", strComposRoll, tn)
 		switch {
 		case strComposRoll <= tn[0]:
 			gs.System.starPopulation = StarPopulationSolo
@@ -42,6 +43,7 @@ func (gs *GenerationState) Step07() error {
 		case strComposRoll <= tn[4]:
 			gs.System.starPopulation = StarPopulationQuintenary
 		}
+		fmt.Println("gs.System.starPopulation =", gs.System.starPopulation)
 		return nil
 	}
 	switch gs.NextStep {

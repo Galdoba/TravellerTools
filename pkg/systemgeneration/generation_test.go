@@ -7,8 +7,8 @@ import (
 
 func TestGeneration(t *testing.T) {
 	for _, name := range []string{
-		"Solo star 1",
-		"Sol 989898",
+		//"Sol 124", Rouge GG
+		"Sol 139",
 		//"Sol 11",
 		//"Sol 9",
 	} {
