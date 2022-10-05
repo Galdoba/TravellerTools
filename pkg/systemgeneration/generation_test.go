@@ -2,17 +2,19 @@ package systemgeneration
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
 func TestGeneration(t *testing.T) {
-	for _, name := range []string{
-		//"Sol 124", Rouge GG
-		"Sol 139",
-		//"Sol 11",
-		//"Sol 9",
-	} {
-		gen, _ := NewGenerator(name)
+	for i := 55; i < 56; i++ {
+		name := fmt.Sprintf("System %v", i)
+		gen, err := NewGenerator(name)
+		if err != nil {
+			fmt.Println("==============", err.Error())
+			t.Error(err.Error())
+			break
+		}
 		if gen.NextStep != 1 {
 			t.Errorf("have nextstep=%v (expect 1)", gen.NextStep)
 		}
@@ -23,7 +25,16 @@ func TestGeneration(t *testing.T) {
 			t.Errorf("Star System object not set\n  have %v (expect %v or %v)", gen.System.ObjectType, ObjectUNDEFINED, ObjectNONE)
 		}
 		if err := gen.GenerateData(); err != nil {
-			t.Errorf("error: %v", err.Error())
+			if strings.Contains(err.Error(), "unimplemented") {
+				fmt.Println(" ")
+				fmt.Println("//////////")
+				fmt.Println(" ")
+				continue
+			}
+
+			fmt.Println("==============", err.Error())
+			t.Errorf(err.Error())
+			break
 		}
 		fmt.Println(gen.System)
 		// gen.Step01()

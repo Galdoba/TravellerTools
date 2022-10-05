@@ -28,14 +28,16 @@ func (gs *GenerationState) Step14() error {
 	gg := gs.System.GasGigants
 	canPutGGIn := gs.canPlaceGGin()
 	if gg > len(canPutGGIn) {
+		fmt.Println("отказываемся от газовых гигантов")
+		fmt.Println(gg, "|", canPutGGIn)
 		gg = len(canPutGGIn)
 	}
-	fmt.Println(gg, "|", canPutGGIn)
+
 	gs.placeGG(canPutGGIn)
-	pl := gs.System.RockyPlanets
-	planetMarkers := gs.canPlacePlanets()
-	fmt.Println(pl, "|", planetMarkers)
+	//pl := gs.System.RockyPlanets
+	//planetMarkers := gs.canPlacePlanets()
 	gs.placePlanets()
+
 	gs.ConcludedStep = 14
 	gs.NextStep = 15
 	switch gs.NextStep {
@@ -53,14 +55,99 @@ func (gs *GenerationState) placePlanets() error {
 	if pl > freeSlots(planetMarkers) {
 		return fmt.Errorf("cannot suport so many planets %v | %v", pl, len(planetMarkers))
 	}
+	for i := 0; i < pl; i++ {
+		st := gs.Dice.Roll(fmt.Sprintf("1d%v", len(gs.System.Stars))).DM(-1).Sum()
+		if len(gs.System.Stars[st].orbitDistances) < 1 {
+			i--
+			continue
+		}
+		// fmt.Println("DEBUG LOG:")
+		// fmt.Println(gs.SystemName)
+		// fmt.Println(gs.System.Stars[st])
+		// fmt.Printf("pl=%v\ni=%v\nst=%v\nlen(gs.System.Stars[st].orbitDistances)=%v\n", pl, i, st, len(gs.System.Stars[st].orbitDistances))
+		// fmt.Println(gs.System.Stars[st].orbitDistances)
+
+		try := 0
+		//placed := false
+		for {
+			orb := gs.Dice.Roll(fmt.Sprintf("1d%v", len(gs.System.Stars[st].orbitDistances))).DM(-1).Sum()
+			//gs.debug(fmt.Sprintf("try %v orb %v...", try, orb))
+			if orb-try < 0 {
+				i--
+				break
+			}
+			dist := gs.System.Stars[st].orbitDistances[orb-try]
+			if v, ok := gs.System.Stars[st].orbit[dist]; ok == true {
+				if !strings.Contains(v.Describe(), "empty orbit") {
+					try++
+					continue
+				}
+				planet := &rockyPlanet{num: i + 1, star: gs.System.Stars[st].Describe(), orbit: dist, eccentricity: 0.0, comment: "Rocky Planet"}
+				if gs.Dice.Roll("1d6").Sum() < 4 {
+					roll := gs.Dice.Roll("2d10").Sum()
+					planet.eccentricity = eccentricity(roll)
+				}
+				gs.System.Stars[st].orbit[dist] = planet
+				//	placed = true
+				break
+			}
+		}
+		gs.debug(fmt.Sprintf("planet %v placed...", i+1))
+	}
 	return nil
+}
+
+func eccentricity(roll int) float64 {
+	switch roll {
+	default:
+		return 0.0
+	case 2:
+		return 0.002
+	case 3:
+		return 0.003
+	case 4:
+		return 0.004
+	case 5:
+		return 0.005
+	case 6:
+		return 0.006
+	case 7:
+		return 0.007
+	case 8:
+		return 0.008
+	case 9:
+		return 0.009
+	case 10:
+		return 0.010
+	case 11:
+		return 0.020
+	case 12:
+		return 0.030
+	case 13:
+		return 0.040
+	case 14:
+		return 0.050
+	case 15:
+		return 0.070
+	case 16:
+		return 0.100
+	case 17:
+		return 0.125
+	case 18:
+		return 0.150
+	case 19:
+		return 0.200
+	case 20:
+		return 0.250
+	}
 }
 
 func (gs *GenerationState) canPlacePlanets() [][]orbMarker {
 	om := [][]orbMarker{}
 	for s, star := range gs.System.Stars {
 		om = append(om, []orbMarker{})
-		for i := int(star.innerLimit * 1000); i < int(star.outerLimit*1000); i-- {
+		//TODO: переписать чтобы шло по orbitDistance
+		for i := int(star.innerLimit * 1000); i < int(star.outerLimit*1000); i++ {
 			orb := float64(i) / 1000
 			if v, ok := star.orbit[orb]; ok == true {
 				if strings.Contains(v.Describe(), "empty orbit") {
@@ -81,6 +168,8 @@ func freeSlots(om [][]orbMarker) int {
 }
 
 func (gs *GenerationState) placeGG(markers []orbMarker) error {
+	fmt.Println(gs.System.GG)
+
 	if len(gs.System.GG) > len(markers) {
 		return fmt.Errorf("can't place all GGs %v/%v", len(gs.System.GG), len(markers))
 	}
@@ -93,11 +182,13 @@ func (gs *GenerationState) placeGG(markers []orbMarker) error {
 			try++
 			r := gs.Dice.Roll("1d" + fmt.Sprintf("%v", len(gs.System.Stars))).DM(-1).Sum()
 			for _, m := range markers {
-				fmt.Println("GO:", m)
+
 				if m.starPos != r {
 					continue
 				}
-				fmt.Println(gs.System.Stars[r].orbit[m.orbRad].Describe())
+				// if _, ok := gs.System.Stars[r].orbit[m.orbRad]; ok == false {
+				// 	continue
+				// }
 				if !strings.Contains(gs.System.Stars[r].orbit[m.orbRad].Describe(), " ggPossible") {
 					continue
 				}
@@ -109,6 +200,7 @@ func (gs *GenerationState) placeGG(markers []orbMarker) error {
 						placeTo = starInner
 					}
 					gg.spawnedAtAU = roundFloat(placeTo, 2)
+					//TODO: переписать чтобы шло по orbitDistance
 					for i := 0; i < 10000000; i++ {
 						orbFl := float64(i) / 1000
 						if _, ok := gs.System.Stars[r].orbit[orbFl]; ok == true {
@@ -119,6 +211,7 @@ func (gs *GenerationState) placeGG(markers []orbMarker) error {
 								break
 							}
 							delete(gs.System.Stars[r].orbit, orbFl)
+							markers = gs.canPlaceGGin()
 						}
 					}
 				}
@@ -128,14 +221,7 @@ func (gs *GenerationState) placeGG(markers []orbMarker) error {
 			}
 		}
 	}
-	for s, _ := range gs.System.Stars {
-		for k, v := range gs.System.Stars[s].orbit {
-			if !strings.Contains(v.Describe(), "empty orbit") {
-				continue
-			}
-			gs.System.Stars[s].orbit[k] = &bodyHolder{strings.TrimSuffix(v.Describe(), " ggPossible")}
-		}
-	}
+	gs.debug(fmt.Sprintf("Cleaning orbits..."))
 	return nil
 }
 
@@ -144,7 +230,6 @@ func removeMarker(markers []orbMarker, n int) []orbMarker {
 }
 
 func (gs *GenerationState) setOrbitSpots() error {
-
 	for i, star := range gs.System.Stars {
 		orb := 0
 		star.orbit = make(map[float64]StellarBody)
@@ -167,8 +252,20 @@ func (gs *GenerationState) setOrbitSpots() error {
 		}
 		star.markClosestToSnowLine()
 		star.markPossibleGG()
+		star.updateOrbitDistances()
 	}
 	return nil
+}
+
+func (s *star) updateOrbitDistances() {
+	s.orbitDistances = nil
+	for k := range s.orbit {
+		if k < s.innerLimit || k > s.outerLimit {
+			continue
+		}
+		s.orbitDistances = append(s.orbitDistances, k)
+	}
+	sort.Float64s(s.orbitDistances)
 }
 
 func (s *star) markClosestToSnowLine() {
@@ -217,30 +314,16 @@ func (s *star) markPossibleGG() {
 func (gs *GenerationState) canPlaceGGin() []orbMarker {
 	cp := []orbMarker{}
 	for i, star := range gs.System.Stars {
-		for _, v := range star.OrbitsSorted() {
-			if strings.Contains(star.orbit[v.orbRad].Describe(), " ggPossible") {
-				cp = append(cp, orbMarker{i, v.orbRad})
+		for _, k := range star.orbitDistances {
+			if v, ok := star.orbit[k]; ok == true {
+				if strings.Contains(v.Describe(), " ggPossible") {
+					cp = append(cp, orbMarker{i, k})
+				}
 			}
+
 		}
 	}
 	return cp
-}
-
-func (s *star) OrbitsSorted() []orbMarker {
-	unsorted := []float64{}
-	for k, _ := range s.orbit {
-		unsorted = append(unsorted, k)
-	}
-	sort.Float64s(unsorted)
-	sorted := []orbMarker{}
-	for _, orb := range unsorted {
-		for k, _ := range s.orbit {
-			if orb == k {
-				sorted = append(sorted, orbMarker{s.num, k})
-			}
-		}
-	}
-	return sorted
 }
 
 type orbMarker struct {

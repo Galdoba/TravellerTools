@@ -32,6 +32,11 @@ func (gs *GenerationState) Step02() error {
 		gs.NextStep = 20
 	}
 	gs.debug(fmt.Sprintf("gs.System.ObjectType set as %v", gs.System.ObjectType))
+	switch gs.System.ObjectType {
+	case ObjectRoguePlanet, ObjectRogueGasGigant, ObjectNebula, ObjectBlackHole:
+		gs.System.Stars = append(gs.System.Stars, &star{})
+		gs.setOrbitSpots()
+	}
 	gs.ConcludedStep = 2
 	switch gs.NextStep {
 	case 4, 3, 15, 13, 18, 20:

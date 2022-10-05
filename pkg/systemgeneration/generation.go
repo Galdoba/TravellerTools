@@ -116,6 +116,7 @@ type star struct {
 	snowLine              float64
 	outerLimit            float64
 	orbit                 map[float64]StellarBody
+	orbitDistances        []float64
 }
 
 type bodyHolder struct {
@@ -153,16 +154,23 @@ func (g *ggiant) Describe() string {
 
 type rockyPlanet struct {
 	//stellarBody
-	num      int
-	star     string
-	orbit    float64
-	localUWP string
-	sizeType string
-	comment  string
+	num           int
+	star          string
+	orbit         float64
+	localUWP      string
+	sizeCode      string
+	atmoCode      string
+	hydrCode      string
+	eccentricity  float64
+	comment       string
+	sizeType      string
+	mass          float64
+	radius        float64
+	potentialAtmo string
 }
 
 func (rp *rockyPlanet) Describe() string {
-	return fmt.Sprintf("%v AU	Planet %v	%v	%v	%v", rp.orbit, rp.num, rp.localUWP, rp.sizeType, rp.comment)
+	return fmt.Sprintf("%v AU	Planet %v	_%v%v%v___-_	%v	%v	%v", rp.orbit, rp.num, rp.sizeCode, rp.atmoCode, rp.hydrCode, rp.sizeType, rp.eccentricity, rp.comment)
 }
 
 type belt struct {
@@ -214,6 +222,8 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step13()
 		case 14:
 			err = gs.Step14()
+		case 15:
+			err = gs.Step15()
 		case 20:
 			err = gs.Step20()
 			if err == nil {

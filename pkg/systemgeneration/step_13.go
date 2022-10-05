@@ -23,10 +23,11 @@ func (gs *GenerationState) Step13() error {
 			gg.descr = GasGigantJovian
 		}
 		gg.size = sizeOfGG(gs.Dice, gg.descr)
+		gg.comment = "Gas Gigant"
 		gs.System.GG = append(gs.System.GG, &gg)
 	}
 	gs.System.GG = sortGGiantsBySize(gs.System.GG)
-	if gs.Dice.Roll("1d6").Sum() == 6 {
+	if len(gs.System.GG) > 0 && gs.Dice.Roll("1d6").Sum() == 6 {
 		fmt.Println("DEBUG: Gas Gigant Migrated")
 		gs.System.GG[0].migratedToAU = float64(gs.Dice.Roll("1d100").Sum())
 		gs.System.GG[0].descr = "Hot " + gs.System.GG[0].descr
