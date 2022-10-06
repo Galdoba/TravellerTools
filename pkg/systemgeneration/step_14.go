@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+const (
+	habZoneInner     = "Inner"
+	habZoneHabitable = "Habitable"
+	habZoneOuter     = "Outer"
+)
+
 func (gs *GenerationState) Step14() error {
 	fmt.Println("START Step 14")
 	if gs.NextStep != 14 {
@@ -33,7 +39,9 @@ func (gs *GenerationState) Step14() error {
 		gg = len(canPutGGIn)
 	}
 
-	gs.placeGG(canPutGGIn)
+	if err := gs.placeGG(canPutGGIn); err != nil {
+		return err
+	}
 	//pl := gs.System.RockyPlanets
 	//planetMarkers := gs.canPlacePlanets()
 	gs.placePlanets()
@@ -57,7 +65,8 @@ func (gs *GenerationState) placePlanets() error {
 	}
 	for i := 0; i < pl; i++ {
 		st := gs.Dice.Roll(fmt.Sprintf("1d%v", len(gs.System.Stars))).DM(-1).Sum()
-		if len(gs.System.Stars[st].orbitDistances) < 1 {
+		star := gs.System.Stars[st]
+		if len(star.orbitDistances) < 1 {
 			i--
 			continue
 		}
@@ -70,23 +79,34 @@ func (gs *GenerationState) placePlanets() error {
 		try := 0
 		//placed := false
 		for {
-			orb := gs.Dice.Roll(fmt.Sprintf("1d%v", len(gs.System.Stars[st].orbitDistances))).DM(-1).Sum()
+			orb := gs.Dice.Roll(fmt.Sprintf("1d%v", len(star.orbitDistances))).DM(-1).Sum()
 			//gs.debug(fmt.Sprintf("try %v orb %v...", try, orb))
 			if orb-try < 0 {
 				i--
 				break
 			}
-			dist := gs.System.Stars[st].orbitDistances[orb-try]
-			if v, ok := gs.System.Stars[st].orbit[dist]; ok == true {
+			dist := star.orbitDistances[orb-try]
+			if v, ok := star.orbit[dist]; ok == true {
 				if !strings.Contains(v.Describe(), "empty orbit") {
 					try++
 					continue
 				}
-				planet := &rockyPlanet{num: i + 1, star: gs.System.Stars[st].Describe(), orbit: dist, eccentricity: 0.0, comment: "Rocky Planet"}
+				planet := &rockyPlanet{num: i + 1, star: star.Describe(), orbit: dist, eccentricity: 0.0, comment: "Rocky Planet"}
 				if gs.Dice.Roll("1d6").Sum() < 4 {
 					roll := gs.Dice.Roll("2d10").Sum()
 					planet.eccentricity = eccentricity(roll)
 				}
+				switch {
+				default:
+					planet.habZone = "UNDEFINED"
+				case dist-star.habitableLow < 0:
+					planet.habZone = habZoneInner
+				case (dist-star.habitableLow >= 0) && (dist-star.habitableHigh) < 0:
+					planet.habZone = habZoneHabitable
+				case (dist - star.habitableHigh) >= 0:
+					planet.habZone = habZoneOuter
+				}
+
 				gs.System.Stars[st].orbit[dist] = planet
 				//	placed = true
 				break
@@ -170,11 +190,15 @@ func freeSlots(om [][]orbMarker) int {
 func (gs *GenerationState) placeGG(markers []orbMarker) error {
 	fmt.Println(gs.System.GG)
 
-	if len(gs.System.GG) > len(markers) {
-		return fmt.Errorf("can't place all GGs %v/%v", len(gs.System.GG), len(markers))
-	}
+	// if len(gs.System.GG) > len(markers) {
+	// 	return fmt.Errorf("can't place all GGs %v/%v", len(gs.System.GG), len(markers))
+	// }
 	gs.debug(fmt.Sprintf("Placing %v Gas Gigants...", len(gs.System.GG)))
 	for n, gg := range gs.System.GG {
+		if n >= len(markers) {
+			gs.debug(fmt.Sprintf("Placing Gas Gigant %v aborted...", n+1))
+			continue
+		}
 		gs.debug(fmt.Sprintf("Placing Gas Gigant %v...", n+1))
 		placed := false
 		try := 0

@@ -20,7 +20,9 @@ func (gs *GenerationState) Step15() error {
 	if gs.NextStep != 15 {
 		return fmt.Errorf("not actual step")
 	}
-	gs.setPlanetTypes()
+	if err := gs.setPlanetDetails(); err != nil {
+		return err
+	}
 	gs.ConcludedStep = 15
 	gs.NextStep = 16
 	switch gs.NextStep {
@@ -32,245 +34,439 @@ func (gs *GenerationState) Step15() error {
 	return nil
 }
 
-func (gs *GenerationState) setPlanetTypes() error {
+func (gs *GenerationState) setPlanetDetails() error {
 	for i, star := range gs.System.Stars {
-		fmt.Println(star)
-		lowHab := star.habitableLow
-		hiHab := star.habitableHigh
 		for _, orbit := range star.orbitDistances {
-			fmt.Println(orbit)
 			if planet, ok := star.orbit[orbit].(*rockyPlanet); ok == true {
-				pos := planet.orbit
-				sizeTypeRoll := gs.Dice.Roll("2d6").Sum()
-				sizeType := "UNDEFINED"
-				p := ""
-				switch {
-				case pos < lowHab:
-					sizeType = innerSizeType(sizeTypeRoll)
-					p = "I"
-				case pos < hiHab:
-					sizeType = habitableSizeType(sizeTypeRoll)
-					p = "H"
-				default:
-					sizeType = outerSizeType(sizeTypeRoll)
-					p = "O"
+				if err := planet.rollSizeType(gs.Dice); err != nil {
+					return err
 				}
-				gs.System.Stars[i].orbit[orbit].(*rockyPlanet).sizeType = sizeType
-				size := rollSize(gs.Dice, sizeType, p)
-				gs.System.Stars[i].orbit[orbit].(*rockyPlanet).sizeCode = size
-				atmo := rollAtmo(gs.Dice, sizeType, p, size)
-				gs.System.Stars[i].orbit[orbit].(*rockyPlanet).atmoCode = atmo
-				hydr := rollHydr(gs.Dice, sizeType, p, atmo)
-				gs.System.Stars[i].orbit[orbit].(*rockyPlanet).hydrCode = hydr
-
+				if err := planet.rollSize(gs.Dice); err != nil {
+					return err
+				}
+				if err := planet.rollAtmo(gs.Dice); err != nil {
+					return err
+				}
+				if err := planet.rollHydr(gs.Dice); err != nil {
+					return err
+				}
+				gs.System.Stars[i].orbit[orbit] = planet
 			}
 		}
 	}
 	return nil
 }
 
-func rollSize(dp *dice.Dicepool, sType, p string) string {
-	switch sType {
+func (p *rockyPlanet) rollSize(dp *dice.Dicepool) error {
+	switch p.habZone {
+	default:
+		return fmt.Errorf("p.habZone = %v", p.habZone)
+	case habZoneInner, habZoneHabitable, habZoneOuter:
+	}
+	switch p.sizeType {
+	default:
+		return fmt.Errorf("p.sizeType  = %v", p.sizeType)
 	case sizeDwarf:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerDwarfSize(i)
-		case "H":
-			return habitableDwarfSize(i)
-		case "O":
-			return outerDwarfSize(i)
+		r := dp.Roll("1d6").Sum()
+		switch r {
+		case 1, 3, 5:
+			p.sizeCode = "0"
+		case 2, 4, 6:
+			p.sizeCode = "1"
 		}
 	case sizeMercurian:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerMercurianSize(i)
-		case "H":
-			return habitableMercurianSize(i)
-		case "O":
-			return outerMercurianSize(i)
+		r := dp.Roll("1d6").Sum()
+		switch r {
+		case 1, 3, 5:
+			p.sizeCode = "2"
+		case 2, 4, 6:
+			p.sizeCode = "3"
 		}
 	case sizeSubterran:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerSubterranSize(i)
-		case "H":
-			return habitableSubterranSize(i)
-		case "O":
-			return outerSubterranSize(i)
+		r := dp.Roll("1d6").Sum()
+		switch r {
+		case 1, 2:
+			p.sizeCode = "4"
+		case 3, 4:
+			p.sizeCode = "5"
+		case 5, 6:
+			p.sizeCode = "6"
 		}
 	case sizeTerran:
-		i := dp.Roll("2d6").Sum()
-		switch p {
-		case "I":
-			return innerTerranSize(i)
-		case "H":
-			return habitableTerranSize(i)
-		case "O":
-			return outerTerranSize(i)
+		r := dp.Roll("2d6").Sum()
+		switch r {
+		case 2, 3, 4, 5:
+			p.sizeCode = "7"
+		case 6, 7, 8, 9:
+			p.sizeCode = "8"
+		case 10, 11, 12:
+			p.sizeCode = "9"
 		}
 	case sizeSuperterran:
-		i := dp.Roll("2d10").Sum()
-		switch p {
-		case "I":
-			return innerSuperterranSize(i)
-		case "H":
-			return habitableSuperterranSize(i)
-		case "O":
-			return outerSuperterranSize(i)
+		r := dp.Roll("2d10").Sum()
+		switch r {
+		case 2, 3:
+			p.sizeCode = "A"
+		case 4, 5:
+			p.sizeCode = "B"
+		case 6, 7:
+			p.sizeCode = "C"
+		case 8, 9:
+			p.sizeCode = "D"
+		case 10:
+			p.sizeCode = "E"
+		case 11:
+			p.sizeCode = "F"
+		case 12:
+			p.sizeCode = "G"
+		case 13:
+			p.sizeCode = "H"
+		case 14:
+			p.sizeCode = "J"
+		case 15:
+			p.sizeCode = "K"
+		case 16:
+			p.sizeCode = "L"
+		case 17:
+			p.sizeCode = "M"
+		case 18:
+			p.sizeCode = "N"
+		case 19:
+			p.sizeCode = "P"
+		case 20:
+			p.sizeCode = "Q"
 		}
 	}
-	return "*"
+
+	return nil
 }
 
-func rollAtmo(dp *dice.Dicepool, sType, p string, size string) string {
-	switch sType {
+func (p *rockyPlanet) rollAtmo(dp *dice.Dicepool) error {
+	if p.sizeCode == "" {
+		return fmt.Errorf("p.sizeCode is not filled")
+	}
+	switch p.habZone {
+	default:
+		return fmt.Errorf("p.habZone = %v", p.habZone)
+	case habZoneInner, habZoneHabitable, habZoneOuter:
+	}
+	switch p.sizeType {
+	default:
+		return fmt.Errorf("p.sizeType  = %v", p.sizeType)
 	case sizeDwarf:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerDwarfAtmo(i)
-		case "H":
-			return habitableDwarfAtmo(i)
-		case "O":
-			return outerDwarfAtmo(i)
+		r := dp.Roll("1d6").Sum()
+		switch r {
+		case 1, 3, 5:
+			p.atmoCode = "0"
+		case 2, 4, 6:
+			p.atmoCode = "1"
 		}
 	case sizeMercurian:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerMercurianAtmo(i)
-		case "H":
-			return habitableMercurianAtmo(i)
-		case "O":
-			return outerMercurianAtmo(i)
+		r := dp.Roll("1d6").DM(-3).Sum()
+		if r < 3 {
+			r = 0
 		}
+		p.atmoCode = ehex.New().Set(r).Code()
 	case sizeSubterran:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerSubterranAtmo(i)
-		case "H":
-			return habitableSubterranAtmo(i)
-		case "O":
-			return outerSubterranAtmo(i)
+		dm := 0
+		if p.habZone == habZoneOuter {
+			dm = 1
 		}
+		r := dp.Roll("1d6").DM(dm).Sum()
+		p.atmoCode = ehex.New().Set(r).Code()
 	case sizeTerran:
-		i := dp.Roll("2d6").Sum()
-		switch p {
-		case "I":
-			return innerTerranAtmo(i)
-		case "H":
-			return habitableTerranAtmo(i)
-		case "O":
-			return outerTerranAtmo(i)
+		switch p.habZone {
+		case habZoneInner:
+			r := dp.Roll("2d6").Sum()
+			switch r {
+			case 2:
+				p.atmoCode = "2"
+			case 3:
+				p.atmoCode = "3"
+			case 4, 5:
+				p.atmoCode = "4"
+			case 6, 7:
+				p.atmoCode = "5"
+			case 8:
+				p.atmoCode = "6"
+			case 9:
+				p.atmoCode = "7"
+			case 10:
+				p.atmoCode = "A"
+			case 11:
+				p.atmoCode = "B"
+			case 12:
+				p.atmoCode = "C"
+			}
+		case habZoneHabitable:
+			s := ehex.New().Set(p.sizeCode).Value()
+			r := dp.Roll("2d6").DM(s - 7).Sum()
+			p.atmoCode = ehex.New().Set(r).Code()
+		case habZoneOuter:
+			r := dp.Roll("2d6").Sum()
+			switch r {
+			case 2:
+				p.atmoCode = "0"
+			case 3, 4:
+				p.atmoCode = "1"
+			case 5, 6:
+				p.atmoCode = "A"
+			case 7, 8:
+				p.atmoCode = "B"
+			case 9:
+				p.atmoCode = "C"
+			case 10:
+				p.atmoCode = "D"
+			case 11:
+				p.atmoCode = "E"
+			case 12:
+				p.atmoCode = "F"
+			}
 		}
 	case sizeSuperterran:
-		i := dp.Roll("2d10").Sum()
-		switch p {
-		case "I":
-			dm := 0
-			switch size {
+		dm := -999
+		fmt.Println("-----------------", p)
+		switch p.habZone {
+		case habZoneInner, habZoneHabitable:
+			switch p.sizeCode {
 			case "A", "B", "C", "D", "E":
+				dm = 0
 			case "F", "G", "H", "J", "K":
 				dm = 3
-			default:
+			case "L", "M", "N", "P", "Q":
 				dm = 6
+			default:
+				return fmt.Errorf("unknown p.sizeCode (%v)", p.sizeCode)
 			}
-			return innerSuperterranAtmo(i + dm)
-		case "H":
-			return habitableSuperterranAtmo(i)
-		case "O":
-			return outerSuperterranAtmo(i)
+			r := dp.Roll("2d10").DM(dm).Sum()
+			switch r {
+			default:
+				p.atmoCode = "D"
+			case 2:
+				p.atmoCode = "6"
+			case 3:
+				p.atmoCode = "7"
+			case 4, 5, 6:
+				p.atmoCode = "8"
+			case 7, 8, 9:
+				p.atmoCode = "9"
+			case 10, 11, 12:
+				p.atmoCode = "E"
+			case 13, 14, 15:
+				p.atmoCode = "A"
+			case 16, 17:
+				p.atmoCode = "B"
+			case 18, 19:
+				p.atmoCode = "C"
+			}
+		case habZoneOuter:
+			switch p.sizeCode {
+			case "A", "B", "C", "D", "E":
+				dm = 0
+			case "F", "G", "H", "J", "K":
+				dm = 1
+			case "L", "M", "N", "P", "Q":
+				dm = 3
+			default:
+				return fmt.Errorf("unknown p.sizeCode (%v)", p.sizeCode)
+			}
+			r := dp.Roll("1d6").DM(dm).Sum()
+			switch r {
+			default:
+				p.atmoCode = "D"
+			case 1:
+				p.atmoCode = "E"
+			case 2:
+				p.atmoCode = "A"
+			case 3:
+				p.atmoCode = "B"
+			case 4:
+				p.atmoCode = "C"
+
+			}
 		}
 	}
-	return "*"
+	if p.atmoCode == "" {
+		return fmt.Errorf("not asigned ATMO")
+	}
+	return nil
 }
 
-func rollHydr(dp *dice.Dicepool, sType, p, atmo string) string {
-	i := 0
-	switch sType {
-	case sizeDwarf:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerDwarfHydr(i)
-		case "H":
-			return habitableDwarfHydr(i)
-		case "O":
-			return outerDwarfHydr(i)
-		}
-	case sizeMercurian:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerMercurianHydr(i)
-		case "H":
-			return habitableMercurianHydr(i)
-		case "O":
-			return outerMercurianHydr(i)
-		}
+func (p *rockyPlanet) rollHydr(dp *dice.Dicepool) error {
+	if p.atmoCode == "" {
+		fmt.Errorf("p.atmoCode is not filled")
+	}
+	switch p.habZone {
+	default:
+		return fmt.Errorf("p.habZone = %v", p.habZone)
+	case habZoneInner, habZoneHabitable, habZoneOuter:
+	}
+	switch p.sizeType {
+	default:
+		return fmt.Errorf("p.sizeType  = %v", p.sizeType)
+	case sizeDwarf, sizeMercurian:
+		p.hydrCode = "0"
 	case sizeSubterran:
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			return innerSubterranHydr(i)
-		case "H":
-			return habitableSubterranHydr(i)
-		case "O":
-			return outerSubterranHydr(i)
+		switch p.habZone {
+		case habZoneInner:
+			p.hydrCode = "0"
+		case habZoneHabitable:
+			switch p.atmoCode {
+			default:
+				a := ehex.New().Set(p.atmoCode).Value()
+				r := dp.Roll("2d6").DM(-9 + a).Sum()
+				if r < 0 {
+					r = 0
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
+			case "0", "1", "2", "3":
+				p.hydrCode = "0"
+			}
+		case habZoneOuter:
+			dm := 0
+			switch p.atmoCode {
+			default:
+				switch p.atmoCode {
+				case "4", "5":
+					dm = -1
+				case "6", "7":
+					dm = 1
+				}
+				r := dp.Roll("1d6").DM(dm).Sum()
+				switch r {
+				case 0, 1:
+					p.hydrCode = "0"
+				case 2:
+					p.hydrCode = "2"
+				case 3:
+					p.hydrCode = "4"
+				case 4:
+					p.hydrCode = "6"
+				case 5:
+					p.hydrCode = "8"
+				case 6, 7:
+					p.hydrCode = "A"
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
+			case "0", "1", "2", "3":
+				p.hydrCode = "0"
+			}
 		}
 	case sizeTerran:
-		a := ehex.New().Set(atmo).Value()
-		i := dp.Roll("1d6").Sum()
-		switch p {
-		case "I":
-			switch atmo {
-			case "0", "1", "2", "3":
-				return "0"
+		switch p.habZone {
+		case habZoneInner:
+			switch p.atmoCode {
+			case "0", "1", "2", "3", "A", "B", "C", "D", "E", "F":
+				p.hydrCode = "0"
 			case "5", "6", "8":
-				i = dp.Roll("1d6").DM(-10 + a).Sum()
+				a := ehex.New().Set(p.atmoCode).Value()
+				r := dp.Roll("1d6").DM(-10 + a).Sum()
+				if r < 0 {
+					r = 0
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
 			case "4", "7", "9":
-				i = dp.Roll("1d6").DM(-11 + a).Sum()
+				a := ehex.New().Set(p.atmoCode).Value()
+				r := dp.Roll("1d6").DM(-11 + a).Sum()
+				if r < 0 {
+					r = 0
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
+			}
+		case habZoneHabitable:
+			switch p.atmoCode {
+			case "0", "1", "2", "3", "A", "B", "C", "D", "E", "F":
+				p.hydrCode = "0"
+			default:
+				a := ehex.New().Set(p.atmoCode).Value()
+				r := dp.Roll("2d6").DM(-7 + a).Sum()
+				if r < 0 {
+					r = 0
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
+			}
+		case habZoneOuter:
+			switch p.atmoCode {
+			default:
+				a := ehex.New().Set(p.atmoCode).Value()
+				r := dp.Roll("2d6").DM(-7 + a).Sum()
+				if r < 0 {
+					r = 0
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
+			case "0", "1":
+				p.hydrCode = "0"
 			case "A", "B", "C", "D", "E", "F":
-				return "0"
+				r := dp.Roll("1d6").Sum()
+				switch r {
+				case 1:
+					p.hydrCode = "0"
+				case 2:
+					p.hydrCode = "2"
+				case 3:
+					p.hydrCode = "4"
+				case 4:
+					p.hydrCode = "6"
+				case 5:
+					p.hydrCode = "8"
+				case 6:
+					p.hydrCode = "A"
+				}
 			}
-			if i < 0 {
-				return "0"
-			}
-			return fmt.Sprintf("%v", i)
-		case "H":
-			return habitableTerranHydr(i)
-		case "O":
-			return outerTerranHydr(i)
 		}
 	case sizeSuperterran:
-		switch p {
-		case "I":
-
-			a := ehex.New().Set(atmo).Value()
-			switch atmo {
+		a := ehex.New().Set(p.atmoCode).Value()
+		switch p.habZone {
+		case habZoneInner:
+			switch p.atmoCode {
 			case "6", "8":
-				i = dp.Roll("1d6").DM(-10 + a).Sum()
+				r := dp.Roll("1d6").DM(a - 10).Sum()
+				if r < 0 {
+					r = 0
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
 			case "7", "9":
-				i = dp.Roll("1d6").DM(-11 + a).Sum()
+				r := dp.Roll("1d6").DM(a - 11).Sum()
+				if r < 0 {
+					r = 0
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
 			default:
-				return "0"
+				p.hydrCode = "0"
 			}
-			if i < 0 {
-				i = 0
+		case habZoneHabitable, habZoneOuter:
+			if p.sizeType == sizeSuperterran {
+				//return fmt.Errorf("STOP")
 			}
-			return fmt.Sprintf("%v", i)
-			//return innerSuperterranHydr(i)
-		case "H":
-			return habitableSuperterranHydr(i)
-		case "O":
-			return outerSuperterranHydr(i)
+			switch p.atmoCode {
+			case "A", "B", "C", "D", "E", "F":
+				p.hydrCode = "0"
+			default:
+				r := dp.Roll("2d6").DM(a - 7).Sum()
+				if r < 0 {
+					r = 0
+				}
+				p.hydrCode = ehex.New().Set(r).Code()
+			}
+			//case habZoneOuter: в книге количество воды почему-то зависит от размера супертерана что не логично
 		}
 	}
-	return "*"
+	return nil
+}
+
+func (p *rockyPlanet) rollSizeType(dp *dice.Dicepool) error {
+	sizeTypeRoll := dp.Roll("2d6").Sum()
+	switch p.habZone {
+	case habZoneInner:
+		p.sizeType = innerSizeType(sizeTypeRoll)
+	case habZoneHabitable:
+		p.sizeType = habitableSizeType(sizeTypeRoll)
+	case habZoneOuter:
+		p.sizeType = outerSizeType(sizeTypeRoll)
+	default:
+		return fmt.Errorf("habitable zone is '%v', %v", p.habZone, p)
+	}
+	return nil
 }
 
 func innerSizeType(roll int) string {
@@ -305,274 +501,6 @@ func habitableSizeType(roll int) string {
 	case 12:
 		return sizeSuperterran
 	}
-}
-
-func innerDwarfSize(i int) string {
-	switch i {
-	default:
-		return "X"
-	case 1, 3, 5:
-		return "0"
-	case 2, 4, 6:
-		return "1"
-	}
-}
-func innerDwarfAtmo(i int) string {
-	switch i {
-	default:
-		return "X"
-	case 1, 3, 5:
-		return "0"
-	case 2, 4, 6:
-		return "1"
-	}
-}
-func innerDwarfHydr(roll int) string {
-	return "0"
-}
-func innerMercurianSize(i int) string {
-	switch i {
-	default:
-		return "X"
-	case 1, 3, 5:
-		return "2"
-	case 2, 4, 6:
-		return "3"
-	}
-}
-func innerMercurianAtmo(i int) string {
-	switch {
-	default:
-		return "0"
-	case i-3 > 0:
-		return fmt.Sprintf("%v", i-3)
-	}
-}
-func innerMercurianHydr(roll int) string {
-	return "0"
-}
-func innerSubterranSize(roll int) string {
-	switch roll {
-	case 1, 2:
-		return "4"
-	case 3, 4:
-		return "5"
-	case 5, 6:
-		return "6"
-	}
-	return "X"
-}
-func innerSubterranAtmo(roll int) string {
-	return fmt.Sprintf("%v", roll)
-}
-func innerSubterranHydr(roll int) string {
-	return "0"
-}
-func innerTerranSize(roll int) string {
-	switch roll {
-	case 2, 3, 4, 5:
-		return "7"
-	case 6, 7, 8, 9:
-		return "8"
-	case 10, 11, 12:
-		return "9"
-	}
-	return "X"
-}
-func innerTerranAtmo(roll int) string {
-	switch roll {
-	case 2:
-		return "2"
-	case 3:
-		return "3"
-	case 4, 5:
-		return "4"
-	case 6, 7:
-		return "5"
-	case 8:
-		return "6"
-	case 9:
-		return "7"
-	case 10:
-		return "A"
-	case 11:
-		return "B"
-	case 12:
-		return "C"
-	}
-	return "X"
-}
-func innerTerranHydr(roll int) string {
-	return "X"
-}
-func innerSuperterranSize(roll int) string {
-	switch roll {
-	case 2, 3:
-		return "A"
-	case 4, 5:
-		return "B"
-	case 6, 7:
-		return "C"
-	case 8, 9:
-		return "D"
-	case 10:
-		return "E"
-	case 11:
-		return "F"
-	case 12:
-		return "G"
-	case 13:
-		return "H"
-	case 14:
-		return "J"
-	case 15:
-		return "K"
-	case 16:
-		return "L"
-	case 17:
-		return "M"
-	case 18:
-		return "N"
-	case 19:
-		return "P"
-	case 20:
-		return "Q"
-	}
-	return "X"
-}
-func innerSuperterranAtmo(roll int) string {
-	switch roll {
-	case 2:
-		return "6"
-	case 3:
-		return "7"
-	case 4, 5, 6:
-		return "8"
-	case 7, 8, 9:
-		return "9"
-	case 10, 11, 12:
-		return "E"
-	case 13, 14, 15:
-		return "A"
-	case 16, 17:
-		return "B"
-	case 18, 19:
-		return "C"
-	default:
-		if roll >= 20 {
-			return "D"
-		}
-	}
-	return "X"
-}
-func innerSuperterranHydr(roll int) string {
-	return "X"
-}
-func habitableDwarfSize(roll int) string {
-	return "X"
-}
-func habitableDwarfAtmo(roll int) string {
-	return "X"
-}
-func habitableDwarfHydr(roll int) string {
-	return "X"
-}
-func habitableMercurianSize(roll int) string {
-	return "X"
-}
-func habitableMercurianAtmo(roll int) string {
-	return "X"
-}
-func habitableMercurianHydr(roll int) string {
-	return "X"
-}
-func habitableSubterranSize(roll int) string {
-	switch roll {
-	case 1, 2:
-		return "4"
-	case 3, 4:
-		return "5"
-	case 5, 6:
-		return "6"
-	}
-	return "X"
-}
-func habitableSubterranAtmo(roll int) string {
-	return "X"
-}
-func habitableSubterranHydr(roll int) string {
-	return "X"
-}
-func habitableTerranSize(roll int) string {
-	return "X"
-}
-func habitableTerranAtmo(roll int) string {
-	return "X"
-}
-func habitableTerranHydr(roll int) string {
-	return "X"
-}
-func habitableSuperterranSize(roll int) string {
-	return "X"
-}
-func habitableSuperterranAtmo(roll int) string {
-	return "X"
-}
-func habitableSuperterranHydr(roll int) string {
-	return "X"
-}
-func outerDwarfSize(roll int) string {
-	return "X"
-}
-func outerDwarfAtmo(roll int) string {
-	return "X"
-}
-func outerDwarfHydr(roll int) string {
-	return "X"
-}
-func outerMercurianSize(roll int) string {
-	return "X"
-}
-func outerMercurianAtmo(roll int) string {
-	return "X"
-}
-func outerMercurianHydr(roll int) string {
-	return "X"
-}
-func outerSubterranSize(roll int) string {
-	switch roll {
-	case 1, 2:
-		return "4"
-	case 3, 4:
-		return "5"
-	case 5, 6:
-		return "6"
-	}
-	return "X"
-}
-func outerSubterranAtmo(roll int) string {
-	return "X"
-}
-func outerSubterranHydr(roll int) string {
-	return "X"
-}
-func outerTerranSize(roll int) string {
-	return "X"
-}
-func outerTerranAtmo(roll int) string {
-	return "X"
-}
-func outerTerranHydr(roll int) string {
-	return "X"
-}
-func outerSuperterranSize(roll int) string {
-	return "X"
-}
-func outerSuperterranAtmo(roll int) string {
-	return "X"
-}
-func outerSuperterranHydr(roll int) string {
-	return "X"
 }
 
 func outerSizeType(roll int) string {

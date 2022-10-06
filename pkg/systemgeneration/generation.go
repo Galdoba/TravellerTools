@@ -157,7 +157,6 @@ type rockyPlanet struct {
 	num           int
 	star          string
 	orbit         float64
-	localUWP      string
 	sizeCode      string
 	atmoCode      string
 	hydrCode      string
@@ -167,6 +166,7 @@ type rockyPlanet struct {
 	mass          float64
 	radius        float64
 	potentialAtmo string
+	habZone       string
 }
 
 func (rp *rockyPlanet) Describe() string {

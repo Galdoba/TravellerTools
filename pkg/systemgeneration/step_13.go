@@ -26,7 +26,9 @@ func (gs *GenerationState) Step13() error {
 		gg.comment = "Gas Gigant"
 		gs.System.GG = append(gs.System.GG, &gg)
 	}
+	fmt.Println(len(gs.System.GG))
 	gs.System.GG = sortGGiantsBySize(gs.System.GG)
+	fmt.Println(len(gs.System.GG))
 	if len(gs.System.GG) > 0 && gs.Dice.Roll("1d6").Sum() == 6 {
 		fmt.Println("DEBUG: Gas Gigant Migrated")
 		gs.System.GG[0].migratedToAU = float64(gs.Dice.Roll("1d100").Sum())
@@ -52,7 +54,12 @@ func (gs *GenerationState) Step13() error {
 func sortGGiantsBySize(gg []*ggiant) []*ggiant {
 	presentSizes := []int{}
 	sortedGG := []*ggiant{}
+	last := 0
 	for _, gg := range gg {
+		if gg.size == last {
+			continue
+		}
+		last = gg.size
 		presentSizes = append(presentSizes, gg.size)
 	}
 	sort.Sort(sort.Reverse(sort.IntSlice(presentSizes)))
