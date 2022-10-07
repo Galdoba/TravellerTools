@@ -175,16 +175,27 @@ func (rp *rockyPlanet) Describe() string {
 
 type belt struct {
 	//stellarBody
-	num      int
-	star     string
-	orbit    float64
-	localUWP string
-	sizeType string
-	comment  string
+	num          int
+	star         string
+	orbit        float64
+	sizeCode     string
+	atmoCode     string
+	hydrCode     string
+	composition  string
+	majorSizeAst int
+	width        float64
+	lowBorder    float64
+	hiBorder     float64
+	zone         string
+	comment      string
 }
 
 func (b *belt) Describe() string {
-	return fmt.Sprintf("%v AU	Belt %v	%v			%v", b.orbit, b.num, b.localUWP, b.comment)
+	return fmt.Sprintf("%v AU	Belt %v	%v%v%v			%v", b.orbit, b.num, b.sizeCode, b.atmoCode, b.hydrCode, b.composition)
+}
+
+func (b *belt) Width() float64 {
+	return b.width
 }
 
 func (gs *GenerationState) GenerateData() error {
@@ -224,6 +235,8 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step14()
 		case 15:
 			err = gs.Step15()
+		case 16:
+			err = gs.Step16()
 		case 20:
 			err = gs.Step20()
 			if err == nil {
@@ -356,7 +369,11 @@ func (gs *GenerationState) debug(str string) {
 
 func (gs *GenerationState) trackStatus() {
 	fmt.Printf("generation steps %v/%v\n", gs.ConcludedStep, gs.NextStep)
+	if gs.ConcludedStep < 16 {
+		return
+	}
 	fmt.Println("SYSTEM SO FAR:")
+
 	gs.System.printSystemSheet()
 	fmt.Println(" ")
 }

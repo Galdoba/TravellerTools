@@ -28,9 +28,6 @@ func (gs *GenerationState) Step14() error {
 		gs.System.body = append(gs.System.body, &belt{num: i})
 	}
 	gs.setOrbitSpots()
-	gs.System.printSystemSheet()
-
-	fmt.Println("РАССТАВЛЯЕ ГГ ТУТ")
 	gg := gs.System.GasGigants
 	canPutGGIn := gs.canPlaceGGin()
 	if gg > len(canPutGGIn) {
@@ -42,9 +39,13 @@ func (gs *GenerationState) Step14() error {
 	if err := gs.placeGG(canPutGGIn); err != nil {
 		return err
 	}
-	//pl := gs.System.RockyPlanets
-	//planetMarkers := gs.canPlacePlanets()
-	gs.placePlanets()
+	if err := gs.placePlanets(); err != nil {
+		return err
+	}
+
+	// if err := gs.placeBelts(); err != nil {
+	// 	return err
+	// }
 
 	gs.ConcludedStep = 14
 	gs.NextStep = 15
@@ -59,7 +60,7 @@ func (gs *GenerationState) Step14() error {
 
 func (gs *GenerationState) placePlanets() error {
 	pl := gs.System.RockyPlanets
-	planetMarkers := gs.canPlacePlanets()
+	planetMarkers := gs.canPlaceBodies()
 	if pl > freeSlots(planetMarkers) {
 		return fmt.Errorf("cannot suport so many planets %v | %v", pl, len(planetMarkers))
 	}
@@ -162,13 +163,12 @@ func eccentricity(roll int) float64 {
 	}
 }
 
-func (gs *GenerationState) canPlacePlanets() [][]orbMarker {
+func (gs *GenerationState) canPlaceBodies() [][]orbMarker {
 	om := [][]orbMarker{}
 	for s, star := range gs.System.Stars {
 		om = append(om, []orbMarker{})
 		//TODO: переписать чтобы шло по orbitDistance
-		for i := int(star.innerLimit * 1000); i < int(star.outerLimit*1000); i++ {
-			orb := float64(i) / 1000
+		for _, orb := range star.orbitDistances {
 			if v, ok := star.orbit[orb]; ok == true {
 				if strings.Contains(v.Describe(), "empty orbit") {
 					om[s] = append(om[s], orbMarker{s, orb})
@@ -188,11 +188,6 @@ func freeSlots(om [][]orbMarker) int {
 }
 
 func (gs *GenerationState) placeGG(markers []orbMarker) error {
-	fmt.Println(gs.System.GG)
-
-	// if len(gs.System.GG) > len(markers) {
-	// 	return fmt.Errorf("can't place all GGs %v/%v", len(gs.System.GG), len(markers))
-	// }
 	gs.debug(fmt.Sprintf("Placing %v Gas Gigants...", len(gs.System.GG)))
 	for n, gg := range gs.System.GG {
 		if n >= len(markers) {
