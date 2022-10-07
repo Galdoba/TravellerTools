@@ -48,6 +48,20 @@ func TestGeneration(t *testing.T) {
 
 }
 
+/*
+
+
+
+Primary Star: G2 V
+  +-----> 0.014: Planet  Terran     X765000-0
+  +-----> 0.020: Planet  Terran     X889000-0
+  | +----------> Moon    Mercurian  X889000-0
+  | +----------> Moon    Dwarf      X889000-0
+  +-----> 0.045: Planet  Terran     X889000-0
+  +-----> 0.060: Belt    Asteroid   X000000-0
+  +-----> 0.063: Jump Border D10 Primary
+*/
+
 func TestTables(t *testing.T) {
 	//return
 	starMap := make(map[string]tabledata)
