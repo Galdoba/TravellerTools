@@ -76,7 +76,7 @@ func setSize(s star) int {
 	ss := 0
 	for _, scl := range []string{"L", "T", "Y", "M", "K", "G", "F", "A", "B", "O"} {
 		if s.class != scl {
-			ss += 10
+			ss += 100
 			continue
 		}
 		ss -= s.num
@@ -84,7 +84,7 @@ func setSize(s star) int {
 	}
 	for _, scl := range []string{"", "VI", "V", "IV", "III", "II", "Ib", "Ia"} {
 		if s.class != scl {
-			ss += 100
+			ss += 10
 			// вса
 			continue
 		}

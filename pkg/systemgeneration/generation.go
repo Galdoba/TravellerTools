@@ -173,6 +173,15 @@ func (rp *rockyPlanet) Describe() string {
 	return fmt.Sprintf("%v AU	Planet %v	_%v%v%v___-_	%v	%v	%v", rp.orbit, rp.num, rp.sizeCode, rp.atmoCode, rp.hydrCode, rp.sizeType, rp.eccentricity, rp.comment)
 }
 
+type jumpZoneBorder struct {
+	zone  string
+	orbit float64
+}
+
+func (jzb *jumpZoneBorder) Describe() string {
+	return fmt.Sprintf("Jump Zone Border: %v - %v", jzb.zone, jzb.orbit)
+}
+
 type belt struct {
 	//stellarBody
 	num          int
@@ -237,6 +246,10 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step15()
 		case 16:
 			err = gs.Step16()
+		case 17:
+			err = gs.Step17()
+		case 18:
+			err = gs.Step18()
 		case 20:
 			err = gs.Step20()
 			if err == nil {
@@ -369,7 +382,7 @@ func (gs *GenerationState) debug(str string) {
 
 func (gs *GenerationState) trackStatus() {
 	fmt.Printf("generation steps %v/%v\n", gs.ConcludedStep, gs.NextStep)
-	if gs.ConcludedStep < 16 {
+	if gs.ConcludedStep < 17 {
 		return
 	}
 	fmt.Println("SYSTEM SO FAR:")
