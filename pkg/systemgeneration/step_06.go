@@ -9,6 +9,7 @@ func (gs *GenerationState) Step06() error {
 	}
 	lumRoll1 := gs.Dice.Roll("1d100").Sum()
 	lumRoll2 := gs.Dice.Roll("1d10").Sum()
+
 	for i, star := range gs.System.Stars {
 		switch star.class {
 		case "L", "T", "Y":

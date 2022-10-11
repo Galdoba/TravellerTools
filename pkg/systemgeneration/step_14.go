@@ -62,7 +62,7 @@ func (gs *GenerationState) placePlanets() error {
 	pl := gs.System.RockyPlanets
 	planetMarkers := gs.canPlaceBodies()
 	if pl > freeSlots(planetMarkers) {
-		return fmt.Errorf("cannot suport so many planets %v | %v", pl, len(planetMarkers))
+		pl = freeSlots(planetMarkers)
 	}
 	for i := 0; i < pl; i++ {
 		st := gs.Dice.Roll(fmt.Sprintf("1d%v", len(gs.System.Stars))).DM(-1).Sum()
@@ -97,17 +97,7 @@ func (gs *GenerationState) placePlanets() error {
 					roll := gs.Dice.Roll("2d10").Sum()
 					planet.eccentricity = eccentricity(roll)
 				}
-				switch {
-				default:
-					planet.habZone = "UNDEFINED"
-				case dist-star.habitableLow < 0:
-					planet.habZone = habZoneInner
-				case (dist-star.habitableLow >= 0) && (dist-star.habitableHigh) < 0:
-					planet.habZone = habZoneHabitable
-				case (dist - star.habitableHigh) >= 0:
-					planet.habZone = habZoneOuter
-				}
-
+				planet.habZone = star.habZone(dist)
 				gs.System.Stars[st].orbit[dist] = planet
 				//	placed = true
 				break
@@ -116,6 +106,20 @@ func (gs *GenerationState) placePlanets() error {
 		gs.debug(fmt.Sprintf("planet %v placed...", i+1))
 	}
 	return nil
+}
+
+func (star *star) habZone(dist float64) string {
+	habZone := "UNDEFINED"
+	switch {
+	default:
+	case dist-star.habitableLow < 0:
+		habZone = habZoneInner
+	case (dist-star.habitableLow >= 0) && (dist-star.habitableHigh) < 0:
+		habZone = habZoneHabitable
+	case (dist - star.habitableHigh) >= 0:
+		habZone = habZoneOuter
+	}
+	return habZone
 }
 
 func eccentricity(roll int) float64 {

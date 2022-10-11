@@ -34,7 +34,7 @@ func (gs *GenerationState) placeBelts() error {
 	beltNum := gs.System.Belts
 	beltMarkers := gs.canPlaceBodies()
 	if beltNum > freeSlots(beltMarkers) {
-		return fmt.Errorf("cannot suport so many belts %v | %v", beltNum, len(beltMarkers))
+		beltNum = freeSlots(beltMarkers)
 	}
 	for i := 0; i < beltNum; i++ {
 		st := gs.Dice.Roll(fmt.Sprintf("1d%v", len(gs.System.Stars))).DM(-1).Sum()

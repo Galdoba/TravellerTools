@@ -11,6 +11,7 @@ func (gs *GenerationState) Step08() error {
 	if gs.NextStep != 8 {
 		return fmt.Errorf("not actual step")
 	}
+
 	switch gs.System.starPopulation {
 	default:
 		return fmt.Errorf("imposible population at step 08")
@@ -20,6 +21,7 @@ func (gs *GenerationState) Step08() error {
 			switch i {
 			case 0:
 				star.rank = "Primary"
+
 			case 1:
 				star.rank = "Secondary"
 			case 2:
@@ -32,7 +34,7 @@ func (gs *GenerationState) Step08() error {
 			if i == 0 {
 				gs.System.Stars[0].distanceType = "Primary"
 				gs.System.Stars[0].distanceFromPrimaryAU = 0.0
-				fmt.Println(gs.System.Stars[i])
+				fmt.Println(gs.System.Stars[i], "-------")
 				continue
 			}
 			for star.distanceFromPrimaryAU <= gs.System.Stars[i-1].distanceFromPrimaryAU {
@@ -44,11 +46,12 @@ func (gs *GenerationState) Step08() error {
 				}
 
 			}
-			fmt.Println(star)
+			fmt.Println(star, "+++++++")
 		}
 		gs.ConcludedStep = 8
 		gs.NextStep = 9
 	}
+
 	switch gs.NextStep {
 	case 9:
 	default:

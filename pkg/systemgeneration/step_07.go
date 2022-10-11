@@ -19,6 +19,7 @@ func (gs *GenerationState) Step07() error {
 		gs.ConcludedStep = 7
 		gs.NextStep = 8
 		gs.System.Stars = sortStars(gs.System.Stars)
+		fmt.Println("len(gs.System.Stars) < strSystToNum(gs.System.starPopulation) - IS NORMAL")
 	case StarPopulationUNKNOWN:
 		tn := []int{}
 		switch gs.System.Stars[0].class {
@@ -56,14 +57,15 @@ func (gs *GenerationState) Step07() error {
 }
 
 func sortStars(stars []*star) []*star {
-	strSizes := []int{}
+	strMasses := []float64{}
 	for _, str := range stars {
-		strSizes = append(strSizes, setSize(*str))
+		strMasses = append(strMasses, str.mass)
 	}
 	newOrder := []*star{}
-	for i := 1000; i > -10; i-- {
-		for v, num := range strSizes {
-			if i != num {
+	for i := 1600001; i > -10; i-- {
+		m := roundFloat(float64(i)/100, 2)
+		for v, mass := range strMasses {
+			if m != mass {
 				continue
 			}
 			newOrder = append(newOrder, stars[v])
@@ -74,9 +76,10 @@ func sortStars(stars []*star) []*star {
 
 func setSize(s star) int {
 	ss := 0
+
 	for _, scl := range []string{"L", "T", "Y", "M", "K", "G", "F", "A", "B", "O"} {
 		if s.class != scl {
-			ss += 100
+			ss += 10
 			continue
 		}
 		ss -= s.num
@@ -84,7 +87,7 @@ func setSize(s star) int {
 	}
 	for _, scl := range []string{"", "VI", "V", "IV", "III", "II", "Ib", "Ia"} {
 		if s.class != scl {
-			ss += 10
+			ss += 100
 			// вса
 			continue
 		}

@@ -29,12 +29,14 @@ func (gs *GenerationState) Step02() error {
 		gs.NextStep = 18
 	case typeRoll <= 100:
 		gs.System.ObjectType = ObjectBlackHole
+		gs.System.Stars = append(gs.System.Stars, BlackHole())
 		gs.NextStep = 20
 	}
 	gs.debug(fmt.Sprintf("gs.System.ObjectType set as %v", gs.System.ObjectType))
 	switch gs.System.ObjectType {
 	case ObjectRoguePlanet, ObjectRogueGasGigant, ObjectNebula, ObjectBlackHole:
-		gs.System.Stars = append(gs.System.Stars, &star{})
+		//return fmt.Errorf("Stop %v", gs.System.ObjectType)
+		//gs.System.Stars = append(gs.System.Stars, &star{})
 		gs.setOrbitSpots()
 	}
 	gs.ConcludedStep = 2

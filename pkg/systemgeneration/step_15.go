@@ -38,16 +38,26 @@ func (gs *GenerationState) setPlanetDetails() error {
 	for i, star := range gs.System.Stars {
 		for _, orbit := range star.orbitDistances {
 			if planet, ok := star.orbit[orbit].(*rockyPlanet); ok == true {
-				if err := planet.rollSizeType(gs.Dice); err != nil {
-					return err
-				}
-				if err := planet.rollSize(gs.Dice); err != nil {
-					return err
-				}
-				if err := planet.rollAtmo(gs.Dice); err != nil {
-					return err
-				}
-				if err := planet.rollHydr(gs.Dice); err != nil {
+				// if err := planet.rollSizeType(gs.Dice); err != nil {
+				// 	return err
+				// }
+				// if err := planet.rollSize(gs.Dice); err != nil {
+				// 	return err
+				// }
+				// if err := planet.rollAtmo(gs.Dice); err != nil {
+				// 	return err
+				// }
+				// if err := planet.rollHydr(gs.Dice); err != nil {
+				// 	return err
+				// }
+				// if planet.orbit > gs.System.Stars[i].habitableHigh {
+				// 	planet.comment = " Cold"
+				// }
+				// if planet.orbit > gs.System.Stars[i].snowLine {
+				// 	planet.comment = " Frozen"
+				// }
+				planet, err := gs.detailPlanet(planet)
+				if err != nil {
 					return err
 				}
 				gs.System.Stars[i].orbit[orbit] = planet
@@ -55,6 +65,23 @@ func (gs *GenerationState) setPlanetDetails() error {
 		}
 	}
 	return nil
+}
+
+func (gs *GenerationState) detailPlanet(planet *rockyPlanet) (*rockyPlanet, error) {
+	if err := planet.rollSizeType(gs.Dice); err != nil {
+		return planet, err
+	}
+	if err := planet.rollSize(gs.Dice); err != nil {
+		return planet, err
+	}
+	if err := planet.rollAtmo(gs.Dice); err != nil {
+		return planet, err
+	}
+	if err := planet.rollHydr(gs.Dice); err != nil {
+		return planet, err
+	}
+
+	return planet, nil
 }
 
 func (p *rockyPlanet) rollSize(dp *dice.Dicepool) error {
@@ -455,6 +482,22 @@ func (p *rockyPlanet) rollHydr(dp *dice.Dicepool) error {
 }
 
 func (p *rockyPlanet) rollSizeType(dp *dice.Dicepool) error {
+	switch p.sizeCode {
+	case "":
+	case "0", "1":
+		p.sizeType = sizeDwarf
+	case "2", "3":
+		p.sizeType = sizeMercurian
+	case "4", "5", "6":
+		p.sizeType = sizeSubterran
+	case "7", "8", "9":
+		p.sizeType = sizeTerran
+	default:
+		p.sizeType = sizeSubterran
+	}
+	if p.sizeType != "" {
+		return nil
+	}
 	sizeTypeRoll := dp.Roll("2d6").Sum()
 	switch p.habZone {
 	case habZoneInner:

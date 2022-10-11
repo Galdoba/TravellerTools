@@ -119,6 +119,20 @@ type star struct {
 	orbitDistances        []float64
 }
 
+func BlackHole() *star {
+	bh := star{}
+	bh.mass = 999999
+	bh.temperature = 1
+	bh.luminocity = 0.000000001
+	bh.innerLimit = 0.001
+	bh.habitableLow = -999
+	bh.habitableHigh = -999
+	bh.snowLine = 0.002
+	bh.outerLimit = 0.2
+	bh.class = "Black Hole"
+	return &bh
+}
+
 type bodyHolder struct {
 	comment string
 }
@@ -142,6 +156,8 @@ type ggiant struct {
 	migratedToAU float64
 	num          int
 	comment      string
+	ring         string
+	moons        []*rockyPlanet
 }
 
 func (g *ggiant) Describe() string {
@@ -167,6 +183,8 @@ type rockyPlanet struct {
 	radius        float64
 	potentialAtmo string
 	habZone       string
+	moons         []*rockyPlanet
+	moonOrbit     int
 }
 
 func (rp *rockyPlanet) Describe() string {
@@ -250,6 +268,8 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step17()
 		case 18:
 			err = gs.Step18()
+		case 19:
+			err = gs.Step19()
 		case 20:
 			err = gs.Step20()
 			if err == nil {
