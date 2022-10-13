@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
 func TestGeneration(t *testing.T) {
-	for i := 29; i < 30; i++ {
+	for i := 29; i < 33; i++ {
 		name := fmt.Sprintf("System %v", i)
 		gen, err := NewGenerator(name)
+		imp := InjectSecondSurveyData(*survey.Parse("|Drinax|2223|A43645A-E|714|||NaHu|M1 V|K|{ +1 }|1|(B34+3)|[657G]|B|9|396|10|5|-107|-17|Ni||Trojan Reach|Tlaiowaha|Troj|Non-Aligned, Human-dominated"))
+		gen.Import(imp)
 		if err != nil {
 			fmt.Println("==============", err.Error())
 			t.Error(err.Error())

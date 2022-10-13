@@ -60,6 +60,63 @@ type StarSystemData struct {
 	World survey.SecondSurveyData
 }
 
+type importData struct {
+	data     string
+	dataKey  string
+	dataType string
+}
+
+type importer interface {
+	Data() string
+	DataKey() string
+	DataType() string
+	Read(string) []importData
+}
+
+func (gs *GenerationState) Import(data ...importer) error {
+	for _, dt := range data {
+		switch v := dt.(type) {
+		default:
+			gs.importedData = append(gs.importedData, importData{dt.Data(), dt.DataKey(), dt.DataType()})
+		case *seImporter:
+			gs.importedData = append(gs.importedData, importData{v.se.Stellar(), "Stellar", "STR"})
+		}
+
+	}
+	return nil
+}
+
+type seImporter struct {
+	se survey.SecondSurveyData
+}
+
+func InjectSecondSurveyData(se survey.SecondSurveyData) *seImporter {
+	return &seImporter{se}
+}
+
+func (d seImporter) Data() string {
+	return d.se.String()
+}
+
+func (d seImporter) DataType() string {
+	return "SecondSurveyData"
+}
+
+func (d seImporter) DataKey() string {
+	return "FULL"
+}
+
+func (d seImporter) Read(key string) []importData {
+	imprt := []importData{}
+	switch key {
+	default:
+		imprt = append(imprt, importData{dataKey: key, dataType: "UNKNOWN", data: "IMPORT ERROR"})
+	case "Stellar":
+		imprt = append(imprt, importData{dataKey: key, dataType: "STR", data: d.se.Stellar()})
+	}
+	return imprt
+}
+
 /*
 Registry Name: TrojXA-202-T196C27
 --------------------------------------------------------------------------------

@@ -51,9 +51,11 @@ type GenerationState struct {
 	NextStep      int
 	System        *StarSystem
 	vocal         bool
+	importedData  []importData
 }
 
 type Generator interface {
+	Import() error
 }
 
 func NewGenerator(name string) (*GenerationState, error) {
@@ -62,6 +64,7 @@ func NewGenerator(name string) (*GenerationState, error) {
 	//gs.Dice.Vocal()
 	gs.vocal = true
 	gs.SystemName = name
+
 	gs.debug(fmt.Sprintf("SystemName set as %v", name))
 	gs.NextStep = 1
 	sts, err := gs.NewStarSystem(SubsectorAverage, StarSystemRealistic)
