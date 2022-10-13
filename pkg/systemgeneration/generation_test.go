@@ -7,7 +7,7 @@ import (
 )
 
 func TestGeneration(t *testing.T) {
-	for i := 265; i < 275; i++ {
+	for i := 29; i < 30; i++ {
 		name := fmt.Sprintf("System %v", i)
 		gen, err := NewGenerator(name)
 		if err != nil {

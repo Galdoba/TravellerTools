@@ -8,7 +8,6 @@ import (
 )
 
 func (gs *GenerationState) Step16() error {
-	fmt.Println("START Step 16")
 	if gs.NextStep != 16 {
 		return fmt.Errorf("not actual step")
 	}
@@ -25,7 +24,6 @@ func (gs *GenerationState) Step16() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	//fmt.Println("END Step 15")
 
 	return nil
 }
@@ -124,7 +122,7 @@ func (gs *GenerationState) setBeltDetails() error {
 	if err := gs.placeBelts(); err != nil {
 		return err
 	}
-	for i, star := range gs.System.Stars {
+	for _, star := range gs.System.Stars {
 		for _, orbit := range star.orbitDistances {
 			if belt, ok := star.orbit[orbit].(*belt); ok == true {
 				if err := belt.rollComposition(gs.Dice); err != nil {
@@ -136,8 +134,6 @@ func (gs *GenerationState) setBeltDetails() error {
 				if err := belt.rollWidth(gs.Dice); err != nil {
 					return err
 				}
-
-				fmt.Println(belt, i)
 
 			}
 		}

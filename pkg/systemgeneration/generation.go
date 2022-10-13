@@ -2,7 +2,6 @@ package systemgeneration
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 	"github.com/Galdoba/utils"
@@ -99,26 +98,6 @@ type StarSystem struct {
 	RockyPlanets   int
 }
 
-type star struct {
-	class                 string
-	num                   int
-	size                  string
-	rank                  string
-	generated             bool
-	distanceType          string
-	distanceFromPrimaryAU float64
-	temperature           int
-	mass                  float64
-	luminocity            float64
-	innerLimit            float64
-	habitableLow          float64
-	habitableHigh         float64
-	snowLine              float64
-	outerLimit            float64
-	orbit                 map[float64]StellarBody
-	orbitDistances        []float64
-}
-
 func BlackHole() *star {
 	bh := star{}
 	bh.mass = 999999
@@ -143,10 +122,6 @@ func (bh *bodyHolder) Describe() string {
 
 func (bh *bodyHolder) setComment(s string) {
 	bh.comment = s
-}
-
-func (s *star) Describe() string {
-	return fmt.Sprintf("%v: %v", s.rank, s.Code())
 }
 
 type ggiant struct {
@@ -185,6 +160,7 @@ type rockyPlanet struct {
 	habZone       string
 	moons         []*rockyPlanet
 	moonOrbit     int
+	nativeLife    int
 }
 
 func (rp *rockyPlanet) Describe() string {
@@ -229,6 +205,7 @@ func (gs *GenerationState) GenerateData() error {
 	err := fmt.Errorf("initial error")
 	err = nil
 	for gs.ConcludedStep < 20 {
+		gs.debug(fmt.Sprintf("Start Step %v", gs.NextStep))
 		switch gs.NextStep {
 		default:
 			err = fmt.Errorf("gs.NextStep = %v unimplemented", gs.NextStep)
@@ -276,10 +253,12 @@ func (gs *GenerationState) GenerateData() error {
 				return nil
 			}
 		}
-		gs.trackStatus()
+		gs.debug(fmt.Sprintf("Step %v concluded", gs.ConcludedStep))
+		//gs.trackStatus()
 		if err != nil {
 			return fmt.Errorf("GenerateData returned err=%v\n concluded Step = %v\n next step = %v", err.Error(), gs.ConcludedStep, gs.NextStep)
 		}
+
 	}
 	return fmt.Errorf("unresolved generation\n concluded Step = %v\n next step = %v", gs.ConcludedStep, gs.NextStep)
 }
@@ -389,6 +368,7 @@ func (gs *GenerationState) Step20() error {
 	if gs.NextStep != 20 {
 		return fmt.Errorf("not actual step")
 	}
+	printSystem(gs)
 	gs.NextStep = 99
 	fmt.Println("END Step 20")
 	return nil
@@ -424,12 +404,6 @@ func (sys *StarSystem) printSystemSheet() {
 			}
 		}
 	}
-}
-
-func (s *star) Code() string {
-	code := fmt.Sprintf("%v%v %v", s.class, s.num, s.size)
-	code = strings.TrimSpace(code)
-	return code
 }
 
 /*

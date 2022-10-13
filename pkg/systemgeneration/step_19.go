@@ -6,7 +6,6 @@ import (
 )
 
 func (gs *GenerationState) Step19() error {
-	fmt.Println("START Step 19")
 	if gs.NextStep != 19 {
 		return fmt.Errorf("not actual step")
 	}
@@ -21,7 +20,6 @@ func (gs *GenerationState) Step19() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	//fmt.Println("END Step 19")
 	return nil
 }
 
@@ -72,10 +70,7 @@ func (gs *GenerationState) placeMoons() error {
 					moon.moonOrbit = 2 * gs.Dice.Roll("2d10").Sum()
 					planet.moons = append(planet.moons, moon)
 				}
-				fmt.Println("planet:", planet)
-				for _, moon := range planet.moons {
-					fmt.Println("moon:", moon)
-				}
+
 			}
 			if ggigant, ok := body.(*ggiant); ok {
 				moons := -10
@@ -134,12 +129,10 @@ func (gs *GenerationState) placeMoons() error {
 					}
 				}
 				ggigant.ring = ring
-				fmt.Println("GG:", ggigant)
-				for _, moon := range ggigant.moons {
-					fmt.Println("moon:", moon)
-				}
+
 			}
 		}
+		star.cleanOrbitDistances()
 	}
 	return nil
 }

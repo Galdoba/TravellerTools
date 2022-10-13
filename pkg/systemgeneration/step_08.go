@@ -7,7 +7,6 @@ import (
 )
 
 func (gs *GenerationState) Step08() error {
-	fmt.Println("START Step 08")
 	if gs.NextStep != 8 {
 		return fmt.Errorf("not actual step")
 	}
@@ -34,7 +33,6 @@ func (gs *GenerationState) Step08() error {
 			if i == 0 {
 				gs.System.Stars[0].distanceType = "Primary"
 				gs.System.Stars[0].distanceFromPrimaryAU = 0.0
-				fmt.Println(gs.System.Stars[i], "-------")
 				continue
 			}
 			for star.distanceFromPrimaryAU <= gs.System.Stars[i-1].distanceFromPrimaryAU {
@@ -46,7 +44,6 @@ func (gs *GenerationState) Step08() error {
 				}
 
 			}
-			fmt.Println(star, "+++++++")
 		}
 		gs.ConcludedStep = 8
 		gs.NextStep = 9
@@ -57,7 +54,6 @@ func (gs *GenerationState) Step08() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	fmt.Println("END Step 08")
 	return nil
 }
 

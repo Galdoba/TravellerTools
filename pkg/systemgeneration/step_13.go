@@ -6,13 +6,11 @@ import (
 )
 
 func (gs *GenerationState) Step13() error {
-	fmt.Println("START Step 13")
 	if gs.NextStep != 13 {
 		return fmt.Errorf("not actual step")
 	}
 	if gs.System.Stars[0].snowLine == -999 {
 		gs.System.GasGigants = 0
-		fmt.Println("DEBUG: Remove Gas Gigants")
 	}
 	for i := 0; i < gs.System.GasGigants; i++ {
 		gg := ggiant{}
@@ -26,11 +24,8 @@ func (gs *GenerationState) Step13() error {
 		gg.comment = "Gas Gigant"
 		gs.System.GG = append(gs.System.GG, &gg)
 	}
-	fmt.Println(len(gs.System.GG))
 	gs.System.GG = sortGGiantsBySize(gs.System.GG)
-	fmt.Println(len(gs.System.GG))
 	if len(gs.System.GG) > 0 && gs.Dice.Roll("1d6").Sum() == 6 {
-		fmt.Println("DEBUG: Gas Gigant Migrated")
 		gs.System.GG[0].migratedToAU = float64(gs.Dice.Roll("1d100").Sum())
 		gs.System.GG[0].descr = "Hot " + gs.System.GG[0].descr
 		gs.System.GG[0].comment = "Migrated"
@@ -47,7 +42,6 @@ func (gs *GenerationState) Step13() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	//fmt.Println("END Step 12")
 	return nil
 }
 

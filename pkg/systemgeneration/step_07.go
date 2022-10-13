@@ -3,7 +3,6 @@ package systemgeneration
 import "fmt"
 
 func (gs *GenerationState) Step07() error {
-	fmt.Println("START Step 07")
 	if gs.NextStep != 7 {
 		return fmt.Errorf("not actual step")
 	}
@@ -11,15 +10,15 @@ func (gs *GenerationState) Step07() error {
 	default:
 		return fmt.Errorf("star population unexpected")
 	case StarPopulationSolo, StarPopulationBinary, StarPopulationTrinary, StarPopulationQuatenary, StarPopulationQuintenary:
-		fmt.Printf("System: %v, have %v, want %v\n", gs.System.starPopulation, len(gs.System.Stars), strSystToNum(gs.System.starPopulation))
 		if len(gs.System.Stars) < strSystToNum(gs.System.starPopulation) {
+			gs.debug(fmt.Sprintf("System: %v, have %v, want %v\n", gs.System.starPopulation, len(gs.System.Stars), strSystToNum(gs.System.starPopulation)))
+
 			gs.NextStep = 4
 			return nil
 		}
 		gs.ConcludedStep = 7
 		gs.NextStep = 8
 		gs.System.Stars = sortStars(gs.System.Stars)
-		fmt.Println("len(gs.System.Stars) < strSystToNum(gs.System.starPopulation) - IS NORMAL")
 	case StarPopulationUNKNOWN:
 		tn := []int{}
 		switch gs.System.Stars[0].class {
@@ -31,7 +30,6 @@ func (gs *GenerationState) Step07() error {
 			tn = []int{69, 98, 100, 200, 300}
 		}
 		strComposRoll := gs.Dice.Roll("1d100").Sum()
-		fmt.Println("strComposRoll", strComposRoll, tn)
 		switch {
 		case strComposRoll <= tn[0]:
 			gs.System.starPopulation = StarPopulationSolo
@@ -44,7 +42,6 @@ func (gs *GenerationState) Step07() error {
 		case strComposRoll <= tn[4]:
 			gs.System.starPopulation = StarPopulationQuintenary
 		}
-		fmt.Println("gs.System.starPopulation =", gs.System.starPopulation)
 		return nil
 	}
 	switch gs.NextStep {
@@ -52,7 +49,6 @@ func (gs *GenerationState) Step07() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	fmt.Println("END Step 07")
 	return nil
 }
 

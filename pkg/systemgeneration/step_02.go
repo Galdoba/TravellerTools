@@ -3,7 +3,6 @@ package systemgeneration
 import "fmt"
 
 func (gs *GenerationState) Step02() error {
-	fmt.Println("START Step 02")
 	if gs.NextStep != 2 {
 		return fmt.Errorf("not actual step")
 	}
@@ -34,8 +33,12 @@ func (gs *GenerationState) Step02() error {
 	}
 	gs.debug(fmt.Sprintf("gs.System.ObjectType set as %v", gs.System.ObjectType))
 	switch gs.System.ObjectType {
-	case ObjectRoguePlanet, ObjectRogueGasGigant, ObjectNebula, ObjectBlackHole:
+	case ObjectBlackHole:
 		//return fmt.Errorf("Stop %v", gs.System.ObjectType)
+		//gs.System.Stars = append(gs.System.Stars, &star{})
+		gs.setOrbitSpots()
+	case ObjectRoguePlanet, ObjectRogueGasGigant, ObjectNebula:
+		return fmt.Errorf("Stop %v", gs.System.ObjectType)
 		//gs.System.Stars = append(gs.System.Stars, &star{})
 		gs.setOrbitSpots()
 	}
@@ -45,6 +48,5 @@ func (gs *GenerationState) Step02() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	fmt.Println("END Step 02")
 	return nil
 }

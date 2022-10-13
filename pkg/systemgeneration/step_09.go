@@ -3,7 +3,6 @@ package systemgeneration
 import "fmt"
 
 func (gs *GenerationState) Step09() error {
-	fmt.Println("START Step 09")
 	if gs.NextStep != 9 {
 		return fmt.Errorf("not actual step")
 	}
@@ -20,7 +19,6 @@ func (gs *GenerationState) Step09() error {
 	if gs.System.GasGigants < 0 {
 		gs.System.GasGigants = 0
 	}
-	fmt.Println("Gas Gigants:", gs.System.GasGigants)
 	gs.ConcludedStep = 9
 	gs.NextStep = 10
 	switch gs.NextStep {
@@ -28,6 +26,5 @@ func (gs *GenerationState) Step09() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	fmt.Println("END Step 09")
 	return nil
 }

@@ -6,15 +6,14 @@ import (
 )
 
 func (gs *GenerationState) Step18() error {
-	fmt.Println("START Step 18")
 	if gs.NextStep != 18 {
 		return fmt.Errorf("not actual step")
 	}
 	//ЗАРЕЗЕРВИРОВАНО
 	d10, d100 := gs.jumpBorders()
 	for i, star := range gs.System.Stars {
-		d10Border := &jumpZoneBorder{zone: star.Describe() + " D10", orbit: d10[i]}
-		d100Border := &jumpZoneBorder{zone: star.Describe() + " D100", orbit: d100[i]}
+		d10Border := &jumpZoneBorder{zone: star.rank + " D10", orbit: d10[i]}
+		d100Border := &jumpZoneBorder{zone: star.rank + " D100", orbit: d100[i]}
 		gs.System.Stars[i].orbit[d10[i]] = d10Border
 		gs.System.Stars[i].orbit[d100[i]] = d100Border
 		gs.System.body = append(gs.System.body, d10Border)
@@ -27,7 +26,6 @@ func (gs *GenerationState) Step18() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	//fmt.Println("END Step 18")
 	return nil
 }
 

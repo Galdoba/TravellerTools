@@ -2,7 +2,6 @@ package systemgeneration
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 )
 
@@ -13,7 +12,6 @@ const (
 )
 
 func (gs *GenerationState) Step14() error {
-	fmt.Println("START Step 14")
 	if gs.NextStep != 14 {
 		return fmt.Errorf("not actual step")
 	}
@@ -31,8 +29,6 @@ func (gs *GenerationState) Step14() error {
 	gg := gs.System.GasGigants
 	canPutGGIn := gs.canPlaceGGin()
 	if gg > len(canPutGGIn) {
-		fmt.Println("отказываемся от газовых гигантов")
-		fmt.Println(gg, "|", canPutGGIn)
 		gg = len(canPutGGIn)
 	}
 
@@ -54,7 +50,6 @@ func (gs *GenerationState) Step14() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	//fmt.Println("END Step 12")
 	return nil
 }
 
@@ -71,11 +66,6 @@ func (gs *GenerationState) placePlanets() error {
 			i--
 			continue
 		}
-		// fmt.Println("DEBUG LOG:")
-		// fmt.Println(gs.SystemName)
-		// fmt.Println(gs.System.Stars[st])
-		// fmt.Printf("pl=%v\ni=%v\nst=%v\nlen(gs.System.Stars[st].orbitDistances)=%v\n", pl, i, st, len(gs.System.Stars[st].orbitDistances))
-		// fmt.Println(gs.System.Stars[st].orbitDistances)
 
 		try := 0
 		//placed := false
@@ -103,7 +93,7 @@ func (gs *GenerationState) placePlanets() error {
 				break
 			}
 		}
-		gs.debug(fmt.Sprintf("planet %v placed...", i+1))
+		//gs.debug(fmt.Sprintf("planet %v placed...", i+1))
 	}
 	return nil
 }
@@ -192,13 +182,13 @@ func freeSlots(om [][]orbMarker) int {
 }
 
 func (gs *GenerationState) placeGG(markers []orbMarker) error {
-	gs.debug(fmt.Sprintf("Placing %v Gas Gigants...", len(gs.System.GG)))
+	//gs.debug(fmt.Sprintf("Placing %v Gas Gigants...", len(gs.System.GG)))
 	for n, gg := range gs.System.GG {
 		if n >= len(markers) {
-			gs.debug(fmt.Sprintf("Placing Gas Gigant %v aborted...", n+1))
+			//gs.debug(fmt.Sprintf("Placing Gas Gigant %v aborted...", n+1))
 			continue
 		}
-		gs.debug(fmt.Sprintf("Placing Gas Gigant %v...", n+1))
+		//gs.debug(fmt.Sprintf("Placing Gas Gigant %v...", n+1))
 		placed := false
 		try := 0
 		for !placed {
@@ -253,17 +243,17 @@ func removeMarker(markers []orbMarker, n int) []orbMarker {
 }
 
 func (gs *GenerationState) setOrbitSpots() error {
-	for i, star := range gs.System.Stars {
+	for _, star := range gs.System.Stars {
 		orb := 0
 		star.orbit = make(map[float64]StellarBody)
-		gs.debug(fmt.Sprintf("Star %v", i))
-		gs.debug(fmt.Sprintf("-------"))
-		gs.debug(fmt.Sprintf("%v", star.innerLimit))
-		gs.debug(fmt.Sprintf("%v", star.habitableLow))
-		gs.debug(fmt.Sprintf("%v", star.habitableHigh))
-		gs.debug(fmt.Sprintf("%v", star.snowLine))
-		gs.debug(fmt.Sprintf("%v", star.outerLimit))
-		gs.debug(fmt.Sprintf("-------"))
+		// gs.debug(fmt.Sprintf("Star %v", i))
+		// gs.debug(fmt.Sprintf("-------"))
+		// gs.debug(fmt.Sprintf("%v", star.innerLimit))
+		// gs.debug(fmt.Sprintf("%v", star.habitableLow))
+		// gs.debug(fmt.Sprintf("%v", star.habitableHigh))
+		// gs.debug(fmt.Sprintf("%v", star.snowLine))
+		// gs.debug(fmt.Sprintf("%v", star.outerLimit))
+		// gs.debug(fmt.Sprintf("-------"))
 		currentPoint := star.innerLimit
 		for currentPoint < star.outerLimit {
 			au := roundFloat(currentPoint, 2)
@@ -278,60 +268,6 @@ func (gs *GenerationState) setOrbitSpots() error {
 		star.updateOrbitDistances()
 	}
 	return nil
-}
-
-func (s *star) updateOrbitDistances() {
-	s.orbitDistances = nil
-	for k := range s.orbit {
-		if k < s.innerLimit || k > s.outerLimit {
-			continue
-		}
-		s.orbitDistances = append(s.orbitDistances, k)
-	}
-	sort.Float64s(s.orbitDistances)
-}
-
-func (s *star) markClosestToSnowLine() {
-	sl := s.snowLine
-	if sl == -999 {
-		return
-	}
-	lowest := 999999.0
-	candidate := 0.0
-	candidateVal := ""
-	for k, v := range s.orbit {
-		dist := k - sl
-		if dist < 0 {
-			dist = dist * -1
-		}
-		if dist < lowest {
-			lowest = dist
-			candidate = k
-			candidateVal = v.Describe()
-		}
-	}
-	if candidate == 0.0 {
-		return
-	}
-	s.orbit[candidate] = &bodyHolder{candidateVal + " CSN"}
-}
-
-func (s *star) markPossibleGG() {
-	csn := -1.0
-	for k, v := range s.orbit {
-		if strings.Contains(v.Describe(), " CSN") {
-			csn = k
-			break
-		}
-	}
-	if csn == -1.0 {
-		return
-	}
-	for k, v := range s.orbit {
-		if k >= csn {
-			s.orbit[k] = &bodyHolder{v.Describe() + " ggPossible"}
-		}
-	}
 }
 
 func (gs *GenerationState) canPlaceGGin() []orbMarker {

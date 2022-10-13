@@ -16,7 +16,6 @@ const (
 )
 
 func (gs *GenerationState) Step15() error {
-	fmt.Println("START Step 15")
 	if gs.NextStep != 15 {
 		return fmt.Errorf("not actual step")
 	}
@@ -30,7 +29,6 @@ func (gs *GenerationState) Step15() error {
 	default:
 		return fmt.Errorf("gs.NextStep imposible")
 	}
-	//fmt.Println("END Step 15")
 	return nil
 }
 
@@ -252,7 +250,6 @@ func (p *rockyPlanet) rollAtmo(dp *dice.Dicepool) error {
 		}
 	case sizeSuperterran:
 		dm := -999
-		fmt.Println("-----------------", p)
 		switch p.habZone {
 		case habZoneInner, habZoneHabitable:
 			switch p.sizeCode {
