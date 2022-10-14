@@ -25,7 +25,7 @@ func (gs *GenerationState) Step14() error {
 	for i := 1; i < gs.System.Belts+1; i++ {
 		gs.System.body = append(gs.System.body, &belt{num: i})
 	}
-	gs.setOrbitSpots()
+
 	gg := gs.System.GasGigants
 	canPutGGIn := gs.canPlaceGGin()
 	if gg > len(canPutGGIn) {
@@ -240,34 +240,6 @@ func (gs *GenerationState) placeGG(markers []orbMarker) error {
 
 func removeMarker(markers []orbMarker, n int) []orbMarker {
 	return append(markers[:n], markers[n+1:]...)
-}
-
-func (gs *GenerationState) setOrbitSpots() error {
-	for _, star := range gs.System.Stars {
-		orb := 0
-		star.orbit = make(map[float64]StellarBody)
-		// gs.debug(fmt.Sprintf("Star %v", i))
-		// gs.debug(fmt.Sprintf("-------"))
-		// gs.debug(fmt.Sprintf("%v", star.innerLimit))
-		// gs.debug(fmt.Sprintf("%v", star.habitableLow))
-		// gs.debug(fmt.Sprintf("%v", star.habitableHigh))
-		// gs.debug(fmt.Sprintf("%v", star.snowLine))
-		// gs.debug(fmt.Sprintf("%v", star.outerLimit))
-		// gs.debug(fmt.Sprintf("-------"))
-		currentPoint := star.innerLimit
-		for currentPoint < star.outerLimit {
-			au := roundFloat(currentPoint, 2)
-			star.orbit[au] = &bodyHolder{fmt.Sprintf("empty orbit %v", orb)}
-			orb++
-			d := gs.Dice.Flux()
-			multiplicator := 1.0 + float64(d+5)/10
-			currentPoint = currentPoint * multiplicator
-		}
-		star.markClosestToSnowLine()
-		star.markPossibleGG()
-		star.updateOrbitDistances()
-	}
-	return nil
 }
 
 func (gs *GenerationState) canPlaceGGin() []orbMarker {

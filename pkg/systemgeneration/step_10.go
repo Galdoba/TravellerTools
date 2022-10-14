@@ -6,7 +6,9 @@ func (gs *GenerationState) Step10() error {
 	if gs.NextStep != 10 {
 		return fmt.Errorf("not actual step")
 	}
-	gs.System.Belts = gs.Dice.Roll("1d6").DM(-3).Sum()
+	if gs.System.Belts == -1 {
+		gs.System.Belts = gs.Dice.Roll("1d6").DM(-3).Sum()
+	}
 	if gs.System.Belts < 0 {
 		gs.System.Belts = 0
 	}

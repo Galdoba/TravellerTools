@@ -6,10 +6,38 @@ import (
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/survey"
+	"github.com/Galdoba/utils"
 )
 
+func TestStellarReading(t *testing.T) {
+	return
+	data := utils.LinesFromTXT(`c:\Users\Public\TrvData\cleanedData.txt`)
+	l := len(data)
+	er := 0
+	starTypes := make(map[string]int)
+	for i, line := range data {
+
+		ssd := survey.Parse(line)
+		fmt.Printf("parsed %v of %v (%v) \r", i, l, len(starTypes))
+		stars, err := decodeStellar(ssd.Stellar())
+		if err != nil {
+			er++
+			t.Errorf("line %v := parsed '%v' from `%v`\n%v", i+1, stars, ssd.Stellar(), err.Error())
+			if er > 0 {
+				break
+			}
+		}
+		for _, star := range stars {
+			starTypes[star]++
+		}
+	}
+	for k, v := range starTypes {
+		fmt.Println(k, v)
+	}
+}
+
 func TestGeneration(t *testing.T) {
-	for i := 29; i < 33; i++ {
+	for i := 4; i < 5; i++ {
 		name := fmt.Sprintf("System %v", i)
 		gen, err := NewGenerator(name)
 		imp := InjectSecondSurveyData(*survey.Parse("|Drinax|2223|A43645A-E|714|||NaHu|M1 V|K|{ +1 }|1|(B34+3)|[657G]|B|9|396|10|5|-107|-17|Ni||Trojan Reach|Tlaiowaha|Troj|Non-Aligned, Human-dominated"))

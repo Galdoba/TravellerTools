@@ -42,16 +42,11 @@ func (gs *GenerationState) Step01() error {
 		gs.NextStep = 2
 	}
 	fmt.Println("IMPORTING:")
-	for _, imported := range gs.importedData {
-		fmt.Println(imported)
-		switch imported.dataKey {
-		case "Stellar":
-			if err := gs.injectStellar(imported.data); err != nil {
-				return err
-			}
-		}
+	if err := gs.callImport("Stellar"); err != nil {
+		return nil
 	}
 	fmt.Println("IMPORTING DONE:")
+
 	gs.ConcludedStep = 1
 	return nil
 }
@@ -76,6 +71,20 @@ func (gs *GenerationState) injectStellar(stellar string) error {
 	gs.System.ObjectType = ObjectStar
 	for _, starCode := range stars {
 		class, num, size := decodeStar(starCode)
+		if num == -1 {
+			num = gs.Dice.Roll("1d10").DM(-1).Sum()
+		}
+		if class == "BD" {
+			dwarfTypeRoll := gs.Dice.Roll("1d100").Sum()
+			switch {
+			case dwarfTypeRoll <= 50:
+				class = "L"
+			case dwarfTypeRoll <= 75:
+				class = "T"
+			case dwarfTypeRoll <= 100:
+				class = "Y"
+			}
+		}
 		str := &star{class: class, num: num, size: size}
 		str.LoadValues()
 		gs.System.Stars = append(gs.System.Stars, str)
@@ -89,6 +98,12 @@ func decodeStar(star string) (string, int, string) {
 	class := ""
 	num := -1
 	size := ""
+	if star == "BD" {
+		return "BD", -1, ""
+	}
+	if star == "D" {
+		return "D", -1, ""
+	}
 	for _, cl := range []string{"O", "B", "A", "F", "G", "K", "M", "L", "T", "Y"} {
 		switch {
 		case strings.Contains(star, cl):
@@ -113,25 +128,46 @@ func decodeStellar(stellar string) ([]string, error) {
 	dt := strings.Split(stellar, " ")
 	stars := []string{}
 	for i, d := range dt {
-		starData := getTableValues(d)
-		if starData.innerLimit != 0 {
-			stars = append(stars, d)
+		switch d {
+		case "BD":
+			stars = append(stars, "BD")
+		case "D":
+			stars = append(stars, "D")
+		case "Ia", "Ib", "II", "III", "IV", "V", "VI":
+			stars = append(stars, dt[i-1]+" "+d)
+		default:
 		}
-		if i != 0 {
-			starData := getTableValues(dt[i-1] + " " + dt[i])
-			if starData.innerLimit != 0 {
-				stars = append(stars, dt[i-1]+" "+dt[i])
+	}
+	for _, str := range stars {
+		switch str {
+		case "BD":
+			continue
+		case "D":
+			continue
+		}
+		checked := false
+		try := 0
+		for !checked {
+			data := getTableValues(str)
+			if data.star != "" {
+				break
+			}
+			if data.star == "" && try == 0 {
+				str = strings.ReplaceAll(str, "VI", "V")
+				try++
+				continue
+			}
+			if data.star == "" && try == 1 {
+				str = strings.ReplaceAll(str, "IV", "V")
+				try++
+				continue
+			}
+			try++
+			if try > 5 {
+				return stars, fmt.Errorf("not matched %v %v %v", str, stars, stellar)
 			}
 		}
-	}
-	check := ""
-	for _, st := range stars {
-		fmt.Println("detected", st)
-		check = st + " "
-	}
-	check = strings.TrimSuffix(check, " ")
-	if check != stellar {
-		return []string{}, fmt.Errorf("'%v' != '%v'", stellar, check)
+
 	}
 
 	return stars, nil

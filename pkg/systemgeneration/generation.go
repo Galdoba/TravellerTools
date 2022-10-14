@@ -72,6 +72,9 @@ func NewGenerator(name string) (*GenerationState, error) {
 		return &gs, err
 	}
 	gs.System = sts
+	gs.System.GasGigants = -1
+	gs.System.Belts = -1
+	gs.System.RockyPlanets = -1
 	return &gs, nil
 }
 
