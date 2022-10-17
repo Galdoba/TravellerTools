@@ -173,6 +173,25 @@ func encodeUWPdata(aspect string, val string) ehex.Ehex {
 			hex.Encode("22,400 km")
 		case "F":
 			hex.Encode("24,000 km")
+		case "G":
+			hex.Encode("24.944-26.553 km")
+		case "H":
+			hex.Encode("26.554-28.162 km")
+		case "J":
+			hex.Encode("28.163-29.771 km")
+		case "K":
+			hex.Encode("29.772-31.381 km")
+		case "L":
+			hex.Encode("31.382-32.990 km")
+		case "M":
+			hex.Encode("32.991-34.599 km")
+		case "N":
+			hex.Encode("34.600-36.209 km")
+		case "P":
+			hex.Encode("36.201-37.818 km")
+		case "Q":
+			hex.Encode("37.819-39.427 km")
+
 		}
 	case Atmo:
 		switch val {
