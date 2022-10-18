@@ -12,17 +12,6 @@ func Export(class string, num int, size string) *star {
 	return &st
 }
 
-type Star interface {
-	Class() string
-	InnerLimit() float64
-	HabitabilityLow() float64
-	HabitabilityHi() float64
-	SnowLine() float64
-	OuterLimit() float64
-	Mass() float64
-	Luminocity() float64
-}
-
 func (st *star) Class() string {
 	return st.class
 }

@@ -7,6 +7,23 @@ import (
 	"github.com/Galdoba/utils"
 )
 
+func (pd *PlanetaryDetails) defineSizeRelatedDetails() error {
+	for _, err := range []error{
+		pd.setDiameter(),
+		pd.setDensity(),
+		pd.setMass(),
+		pd.setGravity(),
+		pd.setOrbiatlPeriod(),
+		pd.setRotationPeriod(),
+		pd.setAxialTilt(),
+	} {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (pd *PlanetaryDetails) setDiameter() error {
 	add := pd.dice.Roll("1d10").DM(-1).Sum()*100 + pd.dice.Roll("1d10").DM(-1).Sum()*10 + pd.dice.Roll("1d10").DM(-1).Sum()*1
 	sizeCode := pd.uwpData.Size()

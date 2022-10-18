@@ -12,62 +12,69 @@ import (
 )
 
 func TestSizeRelated(t *testing.T) {
-	for size := 4; size < 9; size++ {
-		for atmo := 0; atmo < 15; atmo++ {
-			sz := ehex.New().Set(size).Code()
-			at := ehex.New().Set(atmo).Code()
-			uwpData, err := uwp.FromString(fmt.Sprintf("X%v%v5000-0", sz, at))
+
+	sz := ehex.New().Set(4).Code()
+	at := ehex.New().Set(6).Code()
+	hd := ehex.New().Set(6).Code()
+	uwpData, err := uwp.FromString(fmt.Sprintf("X%v%v%v000-0", sz, at, hd))
+	if err != nil {
+		t.Errorf("uwp creation: %v", err.Error())
+	}
+	fmt.Println("UWP:", uwpData.String())
+	Primary := systemgeneration.Export("G", 1, "V")
+	local := systemgeneration.Export("M", 1, "IV")
+	for i := 1; i <= 5; i++ {
+		dp := dice.New().SetSeed(fmt.Sprintf("Test  __  %v", i))
+		sd := NewPlanetaryDetails(dp, uwpData, Primary, local, 0.25)
+		for e, err := range []error{
+			sd.defineSizeRelatedDetails(),
+			sd.defineAtmosphereRelatedDetails(),
+			sd.defineClimate(),
+		} {
 			if err != nil {
-				t.Errorf("uwp creation: %v", err.Error())
-			}
-			fmt.Println("UWP:", uwpData.String())
-			Primary := systemgeneration.Export("F", 5, "V")
-			local := systemgeneration.Export("O", 1, "Ia")
-			for i := 1; i <= 2; i++ {
-				dp := dice.New().SetSeed(fmt.Sprintf("Test  __  %v", i))
-				sd := NewPlanetaryDetails(dp, uwpData, Primary, local, 0.35)
-				for e, err := range []error{
-					sd.setDiameter(),
-					sd.setDensity(),
-					sd.setMass(),
-					sd.setGravity(),
-					sd.setOrbiatlPeriod(),
-					sd.setRotationPeriod(),
-					sd.setAxialTilt(),
-					sd.setTaint(),
-				} {
-					if err != nil {
-						t.Errorf("func returned error on test %v: %v", e, err.Error())
-					}
-				}
-				fmt.Printf("Test %v: object: %v\n", i, sd)
-				if sd.diameter == unatendedInt {
-					t.Errorf("sd.diameter == unatendedInt")
-				}
-				if sd.density == unatendedFlt {
-					t.Errorf("sd.density == unatendedFlt")
-				}
-				if sd.mass == unatendedFlt {
-					t.Errorf("sd.mass == unatendedFlt")
-				}
-				if sd.surfaceGravity == unatendedFlt {
-					t.Errorf("sd.surfaceGravity == unatendedFlt")
-				}
-				if sd.orbitalPeriod == unatendedFlt {
-					t.Errorf("sd.orbitalPeriod == unatendedFlt")
-				}
-				if sd.rotationPeriod == unatendedFlt {
-					t.Errorf("sd.rotationPeriod == unatendedFlt")
-				}
-				if sd.axialTilt == unatendedInt {
-					t.Errorf("sd.axialTilt == unatendedInt")
-				}
-				if sd.taint == unatendedStr {
-					t.Errorf("sd.taint == unatendedStr")
-				}
-				time.Sleep(time.Microsecond)
+				t.Errorf("func returned error on test %v: %v", e, err.Error())
 			}
 		}
+		fmt.Printf("Test %v: object: %v\n", i, sd)
+		fmt.Printf("%v", sd.SizeRelatedString())
+		fmt.Printf("%v", sd.AtmoRelatedString())
+		if sd.diameter == unatendedInt {
+			t.Errorf("sd.diameter == unatendedInt")
+		}
+		if sd.density == unatendedFlt {
+			t.Errorf("sd.density == unatendedFlt")
+		}
+		if sd.mass == unatendedFlt {
+			t.Errorf("sd.mass == unatendedFlt")
+		}
+		if sd.surfaceGravity == unatendedFlt {
+			t.Errorf("sd.surfaceGravity == unatendedFlt")
+		}
+		if sd.orbitalPeriod == unatendedFlt {
+			t.Errorf("sd.orbitalPeriod == unatendedFlt")
+		}
+		if sd.rotationPeriod == unatendedFlt {
+			t.Errorf("sd.rotationPeriod == unatendedFlt")
+		}
+		if sd.axialTilt == unatendedInt {
+			t.Errorf("sd.axialTilt == unatendedInt")
+		}
+		if sd.taint == unatendedStr {
+			t.Errorf("sd.taint == unatendedStr")
+		}
+		if sd.coreType == unatendedStr {
+			t.Errorf("sd.coreType == unatendedStr")
+		}
+		if sd.atmoComposition == unatendedStr {
+			t.Errorf("sd.atmoComposition == unatendedStr")
+		}
+		if sd.pressureCode == unatendedInt {
+			t.Errorf("sd.pressureCode == unatendedInt")
+		}
+		if sd.pressure == unatendedFlt {
+			t.Errorf("sd.pressure == unatendedFlt")
+		}
+		time.Sleep(time.Microsecond)
 	}
 
 }

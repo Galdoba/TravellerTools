@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Galdoba/TravellerTools/pkg/planetarydetails"
+	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
 	"github.com/Galdoba/utils"
 )
@@ -40,7 +42,7 @@ func TestGeneration(t *testing.T) {
 	for i := 4; i < 5; i++ {
 		name := fmt.Sprintf("System %v", i)
 		gen, err := NewGenerator(name)
-		imp := InjectSecondSurveyData(*survey.Parse("|Drinax|2223|A43645A-E|714|||NaHu|M1 V|K|{ +1 }|1|(B34+3)|[657G]|B|9|396|10|5|-107|-17|Ni||Trojan Reach|Tlaiowaha|Troj|Non-Aligned, Human-dominated"))
+		imp := InjectSecondSurveyData(*survey.Parse("|Fantasy|2428|E788400-3|331|||NaHu|G2 V|K|{ -3 }|-3|(631-5)|[1111]|Bc|11|-90|10|5|-105|-12|Ni Pa||Trojan Reach|Tlaiowaha|Troj|Non-Aligned, Human-dominated"))
 		gen.Import(imp)
 		if err != nil {
 			fmt.Println("==============", err.Error())
@@ -76,6 +78,27 @@ func TestGeneration(t *testing.T) {
 		fmt.Println(" ")
 		fmt.Println("//////////")
 		fmt.Println(" ")
+		for _, star := range gen.System.Stars {
+			for _, orb := range star.orbitDistances {
+				if planet, ok := star.orbit[orb].(*rockyPlanet); ok == true {
+
+					uwpS := fmt.Sprintf("X%v%v%v000-0", planet.sizeCode, planet.atmoCode, planet.hydrCode)
+					uwpData, _ := uwp.FromString(uwpS)
+					fmt.Println("planet", uwpS)
+					details := planetarydetails.NewPlanetaryDetails(gen.Dice, uwpData, gen.System.Stars[0], star, planet.orbit)
+					fmt.Println(details.SizeRelatedString())
+					fmt.Println(details.AtmoRelatedString())
+					for _, moon := range planet.moons {
+						uwpS := fmt.Sprintf("X%v%v%v000-0", moon.sizeCode, moon.atmoCode, moon.hydrCode)
+						uwpData, _ := uwp.FromString(uwpS)
+						fmt.Println("moon", uwpS)
+						details := planetarydetails.NewPlanetaryDetails(gen.Dice, uwpData, gen.System.Stars[0], star, planet.orbit)
+						fmt.Println(details.SizeRelatedString())
+						fmt.Println(details.AtmoRelatedString())
+					}
+				}
+			}
+		}
 	}
 
 }
