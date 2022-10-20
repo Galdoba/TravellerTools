@@ -2,6 +2,7 @@ package systemgeneration
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 	"github.com/Galdoba/utils"
@@ -167,6 +168,65 @@ type rockyPlanet struct {
 	moons         []*rockyPlanet
 	moonOrbit     int
 	nativeLife    int
+	uwpStr        string
+}
+
+type detailDataExport struct {
+	orbit        float64
+	sizeCode     string
+	atmoCode     string
+	hydrCode     string
+	eccentricity float64
+	habzone      string
+	mw           bool
+}
+
+func (dde *detailDataExport) Orbit() float64 {
+	return dde.orbit
+}
+func (dde *detailDataExport) SizeCode() string {
+	return dde.sizeCode
+}
+func (dde *detailDataExport) AtmoCode() string {
+	return dde.atmoCode
+}
+func (dde *detailDataExport) HydrCode() string {
+	return dde.hydrCode
+}
+func (dde *detailDataExport) Eccentricity() float64 {
+	return dde.eccentricity
+}
+func (dde *detailDataExport) Habzone() string {
+	return dde.habzone
+}
+func (dde *detailDataExport) IsMW() bool {
+	return dde.mw
+}
+
+func NewPlanetExport(orbit float64, sizeCode string, atmoCode string, hydrCode string, eccentricity float64, habzone string, mw bool) *detailDataExport {
+	dde := detailDataExport{}
+	dde.orbit = orbit
+	dde.sizeCode = sizeCode
+	dde.atmoCode = atmoCode
+	dde.hydrCode = hydrCode
+	dde.eccentricity = eccentricity
+	dde.habzone = habzone
+	dde.mw = mw
+	return &dde
+}
+
+func (rp *rockyPlanet) ExportDetails() *detailDataExport {
+	dde := detailDataExport{}
+	dde.orbit = rp.orbit
+	dde.sizeCode = rp.sizeCode
+	dde.atmoCode = rp.atmoCode
+	dde.hydrCode = rp.hydrCode
+	dde.eccentricity = rp.eccentricity
+	dde.habzone = rp.habZone
+	if strings.Contains(rp.comment, "Mainworld") {
+		dde.mw = true
+	}
+	return &dde
 }
 
 func (rp *rockyPlanet) Describe() string {

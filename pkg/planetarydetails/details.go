@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
-	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+	"github.com/Galdoba/TravellerTools/internal/ehex"
 )
 
 const (
@@ -27,12 +27,28 @@ type Star interface {
 	Luminocity() float64
 }
 
+type PlanetData interface {
+	Orbit() float64
+	SizeCode() string
+	AtmoCode() string
+	HydrCode() string
+	Eccentricity() float64
+	Habzone() string
+	IsMW() bool
+}
+
 type PlanetaryDetails struct {
-	dice    *dice.Dicepool
-	uwpData uwp.UWP
-	primary Star
-	local   Star
-	orbit   float64
+	dice *dice.Dicepool
+	//uwpData uwp.UWP
+	planet       PlanetData
+	primary      Star
+	orbit        float64
+	size         int
+	atmo         int
+	hydr         int
+	eccentricity float64
+	habzone      string
+	mw           bool
 	////SIZE RELATED
 	diameter       int //km
 	density        float64
@@ -54,18 +70,22 @@ type PlanetaryDetails struct {
 	averageSurfaceTemperature float64
 }
 
-func NewPlanetaryDetails(dp *dice.Dicepool, uwpData uwp.UWP,
-	PrimaryStar Star,
-	LocalStar Star,
-	orbit float64) PlanetaryDetails {
+func NewPlanetaryDetails(dp *dice.Dicepool, planet PlanetData,
+	PrimaryStar Star) PlanetaryDetails {
 	pd := PlanetaryDetails{}
 	pd.dice = dp
-	pd.uwpData = uwpData
+
+	//pd.uwpData = uwpData
+	pd.size = ehex.New().Set(planet.SizeCode()).Value()
+	pd.atmo = ehex.New().Set(planet.AtmoCode()).Value()
+	pd.hydr = ehex.New().Set(planet.HydrCode()).Value()
 	pd.primary = PrimaryStar
-	pd.local = LocalStar
 	pd.diameter = unatendedInt
 	pd.density = unatendedFlt
-	pd.orbit = orbit
+	pd.orbit = planet.Orbit()
+	pd.habzone = planet.Habzone()
+	pd.eccentricity = planet.Eccentricity()
+	pd.mw = planet.IsMW()
 	pd.mass = unatendedFlt
 	pd.surfaceGravity = unatendedFlt
 	pd.orbitalPeriod = unatendedFlt

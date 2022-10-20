@@ -216,15 +216,17 @@ func (gs *GenerationState) placeGG(markers []orbMarker) error {
 					//TODO: переписать чтобы шло по orbitDistance
 					for i := 0; i < 10000000; i++ {
 						orbFl := float64(i) / 1000
-						if _, ok := gs.System.Stars[r].orbit[orbFl]; ok == true {
+						if body, ok := gs.System.Stars[r].orbit[orbFl]; ok == true {
 							if orbFl < starInner {
 								continue
 							}
 							if orbFl > m.orbRad {
 								break
 							}
-							delete(gs.System.Stars[r].orbit, orbFl)
-							markers = gs.canPlaceGGin()
+							if !strings.Contains(body.Describe(), "Mainworld") {
+								delete(gs.System.Stars[r].orbit, orbFl)
+								markers = gs.canPlaceGGin()
+							}
 						}
 					}
 				}

@@ -13,19 +13,19 @@ import (
 
 func TestSizeRelated(t *testing.T) {
 
-	sz := ehex.New().Set(4).Code()
-	at := ehex.New().Set(6).Code()
-	hd := ehex.New().Set(6).Code()
+	sz := ehex.New().Set(7).Code()
+	at := ehex.New().Set(8).Code()
+	hd := ehex.New().Set(7).Code()
 	uwpData, err := uwp.FromString(fmt.Sprintf("X%v%v%v000-0", sz, at, hd))
 	if err != nil {
 		t.Errorf("uwp creation: %v", err.Error())
 	}
+	pl := systemgeneration.NewPlanetExport(1.2, "7", "8", "7", 0.15, "Inner", true)
 	fmt.Println("UWP:", uwpData.String())
-	Primary := systemgeneration.Export("G", 1, "V")
-	local := systemgeneration.Export("M", 1, "IV")
-	for i := 1; i <= 5; i++ {
+	Primary := systemgeneration.Export("G", 2, "V")
+	for i := 1; i <= 1; i++ {
 		dp := dice.New().SetSeed(fmt.Sprintf("Test  __  %v", i))
-		sd := NewPlanetaryDetails(dp, uwpData, Primary, local, 0.25)
+		sd := NewPlanetaryDetails(dp, pl, Primary)
 		for e, err := range []error{
 			sd.defineSizeRelatedDetails(),
 			sd.defineAtmosphereRelatedDetails(),

@@ -76,9 +76,9 @@ func (gs *GenerationState) placeMoons() error {
 				moons := -10
 				switch {
 				case strings.Contains(ggigant.descr, GasGigantNeptunian):
-					moons = gs.Dice.Roll("2d6").DM(-4).Sum()
+					moons = gs.Dice.Roll("1d6").DM(-1).Sum()
 				case strings.Contains(ggigant.descr, GasGigantJovian):
-					moons = gs.Dice.Roll("2d6").DM(4).Sum()
+					moons = gs.Dice.Roll("1d6").DM(-1).Sum()
 				}
 				if moons < -9 {
 					return fmt.Errorf("moons was not allocated for ggigant [%v]", ggigant)

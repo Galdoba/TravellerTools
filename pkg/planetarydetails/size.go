@@ -26,36 +26,36 @@ func (pd *PlanetaryDetails) defineSizeRelatedDetails() error {
 
 func (pd *PlanetaryDetails) setDiameter() error {
 	add := pd.dice.Roll("1d10").DM(-1).Sum()*100 + pd.dice.Roll("1d10").DM(-1).Sum()*10 + pd.dice.Roll("1d10").DM(-1).Sum()*1
-	sizeCode := pd.uwpData.Size()
-	switch sizeCode {
+	switch pd.size {
 	case 0:
 		pd.diameter = 0 + add/2
 		return nil
 	default:
-		if sizeCode > 0 && sizeCode < 25 {
-			pd.diameter = (sizeCode * 1000) - 500 + add
+		if pd.size > 0 && pd.size < 25 {
+			pd.diameter = (pd.size * 1000) - 500 + add
 			pd.diameter = int(float64(pd.diameter) * 1.6)
 			return nil
 		}
-		return fmt.Errorf("sizeCode invalid (%v)", sizeCode)
+		return fmt.Errorf("pd.size invalid (%v)", pd.size)
 	}
 }
 
 func (pd *PlanetaryDetails) setDensity() error {
 	ctDM := 0
-	if pd.uwpData.Size() <= 5 && pd.orbit > pd.local.InnerLimit() && pd.orbit < pd.local.SnowLine() {
+	//size := ehex.New().Set(pd.planet.SizeCode()).Value()
+	if pd.size <= 5 && pd.orbit > pd.primary.InnerLimit() && pd.orbit < pd.primary.SnowLine() {
 		ctDM += 3
 	}
-	if pd.uwpData.Size() >= 6 && pd.orbit > pd.local.InnerLimit() && pd.orbit < pd.local.HabitabilityLow() {
+	if pd.size >= 6 && pd.orbit > pd.primary.InnerLimit() && pd.orbit < pd.primary.HabitabilityLow() {
 		ctDM -= 2
 	}
-	if pd.uwpData.Size() >= 6 && pd.orbit >= pd.local.HabitabilityLow() && pd.orbit <= pd.local.HabitabilityHi() {
+	if pd.size >= 6 && pd.orbit >= pd.primary.HabitabilityLow() && pd.orbit <= pd.primary.HabitabilityHi() {
 		ctDM -= 4
 	}
-	if pd.uwpData.Size() <= 5 && pd.orbit > pd.local.SnowLine() && pd.orbit <= pd.local.OuterLimit() {
+	if pd.size <= 5 && pd.orbit > pd.primary.SnowLine() && pd.orbit <= pd.primary.OuterLimit() {
 		ctDM += 9
 	}
-	if pd.uwpData.Size() >= 6 && pd.orbit > pd.local.SnowLine() && pd.orbit <= pd.local.OuterLimit() {
+	if pd.size >= 6 && pd.orbit > pd.primary.SnowLine() && pd.orbit <= pd.primary.OuterLimit() {
 		ctDM += 3
 	}
 	ctRoll := pd.dice.Roll("2d6").DM(ctDM).Sum()
@@ -85,7 +85,7 @@ func (pd *PlanetaryDetails) setDensity() error {
 }
 
 func (pd *PlanetaryDetails) setMass() error {
-	size := float64(pd.uwpData.Size())
+	size := float64(pd.size)
 	if size < 1 {
 		size = 0.5
 	}
@@ -94,7 +94,7 @@ func (pd *PlanetaryDetails) setMass() error {
 }
 
 func (pd *PlanetaryDetails) setGravity() error {
-	size := float64(pd.uwpData.Size())
+	size := float64(pd.size)
 	if size < 1 {
 		size = 0.5
 	}
@@ -105,14 +105,14 @@ func (pd *PlanetaryDetails) setGravity() error {
 
 func (pd *PlanetaryDetails) setOrbiatlPeriod() error {
 	d := pd.orbit
-	m := pd.local.Mass()
+	m := pd.primary.Mass()
 	pd.orbitalPeriod = utils.RoundFloat64(math.Sqrt((d*d*d)/m), 3)
 	return nil
 }
 
 func (pd *PlanetaryDetails) setRotationPeriod() error {
 	w := float64(pd.dice.Roll("4d10").DM(5).Sum())
-	m := pd.local.Mass()
+	m := pd.primary.Mass()
 	d := pd.orbit
 	pd.rotationPeriod = utils.RoundFloat64(w+(m/d), 2)
 	if pd.rotationPeriod > 45 {

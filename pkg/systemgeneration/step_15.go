@@ -2,6 +2,7 @@ package systemgeneration
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/internal/dice"
 	"github.com/Galdoba/TravellerTools/internal/ehex"
@@ -66,6 +67,26 @@ func (gs *GenerationState) setPlanetDetails() error {
 }
 
 func (gs *GenerationState) detailPlanet(planet *rockyPlanet) (*rockyPlanet, error) {
+	fmt.Println("Detail Planet", planet)
+	if strings.Contains(planet.comment, "Mainworld") {
+		wp := strings.Split(gs.System.MW_UWP, "")
+		planet.sizeCode = wp[1]
+		planet.atmoCode = wp[2]
+		planet.hydrCode = wp[3]
+		switch planet.sizeCode {
+		case "0", "1":
+			planet.sizeType = sizeDwarf
+		case "2", "3":
+			planet.sizeType = sizeMercurian
+		case "4", "5", "6":
+			planet.sizeType = sizeSubterran
+		case "7", "8", "9":
+			planet.sizeType = sizeTerran
+		default:
+			planet.sizeType = sizeSuperterran
+		}
+		return planet, nil
+	}
 	if err := planet.rollSizeType(gs.Dice); err != nil {
 		return planet, err
 	}
@@ -78,14 +99,14 @@ func (gs *GenerationState) detailPlanet(planet *rockyPlanet) (*rockyPlanet, erro
 	if err := planet.rollHydr(gs.Dice); err != nil {
 		return planet, err
 	}
-
+	planet.uwpStr = fmt.Sprintf("X%v%v%v000-0", planet.sizeCode, planet.atmoCode, planet.hydrCode)
 	return planet, nil
 }
 
 func (p *rockyPlanet) rollSize(dp *dice.Dicepool) error {
 	switch p.habZone {
 	default:
-		return fmt.Errorf("p.habZone = %v", p.habZone)
+		return fmt.Errorf("p.habZone = `%v` `%v`", p.habZone, p)
 	case habZoneInner, habZoneHabitable, habZoneOuter:
 	}
 	switch p.sizeType {

@@ -17,7 +17,7 @@ const (
 )
 
 func (pd *PlanetaryDetails) setTaint() error {
-	switch pd.uwpData.Atmo() {
+	switch pd.atmo {
 	default:
 		pd.taint = TAINT_NONE
 	case 2, 4, 7, 9, 10:
@@ -51,7 +51,7 @@ func (pd *PlanetaryDetails) setTaint() error {
 }
 
 func (pd *PlanetaryDetails) defineAtmosphereRelatedDetails() error {
-	pd.pressureCode = pd.uwpData.Atmo()
+	pd.pressureCode = pd.atmo
 	switch pd.pressureCode {
 	case 0:
 		pd.atmoComposition = "None"
@@ -112,7 +112,7 @@ func (pd *PlanetaryDetails) setPresure() error {
 }
 
 func (pd *PlanetaryDetails) setCorrosiveAtmoType() error {
-	if pd.uwpData.Atmo() != 11 {
+	if pd.atmo != 11 {
 		return nil
 	}
 	cRoll := pd.dice.Roll("2d6").Sum()
@@ -157,7 +157,7 @@ func (pd *PlanetaryDetails) setCorrosiveAtmoType() error {
 }
 
 func (pd *PlanetaryDetails) setInsidiousAtmoType() error {
-	if pd.uwpData.Atmo() != 12 {
+	if pd.atmo != 12 {
 		return nil
 	}
 	cRoll := pd.dice.Roll("2d6").Sum()

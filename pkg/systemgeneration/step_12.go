@@ -24,16 +24,21 @@ func (gs *GenerationState) Step12() error {
 		}
 		mwuwp = importedUWP
 	}
-	fmt.Printf("%v\n", mwuwp.String())
-	switch mwuwp.Size() {
-	case 0:
-		fmt.Println("Designate MW as asteriod or worldlet")
-	default:
-		fmt.Println("Designate MW as planet or moon")
-	}
+	// //fmt.Printf("%v\n", mwuwp.String())
+	// switch mwuwp.Size() {
+	// case 0:
+	// 	fmt.Println("Designate MW as asteriod or worldlet")
+	// default:
+	// 	fmt.Println("Designate MW as planet or moon")
+	// }
 	fmt.Println(gs.System.Stars[0].orbitDistances)
 	fmt.Println(gs.System.Stars[0].habitableLow, gs.System.Stars[0].habitableHigh)
-
+	wp := gs.SuggestWorldPosition()
+	if wp.star != -1 {
+		orb := wp.orbit
+		star := gs.System.Stars[wp.star]
+		star.orbit[orb] = &rockyPlanet{star: star.Describe(), orbit: orb, eccentricity: 0.0, comment: "Rocky Planet Mainworld", habZone: habZoneHabitable, uwpStr: mwuwp.String()}
+	}
 	gs.ConcludedStep = 12
 	gs.NextStep = 13
 	switch gs.NextStep {
@@ -47,7 +52,7 @@ func (gs *GenerationState) Step12() error {
 func (gs *GenerationState) injectMW_UWP(uwp string) error {
 	data := strings.Split(uwp, "")
 	if len(data) != 9 {
-		return fmt.Errorf("cannot inject PBG data: len(%v) != 9", data)
+		return fmt.Errorf("cannot inject UWP data: len(%v) != 9", data)
 	}
 	gs.System.MW_UWP = uwp
 	return nil

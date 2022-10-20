@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
 
@@ -22,15 +23,15 @@ func printSystem(gs *GenerationState) {
 			data += fmt.Sprintf(" %v   ", formatFloatOutput(orb))
 			switch v := star.orbit[orb].(type) {
 			case *rockyPlanet:
-				data += "Planet      " + "_" + v.sizeCode + v.atmoCode + v.hydrCode + "___-_  " + v.habZone + " zone " + v.sizeType
+				data += "Planet      " + v.uwpStr + "  " + v.habZone + " zone " + v.sizeType
 				for _, moon := range v.moons {
-					data += "\n             Moon" + "        _" + moon.sizeCode + moon.atmoCode + moon.hydrCode + "___-_  " + moon.habZone + " zone " + moon.sizeType
+					data += "\n             Moon" + "        " + moon.uwpStr + "  " + moon.habZone + " zone " + moon.sizeType
 				}
 			case *ggiant:
 				data += "Gas Gigant  " + v.descr
 				data += "\n             " + v.ring
 				for _, moon := range v.moons {
-					data += "\n             Moon" + "        _" + moon.sizeCode + moon.atmoCode + moon.hydrCode + "___-_  " + moon.habZone + " zone " + moon.sizeType
+					data += "\n             Moon" + "        " + moon.uwpStr + "  " + moon.habZone + " zone " + moon.sizeType
 				}
 			case *belt:
 				data += "Belt        " + v.composition
@@ -151,6 +152,46 @@ func (gs *GenerationState) callImport(key string) error {
 		}
 	}
 	return nil
+}
+
+type worldPosition struct {
+	star  int
+	orbit float64
+}
+
+func (gs *GenerationState) SuggestWorldPosition() worldPosition {
+	wp := worldPosition{-1, -1.0}
+	world, err := uwp.FromString(gs.System.MW_UWP)
+	if err != nil {
+		return wp
+	}
+	switch world.Size() {
+	case 0:
+		for s, star := range gs.System.Stars {
+			orbits := star.orbitDistances
+			l := len(orbits)
+			r := gs.Dice.Roll(fmt.Sprintf("1d%v", l)).DM(-1).Sum()
+
+			return worldPosition{s, orbits[r]}
+		}
+	default:
+		for s, star := range gs.System.Stars {
+			orbits := star.orbitDistances
+			sugest := 0.0
+			n := 0
+			for o, orb := range orbits {
+				sugest = orb
+				n = o
+				if orb > star.habitableHigh {
+					break
+				}
+			}
+			if n > 0 {
+				return worldPosition{s, sugest}
+			}
+		}
+	}
+	return wp
 }
 
 /*

@@ -23,14 +23,12 @@ func (pd *PlanetaryDetails) defineClimate() error {
 }
 
 func (pd *PlanetaryDetails) setAlbedo() error {
-	atmo := pd.uwpData.Atmo()
-	hydr := pd.uwpData.Hydr()
 	albRoll := pd.dice.Roll("2d10").Sum()
 	albedoStep := 0.01
 	albedoAdd := 0.0
-	switch atmo {
+	switch pd.atmo {
 	case 4, 5, 6, 7, 8, 9:
-		switch hydr {
+		switch pd.hydr {
 		case 0, 1, 2:
 			albedoAdd = 0.05
 		case 3, 4, 5:
@@ -43,7 +41,7 @@ func (pd *PlanetaryDetails) setAlbedo() error {
 			return fmt.Errorf("unexpected HydroCode")
 		}
 	case 0, 1, 2, 3, 10, 11, 12, 13, 14, 15:
-		switch hydr {
+		switch pd.hydr {
 		case 0, 1, 2, 3, 4, 5:
 			albedoAdd = 0.03
 		case 6, 7, 8, 9, 10:
@@ -53,6 +51,7 @@ func (pd *PlanetaryDetails) setAlbedo() error {
 		}
 	}
 	pd.albedo = albedoStep*float64(albRoll) + albedoAdd
+	//pd.albedo = 0.03 // при увеличении альбедо температура падает
 	if pd.albedo > 1 {
 		return fmt.Errorf("albedo can not be more than 1.0")
 	}
@@ -76,6 +75,10 @@ func (pd *PlanetaryDetails) setAveragetemperature() error {
 	a := pd.albedo
 	e := pd.greenhouseEffect
 	pd.averageSurfaceTemperature = utils.RoundFloat64(b*(math.Pow((1.0-a), 1/4.0))*(1+e), 1)
+	if pd.mw {
+		add := pd.dice.Roll("10d10").Sum()
+		pd.averageSurfaceTemperature = 228 + float64(add)
+	}
 	if pd.averageSurfaceTemperature < 0 {
 		return fmt.Errorf("cannot have negative temp")
 	}
@@ -87,7 +90,7 @@ func (pd *PlanetaryDetails) Biology() {
 	if !strings.Contains(pd.atmoComposition, "Oxygen") {
 		dm -= 20
 	}
-	switch pd.uwpData.Atmo() {
+	switch pd.atmo {
 	case 0, 1, 2, 3:
 		dm -= 50
 	case 4, 5:
@@ -95,7 +98,7 @@ func (pd *PlanetaryDetails) Biology() {
 	case 6, 7, 8, 9:
 		dm += 10
 	}
-	switch pd.uwpData.Hydr() {
+	switch pd.hydr {
 	case 1, 2:
 		dm -= 15
 	case 3, 4, 10:
@@ -103,16 +106,10 @@ func (pd *PlanetaryDetails) Biology() {
 	case 5, 6, 7, 8, 9:
 		dm += 5
 	}
-	if pd.averageSurfaceTemperature < 0+273.25 {
+	if pd.averageSurfaceTemperature < 0+273.25 || pd.averageSurfaceTemperature > 40+273.25 {
 		dm -= 10
 	}
-	if pd.averageSurfaceTemperature > 40+273.25 {
-		dm -= 10
-	}
-	if pd.orbit > pd.local.HabitabilityHi() {
-		dm -= 20
-	}
-	if pd.orbit < pd.local.HabitabilityLow() {
+	if pd.habzone != "Habitable" {
 		dm -= 20
 	}
 	switch pd.primary.Class() {
@@ -124,5 +121,5 @@ func (pd *PlanetaryDetails) Biology() {
 	bRoll := pd.dice.Roll("2d10").DM(dm).Sum()
 	fmt.Printf("Biology Roll: %v (%v - %v)\n", bRoll, dm+2, dm+20)
 	fmt.Printf("Avr. Temp: %v K\n", pd.averageSurfaceTemperature)
-	fmt.Printf("Avr. Temp: %v C\n", pd.averageSurfaceTemperature-273.25)
+	fmt.Printf("Avr. Temp: %v C\n", pd.averageSurfaceTemperature-273)
 }
