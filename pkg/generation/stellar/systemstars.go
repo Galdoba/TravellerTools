@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
-	"github.com/Galdoba/TravellerTools/internal/ehex"
-	"github.com/Galdoba/TravellerTools/internal/generation/worldprofile"
-	"github.com/Galdoba/TravellerTools/internal/helper"
-	"github.com/Galdoba/TravellerTools/internal/struct/satellite"
-	"github.com/Galdoba/TravellerTools/internal/struct/star"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/generation/worldprofile"
+	"github.com/Galdoba/TravellerTools/pkg/helper"
+	"github.com/Galdoba/TravellerTools/pkg/struct/satellite"
+	"github.com/Galdoba/TravellerTools/pkg/struct/star"
 	"github.com/Galdoba/TravellerTools/pkg/survey/calculations"
 )
 

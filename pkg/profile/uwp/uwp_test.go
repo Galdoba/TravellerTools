@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/ehex"
 )
 
 func TestSetUWP(t *testing.T) {

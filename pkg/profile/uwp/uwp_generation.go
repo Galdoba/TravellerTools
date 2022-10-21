@@ -1,6 +1,6 @@
 package uwp
 
-import "github.com/Galdoba/TravellerTools/internal/dice"
+import "github.com/Galdoba/TravellerTools/pkg/dice"
 
 const (
 	GenerationRules_MGT2_MW_CG = "MgT2 Mainworld Sector Construction Guide"

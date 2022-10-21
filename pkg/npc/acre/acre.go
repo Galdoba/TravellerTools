@@ -3,7 +3,7 @@ package acre
 import (
 	"fmt"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
 const (

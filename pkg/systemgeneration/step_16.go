@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
 func (gs *GenerationState) Step16() error {

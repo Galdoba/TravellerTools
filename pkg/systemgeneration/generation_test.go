@@ -80,7 +80,6 @@ func TestGeneration(t *testing.T) {
 		for _, star := range gen.System.Stars {
 			for _, orb := range star.orbitDistances {
 				if planet, ok := star.orbit[orb].(*rockyPlanet); ok == true {
-
 					uwpS := fmt.Sprintf("X%v%v%v000-0", planet.sizeCode, planet.atmoCode, planet.hydrCode)
 					fmt.Println("planet", uwpS)
 					details := planetarydetails.NewPlanetaryDetails(gen.Dice, planet.ExportDetails(), gen.System.Stars[0])

@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
-	"github.com/Galdoba/TravellerTools/internal/struct/star"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/struct/star"
 )
 
 func GenerateNewStellar(systemName string) string {

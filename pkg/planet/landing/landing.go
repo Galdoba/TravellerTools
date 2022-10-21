@@ -3,7 +3,7 @@ package landing
 import (
 	"fmt"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"gopkg.in/AlecAivazis/survey.v1"
 )

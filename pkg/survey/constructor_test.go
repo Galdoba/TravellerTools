@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Galdoba/TravellerTools/internal/generation/stellar"
+	"github.com/Galdoba/TravellerTools/pkg/generation/stellar"
 )
 
 func TestConstructor(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Galdoba/TravellerTools/internal/struct/star"
+	"github.com/Galdoba/TravellerTools/pkg/struct/star"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
 	"github.com/Galdoba/TravellerTools/pkg/survey/calculations"
 )

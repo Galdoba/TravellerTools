@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
-	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/ehex"
 )
 
 const (

@@ -3,7 +3,7 @@ package calculations
 import (
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/ehex"
 )
 
 func Importance(uwp, bases, remarks string) int {

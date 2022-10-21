@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/ehex"
 )
 
 func RU(econ string) int {

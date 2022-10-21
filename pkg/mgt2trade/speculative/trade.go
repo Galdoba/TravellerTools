@@ -3,7 +3,7 @@ package speculative
 import (
 	"fmt"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/tradegoods"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"

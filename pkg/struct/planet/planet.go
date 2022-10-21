@@ -3,8 +3,8 @@ package planet
 import (
 	"fmt"
 
-	"github.com/Galdoba/TravellerTools/internal/struct/star"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+	"github.com/Galdoba/TravellerTools/pkg/struct/star"
 )
 
 type planetOrbit struct {

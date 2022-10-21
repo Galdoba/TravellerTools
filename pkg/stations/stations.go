@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
-	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )

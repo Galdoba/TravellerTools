@@ -3,7 +3,7 @@ package profile
 import (
 	"fmt"
 
-	"github.com/Galdoba/TravellerTools/internal/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/ehex"
 )
 
 type profileData struct {

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/Galdoba/TravellerTools/internal/dice"
-	"github.com/Galdoba/TravellerTools/internal/dice/probability"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/dice/probability"
 )
 
 const (
