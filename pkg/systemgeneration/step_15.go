@@ -37,24 +37,6 @@ func (gs *GenerationState) setPlanetDetails() error {
 	for i, star := range gs.System.Stars {
 		for _, orbit := range star.orbitDistances {
 			if planet, ok := star.orbit[orbit].(*rockyPlanet); ok == true {
-				// if err := planet.rollSizeType(gs.Dice); err != nil {
-				// 	return err
-				// }
-				// if err := planet.rollSize(gs.Dice); err != nil {
-				// 	return err
-				// }
-				// if err := planet.rollAtmo(gs.Dice); err != nil {
-				// 	return err
-				// }
-				// if err := planet.rollHydr(gs.Dice); err != nil {
-				// 	return err
-				// }
-				// if planet.orbit > gs.System.Stars[i].habitableHigh {
-				// 	planet.comment = " Cold"
-				// }
-				// if planet.orbit > gs.System.Stars[i].snowLine {
-				// 	planet.comment = " Frozen"
-				// }
 				planet, err := gs.detailPlanet(planet)
 				if err != nil {
 					return err

@@ -107,6 +107,10 @@ func (dp *Dicepool) Roll(code string) *Dicepool {
 	return dp
 }
 
+func (dp *Dicepool) RollSum(code string) int {
+	return dp.Roll(code).Sum()
+}
+
 func (dp *Dicepool) Vocal() {
 	if dp.vocal == true {
 		dp.vocal = false

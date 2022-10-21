@@ -131,7 +131,6 @@ func (d seImporter) Read(key string) []importData {
 
 func (gs *GenerationState) callImport(key string) error {
 	for _, imported := range gs.importedData {
-		fmt.Println("tri inject", imported)
 		if imported.dataKey != key {
 
 			continue

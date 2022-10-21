@@ -208,9 +208,14 @@ type rockyPlanet struct {
 	num           int
 	star          string
 	orbit         float64
+	port          string
 	sizeCode      string
 	atmoCode      string
 	hydrCode      string
+	popCode       string
+	govCode       string
+	lawCode       string
+	tlCode        string
 	eccentricity  float64
 	comment       string
 	sizeType      string
@@ -310,6 +315,7 @@ type belt struct {
 	hiBorder     float64
 	zone         string
 	comment      string
+	uwpStr       string
 }
 
 func (b *belt) Describe() string {

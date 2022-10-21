@@ -176,3 +176,11 @@ func hashCode(code string) int {
 	}
 	return -1
 }
+
+func CodeOf(i int) string {
+	return New().Set(i).Code()
+}
+
+func ValueOf(s string) int {
+	return New().Set(s).Value()
+}
