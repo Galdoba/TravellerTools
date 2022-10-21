@@ -23,16 +23,8 @@ func (gs *GenerationState) Step12() error {
 			return fmt.Errorf("imported uwp error: %v", err.Error())
 		}
 		mwuwp = importedUWP
+		gs.System.populationType = PopulationON
 	}
-	// //fmt.Printf("%v\n", mwuwp.String())
-	// switch mwuwp.Size() {
-	// case 0:
-	// 	fmt.Println("Designate MW as asteriod or worldlet")
-	// default:
-	// 	fmt.Println("Designate MW as planet or moon")
-	// }
-	fmt.Println(gs.System.Stars[0].orbitDistances)
-	fmt.Println(gs.System.Stars[0].habitableLow, gs.System.Stars[0].habitableHigh)
 	wp := gs.SuggestWorldPosition()
 	if wp.star != -1 {
 		orb := wp.orbit
@@ -62,14 +54,6 @@ func (gs *GenerationState) setOrbitSpots() error {
 	for _, star := range gs.System.Stars {
 		orb := 0
 		star.orbit = make(map[float64]StellarBody)
-		// gs.debug(fmt.Sprintf("Star %v", i))
-		// gs.debug(fmt.Sprintf("-------"))
-		// gs.debug(fmt.Sprintf("%v", star.innerLimit))
-		// gs.debug(fmt.Sprintf("%v", star.habitableLow))
-		// gs.debug(fmt.Sprintf("%v", star.habitableHigh))
-		// gs.debug(fmt.Sprintf("%v", star.snowLine))
-		// gs.debug(fmt.Sprintf("%v", star.outerLimit))
-		// gs.debug(fmt.Sprintf("-------"))
 		currentPoint := star.innerLimit
 		for currentPoint < star.outerLimit {
 			au := roundFloat(currentPoint, 2)
