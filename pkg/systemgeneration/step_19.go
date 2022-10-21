@@ -63,6 +63,7 @@ func (gs *GenerationState) placeMoons() error {
 						moonSize = 0
 					}
 					moon.sizeCode = fmt.Sprintf("%v", moonSize)
+					moon.orbit = planet.orbit
 					moon, err := gs.detailPlanet(moon)
 					if err != nil {
 						return err

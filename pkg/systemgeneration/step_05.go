@@ -12,7 +12,6 @@ func (gs *GenerationState) Step05() error {
 			continue
 		}
 		gs.System.Stars[i].num += numRoll
-		//gs.debug(fmt.Sprintf("gs.System.Stars[%v].num set as %v", i, gs.System.Stars[i].num))
 		gs.ConcludedStep = 5
 		switch gs.System.Stars[i].class {
 		case "O", "B", "A", "F", "G", "K", "M":

@@ -26,27 +26,21 @@ func (gs *GenerationState) Step01() error {
 		tn = 75
 	}
 	gs.System.ObjectType = ObjectNONE
-	gs.debug("ObjectType set as NONE")
 	presenceRoll := gs.Dice.Roll("1d100").Sum()
 	if presenceRoll <= tn {
 		gs.System.ObjectType = ObjectPRESENT
-		gs.debug("ObjectType set as PRESENT")
 	}
 	switch gs.System.ObjectType {
 	default:
 		return fmt.Errorf("system ObjectType is invalid")
 	case ObjectNONE:
-		gs.debug("ObjectType Is not in the hex: END GENERATION")
 		gs.NextStep = 20
 	case ObjectPRESENT:
 		gs.NextStep = 2
 	}
-	fmt.Println("IMPORTING:")
 	if err := gs.callImport("Stellar"); err != nil {
 		return nil
 	}
-	fmt.Println("IMPORTING DONE:")
-
 	gs.ConcludedStep = 1
 	return nil
 }

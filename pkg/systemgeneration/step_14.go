@@ -71,7 +71,6 @@ func (gs *GenerationState) placePlanets() error {
 		//placed := false
 		for {
 			orb := gs.Dice.Roll(fmt.Sprintf("1d%v", len(star.orbitDistances))).DM(-1).Sum()
-			//gs.debug(fmt.Sprintf("try %v orb %v...", try, orb))
 			if orb-try < 0 {
 				i--
 				break
@@ -93,7 +92,6 @@ func (gs *GenerationState) placePlanets() error {
 				break
 			}
 		}
-		//gs.debug(fmt.Sprintf("planet %v placed...", i+1))
 	}
 	return nil
 }
@@ -182,13 +180,10 @@ func freeSlots(om [][]orbMarker) int {
 }
 
 func (gs *GenerationState) placeGG(markers []orbMarker) error {
-	//gs.debug(fmt.Sprintf("Placing %v Gas Gigants...", len(gs.System.GG)))
 	for n, gg := range gs.System.GG {
 		if n >= len(markers) {
-			//gs.debug(fmt.Sprintf("Placing Gas Gigant %v aborted...", n+1))
 			continue
 		}
-		//gs.debug(fmt.Sprintf("Placing Gas Gigant %v...", n+1))
 		placed := false
 		try := 0
 		for !placed {
@@ -199,9 +194,6 @@ func (gs *GenerationState) placeGG(markers []orbMarker) error {
 				if m.starPos != r {
 					continue
 				}
-				// if _, ok := gs.System.Stars[r].orbit[m.orbRad]; ok == false {
-				// 	continue
-				// }
 				if !strings.Contains(gs.System.Stars[r].orbit[m.orbRad].Describe(), " ggPossible") {
 					continue
 				}
@@ -236,7 +228,6 @@ func (gs *GenerationState) placeGG(markers []orbMarker) error {
 			}
 		}
 	}
-	gs.debug(fmt.Sprintf("Cleaning orbits..."))
 	return nil
 }
 

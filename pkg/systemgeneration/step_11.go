@@ -27,18 +27,14 @@ func (gs *GenerationState) adjustStarValues() error {
 	default:
 		return fmt.Errorf("not implemented %v stars\n%v", len(gs.System.Stars), gs.System.Stars)
 	case 0, 1:
-		gs.debug("DEBUG: habitable zone not adjusting")
 		return nil
 	case 2, 3, 4, 5:
-		gs.debug("DEBUG: habitable zone to be adjusted!!!!!!!!!!")
 		for st := 0; st < len(gs.System.Stars); st++ {
 			switch gs.System.Stars[st].distanceType {
 			default:
 				outerSum := starDistanceToClosest(gs.System.Stars, st) * 0.3
 				//outerSum := gs.System.Stars[st].distanceFromPrimaryAU * 0.3
 				if outerSum < gs.System.Stars[st].outerLimit {
-					gs.debug("DEBUG: модифицируем дальний лимит для первой звезды")
-
 					gs.System.Stars[st].outerLimit = outerSum
 
 				}
@@ -56,7 +52,6 @@ func (gs *GenerationState) adjustStarValues() error {
 				gs.System.Stars[st-1].habitableHigh = habHi
 				gs.System.Stars[st].habitableHigh = habHi
 			case StarDistanceClose: //две звезды в близко и разрывают близкие к ним планеты
-				gs.debug("DEBUG: две звезды в близко и разрывают близкие к ним планеты")
 				innerSum := gs.System.Stars[st].distanceFromPrimaryAU * 2.5
 				gs.System.Stars[st-1].innerLimit = innerSum
 				gs.System.Stars[st].innerLimit = innerSum

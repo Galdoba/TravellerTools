@@ -11,8 +11,6 @@ func (gs *GenerationState) Step07() error {
 		return fmt.Errorf("star population unexpected")
 	case StarPopulationSolo, StarPopulationBinary, StarPopulationTrinary, StarPopulationQuatenary, StarPopulationQuintenary:
 		if len(gs.System.Stars) < strSystToNum(gs.System.starPopulation) {
-			gs.debug(fmt.Sprintf("System: %v, have %v, want %v\n", gs.System.starPopulation, len(gs.System.Stars), strSystToNum(gs.System.starPopulation)))
-
 			gs.NextStep = 4
 			return nil
 		}

@@ -67,7 +67,6 @@ func (gs *GenerationState) setPlanetDetails() error {
 }
 
 func (gs *GenerationState) detailPlanet(planet *rockyPlanet) (*rockyPlanet, error) {
-	fmt.Println("Detail Planet", planet)
 	if strings.Contains(planet.comment, "Mainworld") {
 		wp := strings.Split(gs.System.MW_UWP, "")
 		planet.sizeCode = wp[1]

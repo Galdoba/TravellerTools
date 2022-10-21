@@ -18,9 +18,7 @@ func (gs *GenerationState) Step03() error {
 	}
 	str := &star{class: starType, num: -1, size: ""}
 	gs.System.Stars = append(gs.System.Stars, str)
-	gs.debug("starType is " + starType)
 	gs.NextStep = 5
-	gs.debug(fmt.Sprintf("gs.System.ObjectType set as %v", gs.System.ObjectType))
 	gs.ConcludedStep = 3
 	switch gs.NextStep {
 	case 5:

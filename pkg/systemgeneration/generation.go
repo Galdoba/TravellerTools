@@ -11,6 +11,7 @@ import (
 const (
 	DefaultValue             = iota
 	SubsectorEmpty           = "Empty"
+	KEY_SUBSECTOR_TYPE       = "KEY_SUBSECTOR_TYPE"
 	SubsectorScattered       = "Scattered"
 	SubsectorDispersed       = "Dispersed"
 	SubsectorAverage         = "Average"
@@ -26,6 +27,7 @@ const (
 	ObjectNeutronStar        = "NeutronStar"
 	ObjectNebula             = "Nebula"
 	ObjectBlackHole          = "BlackHole"
+	KEY_StarSystem_TYPE      = "KEY_StarSystem_TYPE"
 	StarSystemRealistic      = "Realistic"
 	StarSystemSemiRealistic  = "Semi-Realistic"
 	StarSystemFantastic      = "Fantastic"
@@ -43,6 +45,10 @@ const (
 	StarDistanceDistant      = "Distant"
 	GasGigantNeptunian       = "Neptunian"
 	GasGigantJovian          = "Jovian"
+	KEY_POPULATION           = "KEY_POPULATION"
+	PopulationON             = "ForcePopulated"
+	PopulationOFF            = "ForceNotPopulated"
+	PopulationAuto           = "ForceHabitableOnly"
 )
 
 type GenerationState struct {
@@ -59,16 +65,36 @@ type Generator interface {
 	Import() error
 }
 
-func NewGenerator(name string) (*GenerationState, error) {
+type GeneratorOptions struct {
+	key string
+	val string
+}
+
+func AddOption(key, val string) GeneratorOptions {
+	return GeneratorOptions{key, val}
+}
+
+func NewGenerator(name string, opt ...GeneratorOptions) (*GenerationState, error) {
 	gs := GenerationState{}
 	gs.Dice = dice.New().SetSeed(name)
 	//gs.Dice.Vocal()
 	gs.vocal = true
 	gs.SystemName = name
-
-	gs.debug(fmt.Sprintf("SystemName set as %v", name))
+	subsectorType := SubsectorAverage
+	systemType := StarSystemRealistic
+	populationType := PopulationAuto
+	for _, option := range opt {
+		switch option.key {
+		case KEY_SUBSECTOR_TYPE:
+			subsectorType = setSubsectorTypeOption(option.val)
+		case KEY_StarSystem_TYPE:
+			systemType = setSystemTypeOption(option.val)
+		case KEY_POPULATION:
+			populationType = setPopulationOption(option.val)
+		}
+	}
 	gs.NextStep = 1
-	sts, err := gs.NewStarSystem(SubsectorAverage, StarSystemRealistic)
+	sts, err := gs.NewStarSystem(subsectorType, systemType, populationType)
 	if err != nil {
 		return &gs, err
 	}
@@ -79,20 +105,47 @@ func NewGenerator(name string) (*GenerationState, error) {
 	return &gs, nil
 }
 
-func (gs *GenerationState) NewStarSystem(stsType, ssType string) (*StarSystem, error) {
+func setSubsectorTypeOption(val string) string {
+	switch val {
+	default:
+		return SubsectorAverage
+	case SubsectorScattered, SubsectorDispersed, SubsectorAverage, SubsectorCrowded:
+		return val
+	}
+}
+
+func setSystemTypeOption(val string) string {
+	switch val {
+	default:
+		return StarSystemSemiRealistic
+	case StarSystemRealistic, StarSystemSemiRealistic, StarSystemFantastic:
+		return val
+	}
+}
+
+func setPopulationOption(val string) string {
+	switch val {
+	default:
+		return PopulationAuto
+	case PopulationON, PopulationOFF, PopulationAuto:
+		return val
+	}
+}
+
+func (gs *GenerationState) NewStarSystem(stsType, ssType, pType string) (*StarSystem, error) {
 	ss := StarSystem{}
 	ss.subsectorType = stsType
 	ss.starSystemType = ssType
+	ss.populationType = pType
 	ss.starPopulation = StarPopulationUNKNOWN
 	ss.ObjectType = ObjectUNDEFINED
-	gs.debug(fmt.Sprintf("ObjectType set as %v\n", ObjectUNDEFINED))
-	gs.debug(fmt.Sprintf("starSystemType set as %v\n", ssType))
 	return &ss, nil
 }
 
 type StarSystem struct {
 	subsectorType  string
 	starSystemType string
+	populationType string
 	starPopulation string
 	ObjectType     string
 	Stars          []*star
@@ -271,7 +324,7 @@ func (gs *GenerationState) GenerateData() error {
 	err := fmt.Errorf("initial error")
 	err = nil
 	for gs.ConcludedStep < 20 {
-		gs.debug(fmt.Sprintf("Start Step %v", gs.NextStep))
+		fmt.Printf("Generating Step %v: ", gs.NextStep)
 		switch gs.NextStep {
 		default:
 			err = fmt.Errorf("gs.NextStep = %v unimplemented", gs.NextStep)
@@ -319,7 +372,7 @@ func (gs *GenerationState) GenerateData() error {
 				return nil
 			}
 		}
-		gs.debug(fmt.Sprintf("Step %v concluded", gs.ConcludedStep))
+		fmt.Printf("concluded\r")
 		//gs.trackStatus()
 		if err != nil {
 			return fmt.Errorf("GenerateData returned err=%v\n concluded Step = %v\n next step = %v", err.Error(), gs.ConcludedStep, gs.NextStep)
@@ -427,17 +480,6 @@ func starDistanceToClosest(stars []*star, i int) float64 {
 		d = d * -1
 	}
 	return d
-}
-
-func (gs *GenerationState) Step20() error {
-	fmt.Println("START Step 20")
-	if gs.NextStep != 20 {
-		return fmt.Errorf("not actual step")
-	}
-	printSystem(gs)
-	gs.NextStep = 99
-	fmt.Println("END Step 20")
-	return nil
 }
 
 func (gs *GenerationState) debug(str string) {

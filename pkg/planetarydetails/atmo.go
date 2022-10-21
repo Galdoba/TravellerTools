@@ -1,10 +1,12 @@
 package planetarydetails
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	TAINT_NONE    = "None"
-	Atmo_Standard = "Nitrogen, Oxigen, Argon, Carbon Dioxide"
+	Atmo_Standard = "Nitrogen, Oxygen, Argon, Carbon Dioxide"
 	Atmo_1        = "Hellium, Ammonia, Methane"
 	Atmo_2        = "Nitrogen, Ammonia, Methane"
 	Atmo_3        = "Nitrogen, Nitrogen Dioxide, Nitrous Oxide, Carbon Dioxide"
@@ -14,6 +16,7 @@ const (
 	Atmo_7        = "Carbon Dioxide, Nitrogen, Sulfur Dioxide"
 	Atmo_8        = "Nitrogen, Flourine, Carbon Dioxide"
 	Atmo_9        = "Nitrogen, Methan, Hydrogen"
+	Atmo_10       = "Exotic"
 )
 
 func (pd *PlanetaryDetails) setTaint() error {
@@ -69,6 +72,8 @@ func (pd *PlanetaryDetails) defineAtmosphereRelatedDetails() error {
 		if err := pd.setInsidiousAtmoType(); err != nil {
 			return err
 		}
+	case 10:
+		pd.atmoComposition = Atmo_10
 	}
 	if err := pd.setTaint(); err != nil {
 		return err

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
+	"github.com/Galdoba/utils"
 )
 
 const (
@@ -65,9 +66,28 @@ type PlanetaryDetails struct {
 	pressureCode    int
 	pressure        float64
 	////Climate
-	albedo                    float64 //параметр поглощения радиации: 0 - вся радиация поглощается, 1 - вся радиация отражается
-	greenhouseEffect          float64
-	averageSurfaceTemperature float64
+	albedo                          float64 //параметр поглощения радиации: 0 - вся радиация поглощается, 1 - вся радиация отражается
+	greenhouseEffect                float64
+	averageSurfaceTemperature       float64
+	averageTemperatureEquator       float64
+	averageTemperatureEquatorSummer float64
+	averageTemperatureEquatorWinter float64
+	averageTemperaturePolar         float64
+	averageTemperaturePolarSummer   float64
+	averageTemperaturePolarWinter   float64
+	hydrCover                       float64
+	lifeIndex                       int
+	//Population
+	pop     int
+	mw_pop  int
+	govr    int
+	mw_gov  int
+	law     int
+	mw_law  int
+	tl      int
+	mw_tl   int
+	mw_Port string
+	port    string
 }
 
 func NewPlanetaryDetails(dp *dice.Dicepool, planet PlanetData,
@@ -98,10 +118,20 @@ func NewPlanetaryDetails(dp *dice.Dicepool, planet PlanetData,
 	pd.pressure = unatendedFlt
 	pd.greenhouseEffect = unatendedFlt
 	pd.averageSurfaceTemperature = unatendedFlt
+	pd.averageTemperatureEquator = unatendedFlt
+	pd.averageTemperatureEquatorSummer = unatendedFlt
+	pd.averageTemperaturePolar = unatendedFlt
+	pd.averageTemperaturePolarWinter = unatendedFlt
+	pd.lifeIndex = 0
+	pd.hydrCover = unatendedFlt
 	pd.defineSizeRelatedDetails()
 	pd.defineAtmosphereRelatedDetails()
 	pd.defineClimate()
 	return pd
+}
+
+func (pd *PlanetaryDetails) String() string {
+	return pd.SizeRelatedString() + pd.AtmoRelatedString() + pd.ClimateRelatedString()
 }
 
 func (pd *PlanetaryDetails) SizeRelatedString() string {
@@ -122,5 +152,13 @@ func (pd *PlanetaryDetails) AtmoRelatedString() string {
 	str += fmt.Sprintf("Composition: %v\n", pd.atmoComposition)
 	str += fmt.Sprintf("Pressure   : %v\n", pd.pressure)
 	str += fmt.Sprintf("Taint      : %v\n", pd.taint)
+	return str
+}
+
+func (pd *PlanetaryDetails) ClimateRelatedString() string {
+	str := "Climate\n"
+	str += fmt.Sprintf("Average Temp: %v C\n", utils.RoundFloat64(pd.averageSurfaceTemperature, 1))
+	str += fmt.Sprintf("Biology     : %v\n", pd.lifeIndex)
+	str += fmt.Sprintf("Hydrophere  : %v ", pd.hydrCover) + "%"
 	return str
 }

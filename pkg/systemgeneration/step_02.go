@@ -31,7 +31,6 @@ func (gs *GenerationState) Step02() error {
 		gs.System.Stars = append(gs.System.Stars, BlackHole())
 		gs.NextStep = 20
 	}
-	gs.debug(fmt.Sprintf("gs.System.ObjectType set as %v", gs.System.ObjectType))
 	switch gs.System.ObjectType {
 	case ObjectBlackHole:
 		//return fmt.Errorf("Stop %v", gs.System.ObjectType)
