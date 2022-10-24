@@ -60,7 +60,7 @@ func (gs *GenerationState) PopulateBodies() error {
 	return nil
 }
 
-func (p *rockyPlanet) populate(dp *dice.Dicepool, mwuwp uwp.UWP, popType string) error {
+func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType string) error {
 	mwTL := mwuwp.TL()
 
 	switch popType {
@@ -83,7 +83,7 @@ func (p *rockyPlanet) populate(dp *dice.Dicepool, mwuwp uwp.UWP, popType string)
 		case habZoneInner:
 			switch p.sizeType {
 			case sizeDwarf:
-				pop := dp.Roll("1d6").DM(-3).Sum()
+				pop := dice.Roll("1d6").DM(-3).Sum()
 				if pop < 0 {
 					uwpW, _ := uwp.FromString(fmt.Sprintf("X%v%v%v000-0", p.sizeCode, p.atmoCode, p.hydrCode))
 					p.injectUwpCodes(uwpW)
@@ -93,21 +93,22 @@ func (p *rockyPlanet) populate(dp *dice.Dicepool, mwuwp uwp.UWP, popType string)
 					p.comment = "Under Construction "
 				}
 				p.popCode = fmt.Sprintf("%v", pop)
-				switch dp.Roll("2d6").Sum() {
+				switch dice.Sroll("2d6") {
 				case 2:
 					uwpW, _ := uwp.FromString(fmt.Sprintf("X%v%v%v000-0", p.sizeCode, p.atmoCode, p.hydrCode))
 					p.injectUwpCodes(uwpW)
 				case 3, 4, 5:
-					p.govCode = "1"
-					p.lawCode = ehex.CodeOf(dp.RollSum("1d6+4"))
+					p.govCode = ehex.ToCode(1)
+					lawRoll := dice.Sroll("1d6+4")
+					p.lawCode = ehex.ToCode(lawRoll)
 					p.comment += "Corporative Compound"
 				case 6, 7:
 					p.govCode = "6"
-					p.lawCode = ehex.New().Set(dp.Roll("1d6+4").Sum()).Code()
+					p.lawCode = ehex.New().Set(dice.Roll("1d6+4").Sum()).Code()
 					p.comment += "Research Station"
 				case 8, 9:
 					p.govCode = "6"
-					p.lawCode = ehex.New().Set(dp.Roll("1d6+5").Sum()).Code()
+					p.lawCode = ehex.New().Set(dice.Roll("1d6+5").Sum()).Code()
 					p.comment += "Military Base"
 				case 10, 11:
 					p.govCode = "6"
@@ -116,8 +117,8 @@ func (p *rockyPlanet) populate(dp *dice.Dicepool, mwuwp uwp.UWP, popType string)
 				case 12:
 					//todo: нужен метод добрасывания отдельных участков UWP
 					g := ehex.New().Set(p.popCode).Value()
-					p.govCode = ehex.New().Set(dp.Roll("2d6").DM(-7 + g)).Code()
-					p.lawCode = ehex.New().Set(dp.Roll("2d6").DM(-7 + g)).Code()
+					p.govCode = ehex.New().Set(dice.Roll("2d6").DM(-7 + g)).Code()
+					p.lawCode = ehex.New().Set(dice.Roll("2d6").DM(-7 + g)).Code()
 				}
 			}
 		}

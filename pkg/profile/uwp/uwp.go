@@ -43,6 +43,14 @@ func New() *uwp {
 	return &u
 }
 
+func Inject(uwpString string) *uwp {
+	u, err := FromString(uwpString)
+	if err != nil {
+		return nil
+	}
+	return u
+}
+
 func FromString(uwpString string) (*uwp, error) {
 	u := New()
 	s := strings.Split(uwpString, "")

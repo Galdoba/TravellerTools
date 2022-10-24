@@ -18,8 +18,8 @@ func TestDicepool(t *testing.T) {
 
 func TestDicepoolExtended(t *testing.T) {
 	dp := New().SetSeed(1)
-	fmt.Println(dp.Roll("1d100+1").Sum())
+	fmt.Println(dp.Sroll("1d100+5"))
 	dp2 := New().SetSeed(1)
-	fmt.Println(dp2.Roll("1d100-2").Sum())
+	fmt.Println(dp2.Sroll("1d100+3"))
 
 }

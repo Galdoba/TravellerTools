@@ -177,7 +177,7 @@ func hashCode(code string) int {
 	return -1
 }
 
-func CodeOf(i int) string {
+func ToCode(i int) string {
 	return New().Set(i).Code()
 }
 

@@ -107,7 +107,7 @@ func (dp *Dicepool) Roll(code string) *Dicepool {
 	return dp
 }
 
-func (dp *Dicepool) RollSum(code string) int {
+func (dp *Dicepool) Sroll(code string) int {
 	return dp.Roll(code).Sum()
 }
 
