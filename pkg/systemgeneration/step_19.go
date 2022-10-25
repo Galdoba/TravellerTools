@@ -24,19 +24,21 @@ func (gs *GenerationState) Step19() error {
 }
 
 func (gs *GenerationState) placeMoons() error {
+	//gs.Dice.Vocal()
 	for _, star := range gs.System.Stars {
-		for _, body := range star.orbit {
-			if planet, ok := body.(*rockyPlanet); ok {
+		for _, orb := range star.orbitDistances {
+			if planet, ok := star.orbit[orb].(*rockyPlanet); ok {
+
 				moons := -10
 				switch planet.sizeCode {
 				case "0":
 					moons = 0
 				case "1", "2", "3":
-					moons = gs.Dice.Roll("1d6").DM(-4).Sum()
+					moons = gs.Dice.Sroll("1d6-4")
 				case "4", "5", "6":
-					moons = gs.Dice.Roll("1d6").DM(-3).Sum()
+					moons = gs.Dice.Sroll("1d6-3")
 				default:
-					moons = gs.Dice.Roll("1d6").DM(-2).Sum()
+					moons = gs.Dice.Sroll("1d6-2")
 				}
 				if moons < -9 {
 					return fmt.Errorf("moons was not allocated for planet [%v]", planet)
@@ -51,13 +53,13 @@ func (gs *GenerationState) placeMoons() error {
 					moonSize := -1
 					switch planet.sizeType {
 					case "1", "2", "3", "4", "5":
-						moonSize = gs.Dice.Roll("1d2").DM(-1).Sum()
+						moonSize = gs.Dice.Sroll("1d2-1")
 					case "6", "7", "8":
-						moonSize = gs.Dice.Roll("1d6").DM(-3).Sum()
+						moonSize = gs.Dice.Sroll("1d6-3")
 					case "A", "B", "C", "D", "E", "F":
-						moonSize = gs.Dice.Roll("1d6").DM(-2).Sum()
+						moonSize = gs.Dice.Sroll("1d6-2")
 					case "G", "H", "J", "K", "L", "M", "N", "P", "Q":
-						moonSize = gs.Dice.Roll("1d6").DM(-1).Sum()
+						moonSize = gs.Dice.Sroll("1d6-1")
 					}
 					if moonSize < 0 {
 						moonSize = 0
@@ -73,7 +75,7 @@ func (gs *GenerationState) placeMoons() error {
 				}
 
 			}
-			if ggigant, ok := body.(*ggiant); ok {
+			if ggigant, ok := star.orbit[orb].(*ggiant); ok {
 				moons := -10
 				switch {
 				case strings.Contains(ggigant.descr, GasGigantNeptunian):

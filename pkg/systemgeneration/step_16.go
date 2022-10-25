@@ -11,12 +11,15 @@ func (gs *GenerationState) Step16() error {
 	if gs.NextStep != 16 {
 		return fmt.Errorf("not actual step")
 	}
+	//fmt.Println("BELT")
 	if err := gs.setBeltDetails(); err != nil {
 		return err
 	}
+	fmt.Println("BELT 2")
 	if err := gs.adjustBeltPositions(); err != nil {
 		return err
 	}
+	fmt.Println("BELT 3")
 	gs.ConcludedStep = 16
 	gs.NextStep = 17
 	switch gs.NextStep {
@@ -35,6 +38,7 @@ func (gs *GenerationState) placeBelts() error {
 		beltNum = freeSlots(beltMarkers)
 	}
 	for i := 0; i < beltNum; i++ {
+		fmt.Println("GO BELT", i)
 		st := gs.Dice.Roll(fmt.Sprintf("1d%v", len(gs.System.Stars))).DM(-1).Sum()
 		star := gs.System.Stars[st]
 		if len(star.orbitDistances) < 1 {
@@ -46,6 +50,7 @@ func (gs *GenerationState) placeBelts() error {
 			orb := gs.Dice.Roll(fmt.Sprintf("1d%v", len(star.orbitDistances))).DM(-1).Sum()
 			if orb-try < 0 {
 				i--
+				return fmt.Errorf("Belt not Set: %v", i)
 				break
 			}
 			dist := star.orbitDistances[orb-try]
@@ -59,6 +64,8 @@ func (gs *GenerationState) placeBelts() error {
 					belt.zone = habZoneOuter
 				}
 				gs.System.Stars[st].orbit[dist] = belt
+				return fmt.Errorf("Belt Set: %v", belt.Describe())
+
 				break
 			}
 		}

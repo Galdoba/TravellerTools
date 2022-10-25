@@ -7,6 +7,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+	"github.com/Galdoba/utils"
 )
 
 func (gs *GenerationState) Step20() error {
@@ -41,9 +42,15 @@ func (gs *GenerationState) PopulateBodies() error {
 			if planet, ok := star.orbit[orbit].(*rockyPlanet); ok == true {
 				fmt.Println("planet", p)
 
-				planet.populate(gs.Dice, mwuwp, gs.System.populationType)
+				if err := planet.populate(gs.Dice, mwuwp, gs.System.populationType); err != nil {
+					return nil
+				}
 				for m, _ := range planet.moons {
 					fmt.Println("moon", m)
+					if err := planet.moons[m].populate(gs.Dice, mwuwp, gs.System.populationType); err != nil {
+						return err
+					}
+
 				}
 			}
 			if gg, ok := star.orbit[orbit].(*ggiant); ok == true {
@@ -60,65 +67,367 @@ func (gs *GenerationState) PopulateBodies() error {
 	return nil
 }
 
+func notSettledUWP(p *rockyPlanet) error {
+	fmt.Println("NOT SETTLED ---")
+	notSettled := fmt.Sprintf("X%v%v%v000-0", p.sizeCode, p.atmoCode, p.hydrCode)
+	p.comment = ""
+	p.injectUwpCodes(uwp.Inject(notSettled))
+	return nil
+}
+
+func (p *rockyPlanet) defineAsCorporative(dice *dice.Dicepool, pop int) {
+	gov := 1
+	fmt.Println("Corporative")
+	pop = utils.Min(pop, 5)
+	p.comment += fmt.Sprintf("%v Corporatin %v Facility", dice.PickStrOnly([]string{"Local", "Major"}), dice.PickStrOnly([]string{"Mining", "Science", "Storage"}))
+	law := dice.Sroll("1d6+4")
+	planetUWP := uwp.Inject(fmt.Sprintf("X%v%v%v%v%v%v-0", p.sizeCode, p.atmoCode, p.hydrCode, ehex.ToCode(pop), ehex.ToCode(gov), ehex.ToCode(law)))
+	p.injectUwpCodes(planetUWP)
+}
+
+func (p *rockyPlanet) defineAsMining(dice *dice.Dicepool, pop int, local bool) {
+	gov := 1
+	fmt.Println("Mining")
+	pop = utils.Min(pop, 5)
+	p.comment += fmt.Sprintf("%v Corporatin %v Facility", dice.PickStrOnly([]string{"Local", "Major"}), dice.PickStrOnly([]string{"Mining", "Science", "Storage"}))
+	law := dice.Sroll("1d6+4")
+	planetUWP := uwp.Inject(fmt.Sprintf("X%v%v%v%v%v%v-0", p.sizeCode, p.atmoCode, p.hydrCode, ehex.ToCode(pop), ehex.ToCode(gov), ehex.ToCode(law)))
+	p.injectUwpCodes(planetUWP)
+}
+
+func (p *rockyPlanet) defineAsResearch(dice *dice.Dicepool, pop int) {
+	fmt.Println("Research")
+	gov := 6
+	pop = utils.Min(pop, 3)
+	p.comment += fmt.Sprintf("Research Base")
+	law := dice.Sroll("1d6+4")
+	planetUWP := uwp.Inject(fmt.Sprintf("X%v%v%v%v%v%v-0", p.sizeCode, p.atmoCode, p.hydrCode, ehex.ToCode(pop), ehex.ToCode(gov), ehex.ToCode(law)))
+	p.injectUwpCodes(planetUWP)
+}
+
+func (p *rockyPlanet) defineAsMilitary(dice *dice.Dicepool, pop int) {
+	fmt.Println("Military")
+	gov := 6
+	pop = utils.Min(pop, 4)
+	p.comment += fmt.Sprintf("Military Base")
+	law := dice.Sroll("1d6+5")
+	planetUWP := uwp.Inject(fmt.Sprintf("X%v%v%v%v%v%v-0", p.sizeCode, p.atmoCode, p.hydrCode, ehex.ToCode(pop), ehex.ToCode(gov), ehex.ToCode(law)))
+	p.injectUwpCodes(planetUWP)
+}
+
+func (p *rockyPlanet) defineAsPrison(dice *dice.Dicepool, pop int) {
+	fmt.Println("Prison")
+	gov := 6
+	pop = utils.Min(pop, 4)
+	p.comment += fmt.Sprintf("Prison Instalation")
+	law := dice.Sroll("1d11")
+	planetUWP := uwp.Inject(fmt.Sprintf("X%v%v%v%v%v%v-0", p.sizeCode, p.atmoCode, p.hydrCode, ehex.ToCode(pop), ehex.ToCode(gov), ehex.ToCode(law)))
+	p.injectUwpCodes(planetUWP)
+}
+
+func (p *rockyPlanet) defineAsIndependent(dice *dice.Dicepool, pop int) {
+	gov := utils.Max(dice.Sroll("2d6-7")+pop, 0)
+	pop = utils.Min(pop, 8)
+	p.comment += fmt.Sprintf("Independent World")
+	law := utils.Max(dice.Sroll("2d6-7")+gov, 0)
+	planetUWP := uwp.Inject(fmt.Sprintf("X%v%v%v%v%v%v-0", p.sizeCode, p.atmoCode, p.hydrCode, ehex.ToCode(pop), ehex.ToCode(gov), ehex.ToCode(law)))
+	p.injectUwpCodes(planetUWP)
+}
+
+func (p *rockyPlanet) defineAsColony(dice *dice.Dicepool, pop int) {
+	gov := 6
+	pop = utils.Min(pop, 8)
+	p.comment += fmt.Sprintf("Colony")
+	law := dice.Sroll("2d6-1")
+	planetUWP := uwp.Inject(fmt.Sprintf("X%v%v%v%v%v%v-0", p.sizeCode, p.atmoCode, p.hydrCode, ehex.ToCode(pop), ehex.ToCode(gov), ehex.ToCode(law)))
+	p.injectUwpCodes(planetUWP)
+}
+
+func (p *rockyPlanet) defineAsFuelBase(dice *dice.Dicepool, pop int) {
+	gov := 6
+	pop = utils.Min(pop, 8)
+	p.comment += fmt.Sprintf("Colony")
+	law := dice.Sroll("2d6-1")
+	planetUWP := uwp.Inject(fmt.Sprintf("X%v%v%v%v%v%v-0", p.sizeCode, p.atmoCode, p.hydrCode, ehex.ToCode(pop), ehex.ToCode(gov), ehex.ToCode(law)))
+	p.injectUwpCodes(planetUWP)
+}
+
 func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType string) error {
 	mwTL := mwuwp.TL()
-
+	fmt.Println("===Populate planet", p.orbit, p.habZone, p.sizeType)
 	switch popType {
 	default:
 		return fmt.Errorf("????")
 	case PopulationOFF:
 		p.uwpStr = fmt.Sprintf("X%v%v%v000-0", p.sizeCode, p.atmoCode, p.hydrCode)
 	case PopulationON:
-		fmt.Println(p.comment, "COMMENT")
+		fmt.Println(p.comment, p.sizeType, p.habZone, "COMMENT")
 		if strings.Contains(p.comment, "Mainworld") {
+			fmt.Println("IS MW")
+			p.comment = "Mainworld"
 			p.injectUwpCodes(mwuwp)
 			return nil
 		}
 		if mwTL < 8 {
-			uwpW, _ := uwp.FromString(fmt.Sprintf("X%v%v%v000-0", p.sizeCode, p.atmoCode, p.hydrCode))
-			p.injectUwpCodes(uwpW)
-			return nil
+			fmt.Println("NOT SETTLED low TL")
+			return notSettledUWP(p)
 		}
+		p.comment = ""
 		switch p.habZone {
 		case habZoneInner:
 			switch p.sizeType {
-			case sizeDwarf:
-				pop := dice.Roll("1d6").DM(-3).Sum()
+			case sizeDwarf, sizeMercurian:
+				pop := dice.Sroll("1d6-3")
+				fmt.Println("Pop =", pop)
 				if pop < 0 {
-					uwpW, _ := uwp.FromString(fmt.Sprintf("X%v%v%v000-0", p.sizeCode, p.atmoCode, p.hydrCode))
-					p.injectUwpCodes(uwpW)
-					return nil
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
 				}
 				if pop == 0 {
-					p.comment = "Under Construction "
+					p.comment += "Constructing "
 				}
-				p.popCode = fmt.Sprintf("%v", pop)
 				switch dice.Sroll("2d6") {
 				case 2:
-					uwpW, _ := uwp.FromString(fmt.Sprintf("X%v%v%v000-0", p.sizeCode, p.atmoCode, p.hydrCode))
-					p.injectUwpCodes(uwpW)
+					return notSettledUWP(p)
 				case 3, 4, 5:
-					p.govCode = ehex.ToCode(1)
-					lawRoll := dice.Sroll("1d6+4")
-					p.lawCode = ehex.ToCode(lawRoll)
-					p.comment += "Corporative Compound"
+					p.defineAsCorporative(dice, pop)
 				case 6, 7:
-					p.govCode = "6"
-					p.lawCode = ehex.New().Set(dice.Roll("1d6+4").Sum()).Code()
-					p.comment += "Research Station"
+					p.defineAsResearch(dice, pop)
 				case 8, 9:
-					p.govCode = "6"
-					p.lawCode = ehex.New().Set(dice.Roll("1d6+5").Sum()).Code()
-					p.comment += "Military Base"
+					p.defineAsMilitary(dice, pop)
 				case 10, 11:
-					p.govCode = "6"
-					p.lawCode = "B"
-					p.comment += "Prison"
+					p.defineAsPrison(dice, pop)
 				case 12:
-					//todo: нужен метод добрасывания отдельных участков UWP
-					g := ehex.New().Set(p.popCode).Value()
-					p.govCode = ehex.New().Set(dice.Roll("2d6").DM(-7 + g)).Code()
-					p.lawCode = ehex.New().Set(dice.Roll("2d6").DM(-7 + g)).Code()
+					p.defineAsIndependent(dice, pop)
+				}
+			case sizeSubterran:
+				pop := dice.Sroll("1d6-2")
+				fmt.Println("Pop =", pop)
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3, 4, 5, 6, 7:
+					p.defineAsCorporative(dice, pop)
+				case 8, 9:
+					p.defineAsResearch(dice, pop)
+				case 10, 11:
+					p.defineAsMilitary(dice, pop)
+				case 12:
+					p.defineAsIndependent(dice, pop)
+				}
+			case sizeTerran, sizeSuperterran:
+				pop := 0
+				switch p.atmoCode {
+				default:
+					pop = dice.Sroll("2d6-4")
+				case "0", "1", "2", "3", "4", "5":
+					pop = dice.Sroll("1d6-2")
+				case "A", "B", "C", "D", "E", "F":
+					pop = dice.Sroll("1d6-3")
+				}
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3, 4:
+					p.defineAsCorporative(dice, pop)
+				case 5, 6:
+					p.defineAsResearch(dice, pop)
+				case 7, 8:
+					p.defineAsMilitary(dice, pop)
+				case 9, 10, 11, 12:
+					p.defineAsIndependent(dice, pop)
+				}
+			}
+		case habZoneHabitable:
+			switch p.sizeType {
+			case sizeDwarf, sizeMercurian:
+				pop := dice.Sroll("1d6-3")
+				fmt.Println("Pop =", pop)
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3, 4, 5:
+					p.defineAsCorporative(dice, pop)
+				case 6, 7:
+					p.defineAsResearch(dice, pop)
+				case 8, 9:
+					p.defineAsMilitary(dice, pop)
+				case 10, 11:
+					p.defineAsPrison(dice, pop)
+				case 12:
+					p.defineAsIndependent(dice, pop)
+				}
+			case sizeSubterran:
+				pop := dice.Sroll("1d6-2")
+				fmt.Println("Pop =", pop)
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3, 4, 5, 6, 7:
+					p.defineAsCorporative(dice, pop)
+				case 8, 9:
+					p.defineAsResearch(dice, pop)
+				case 10, 11:
+					p.defineAsMilitary(dice, pop)
+				case 12:
+					p.defineAsIndependent(dice, pop)
+				}
+			case sizeTerran, sizeSuperterran:
+				pop := 0
+				switch p.atmoCode {
+				default:
+					pop = dice.Sroll("2d6-4")
+				case "0", "1", "2", "3", "4", "5":
+					pop = dice.Sroll("1d6-2")
+				case "A", "B", "C", "D", "E", "F":
+					pop = dice.Sroll("1d6-3")
+				}
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3:
+					p.defineAsCorporative(dice, pop)
+				case 4, 5:
+					p.defineAsResearch(dice, pop)
+				case 6, 7, 8, 9:
+					p.defineAsColony(dice, pop)
+				case 10, 11, 12:
+					p.defineAsIndependent(dice, pop)
+				}
+			}
+		case habZoneOuter:
+			fmt.Println("DO NOTHING YET")
+			switch p.sizeType {
+			case sizeDwarf, sizeMercurian:
+				pop := dice.Sroll("1d6-3")
+				fmt.Println("Pop =", pop)
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3:
+					p.defineAsCorporative(dice, pop)
+				case 4, 5:
+					p.defineAsResearch(dice, pop)
+				case 6, 7:
+					p.defineAsMilitary(dice, pop)
+				case 8, 9:
+					p.defineAsFuelBase(dice, pop)
+				case 10, 11:
+					p.defineAsPrison(dice, pop)
+				case 12:
+					p.defineAsIndependent(dice, pop)
+				}
+			case sizeSubterran:
+				pop := dice.Sroll("1d6-2")
+				fmt.Println("Pop =", pop)
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3:
+					p.defineAsCorporative(dice, pop)
+				case 4, 5:
+					p.defineAsResearch(dice, pop)
+				case 6, 7:
+					p.defineAsMilitary(dice, pop)
+				case 8, 9:
+					p.defineAsFuelBase(dice, pop)
+				case 10, 11:
+					p.defineAsPrison(dice, pop)
+				case 12:
+					p.defineAsIndependent(dice, pop)
+				}
+			case sizeTerran:
+				pop := dice.Sroll("1d6-2")
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3:
+					p.defineAsCorporative(dice, pop)
+				case 4, 5:
+					p.defineAsResearch(dice, pop)
+				case 6, 7:
+					p.defineAsFuelBase(dice, pop)
+				case 8, 9:
+					p.defineAsMilitary(dice, pop)
+				case 10, 11, 12:
+					p.defineAsIndependent(dice, pop)
+				}
+			case sizeSuperterran:
+				pop := dice.Sroll("1d6-3")
+				if pop < 0 {
+					fmt.Println("NOT SETTLED")
+					return notSettledUWP(p)
+				}
+				if pop == 0 {
+					p.comment += "Constructing "
+				}
+				switch dice.Sroll("2d6") {
+				case 2:
+					return notSettledUWP(p)
+				case 3, 4:
+					p.defineAsCorporative(dice, pop)
+				case 5, 6:
+					p.defineAsResearch(dice, pop)
+				case 7, 8:
+					p.defineAsMilitary(dice, pop)
+				case 9, 10, 11, 12:
+					p.defineAsIndependent(dice, pop)
 				}
 			}
 		}
@@ -135,4 +444,6 @@ func (p *rockyPlanet) injectUwpCodes(uwpS uwp.UWP) {
 	p.govCode = ehex.New().Set(uwpS.Govr()).Code()
 	p.lawCode = ehex.New().Set(uwpS.Laws()).Code()
 	p.tlCode = ehex.New().Set(uwpS.TL()).Code()
+	p.uwpStr = uwpS.Starport() + ehex.New().Set(uwpS.Size()).Code() + ehex.New().Set(uwpS.Atmo()).Code() + ehex.New().Set(uwpS.Hydr()).Code() + ehex.New().Set(uwpS.Pops()).Code() + ehex.New().Set(uwpS.Govr()).Code() + ehex.New().Set(uwpS.Laws()).Code() + "-" + ehex.New().Set(uwpS.TL()).Code()
+	fmt.Println(p.uwpStr)
 }

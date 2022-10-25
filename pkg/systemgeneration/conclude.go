@@ -23,15 +23,15 @@ func printSystem(gs *GenerationState) {
 			data += fmt.Sprintf(" %v   ", formatFloatOutput(orb))
 			switch v := star.orbit[orb].(type) {
 			case *rockyPlanet:
-				data += "Planet      " + v.uwpStr + "  " + v.habZone + " zone " + v.sizeType
+				data += "Planet      " + v.uwpStr + "  " + v.comment
 				for _, moon := range v.moons {
-					data += "\n             Moon" + "        " + moon.uwpStr + "  " + moon.habZone + " zone " + moon.sizeType
+					data += "\n             Moon" + "        " + moon.uwpStr + "  " + moon.comment
 				}
 			case *ggiant:
 				data += "Gas Gigant  " + v.descr
 				data += "\n             " + v.ring
 				for _, moon := range v.moons {
-					data += "\n             Moon" + "        " + moon.uwpStr + "  " + moon.habZone + " zone " + moon.sizeType
+					data += "\n             Moon" + "        " + moon.uwpStr + "  " + moon.comment
 				}
 			case *belt:
 				data += "Belt        " + v.composition

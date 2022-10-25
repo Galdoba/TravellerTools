@@ -102,7 +102,8 @@ func (dp *Dicepool) Roll(code string) *Dicepool {
 		dp.result = append(dp.result, dp.rand.Intn(dp.edges)+1)
 	}
 	if dp.vocal {
-		fmt.Printf("Rolled [%v + %v]: result is %v\n", code, dp.modTotal, dp.result)
+		fmt.Printf("   Rolled [%v + %v]: result is %v\n", code, dp.modTotal, dp.result)
+		fmt.Printf("   Code [%v]: %v\n", code, dp.edges)
 	}
 	return dp
 }
@@ -258,6 +259,12 @@ func (d *Dicepool) PickStr(slice []string) (int, string) {
 	l := fmt.Sprintf("%v", len(slice))
 	r := d.Roll("1d" + l).DM(-1).Sum()
 	return r, slice[r]
+}
+
+func (d *Dicepool) PickStrOnly(slice []string) string {
+	l := fmt.Sprintf("%v", len(slice))
+	r := d.Roll("1d" + l).DM(-1).Sum()
+	return slice[r]
 }
 
 /*

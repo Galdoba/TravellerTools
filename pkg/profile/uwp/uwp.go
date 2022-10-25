@@ -45,7 +45,9 @@ func New() *uwp {
 
 func Inject(uwpString string) *uwp {
 	u, err := FromString(uwpString)
+
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil
 	}
 	return u

@@ -39,9 +39,9 @@ func (gs *GenerationState) Step14() error {
 		return err
 	}
 
-	// if err := gs.placeBelts(); err != nil {
-	// 	return err
-	// }
+	if err := gs.placeBelts(); err != nil {
+		return err
+	}
 
 	gs.ConcludedStep = 14
 	gs.NextStep = 15

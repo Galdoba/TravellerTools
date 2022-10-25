@@ -20,6 +20,7 @@ func (gs *GenerationState) Step15() error {
 	if gs.NextStep != 15 {
 		return fmt.Errorf("not actual step")
 	}
+
 	if err := gs.setPlanetDetails(); err != nil {
 		return err
 	}
@@ -42,6 +43,11 @@ func (gs *GenerationState) setPlanetDetails() error {
 					return err
 				}
 				gs.System.Stars[i].orbit[orbit] = planet
+			}
+			if belt, ok := star.orbit[orbit].(*belt); ok == true {
+				fmt.Println(belt)
+				fmt.Println("NEEDDETAILS")
+				return fmt.Errorf("Belt stop")
 			}
 		}
 	}
