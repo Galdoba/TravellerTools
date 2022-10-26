@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/utils"
 )
 
 func (gs *GenerationState) Step16() error {
@@ -14,6 +15,11 @@ func (gs *GenerationState) Step16() error {
 	//fmt.Println("BELT")
 	if err := gs.setBeltDetails(); err != nil {
 		return err
+	}
+	for s, star := range gs.System.Stars {
+		for k, v := range star.orbit {
+			fmt.Println(k, v.Describe(), s)
+		}
 	}
 	fmt.Println("BELT 2")
 	if err := gs.adjustBeltPositions(); err != nil {
@@ -31,13 +37,33 @@ func (gs *GenerationState) Step16() error {
 	return nil
 }
 
+func (gs *GenerationState) randomStar() (*star, int) {
+	l := len(gs.System.Stars)
+	s := gs.Dice.Sroll(fmt.Sprintf("1d%v-1", l))
+	return gs.System.Stars[s], s
+}
+
+func (gs *GenerationState) makeOneOrbit() error {
+	star, s := gs.randomStar()
+	lastOrbit := star.orbitDistances[len(star.orbitDistances)-1]
+	newOrbit := lastOrbit * ((float64(gs.Dice.Sroll("1d10")) / 10) + 1.0)
+	newOrbit = utils.RoundFloat64(newOrbit, 2)
+	gs.System.Stars[s].orbitDistances = append(gs.System.Stars[s].orbitDistances, newOrbit)
+	gs.System.Stars[s].orbit[newOrbit] = &bodyHolder{"empty orbit"}
+	return nil
+}
+
 func (gs *GenerationState) placeBelts() error {
 	beltNum := gs.System.Belts
 	beltMarkers := gs.canPlaceBodies()
-	if beltNum > freeSlots(beltMarkers) {
-		beltNum = freeSlots(beltMarkers)
+	freeSlots := freeSlots(beltMarkers)
+	for beltNum > freeSlots {
+		gs.makeOneOrbit()
+		freeSlots++
 	}
+	fmt.Println("GO BELT", beltNum, beltMarkers)
 	for i := 0; i < beltNum; i++ {
+		fmt.Println("GO BELT", i)
 		fmt.Println("GO BELT", i)
 		st := gs.Dice.Roll(fmt.Sprintf("1d%v", len(gs.System.Stars))).DM(-1).Sum()
 		star := gs.System.Stars[st]
@@ -50,7 +76,7 @@ func (gs *GenerationState) placeBelts() error {
 			orb := gs.Dice.Roll(fmt.Sprintf("1d%v", len(star.orbitDistances))).DM(-1).Sum()
 			if orb-try < 0 {
 				i--
-				return fmt.Errorf("Belt not Set: %v", i)
+				//return fmt.Errorf("Belt not Set: %v", i)
 				break
 			}
 			dist := star.orbitDistances[orb-try]
@@ -64,7 +90,7 @@ func (gs *GenerationState) placeBelts() error {
 					belt.zone = habZoneOuter
 				}
 				gs.System.Stars[st].orbit[dist] = belt
-				return fmt.Errorf("Belt Set: %v", belt.Describe())
+				//return fmt.Errorf("Belt Set: %v", belt.Describe())
 
 				break
 			}
@@ -126,9 +152,9 @@ func canStayInBelt(body StellarBody) bool {
 }
 
 func (gs *GenerationState) setBeltDetails() error {
-	if err := gs.placeBelts(); err != nil {
-		return err
-	}
+	// if err := gs.placeBelts(); err != nil {
+	// 	return err
+	// }
 	for _, star := range gs.System.Stars {
 		for _, orbit := range star.orbitDistances {
 			if belt, ok := star.orbit[orbit].(*belt); ok == true {

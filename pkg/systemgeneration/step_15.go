@@ -47,7 +47,7 @@ func (gs *GenerationState) setPlanetDetails() error {
 			if belt, ok := star.orbit[orbit].(*belt); ok == true {
 				fmt.Println(belt)
 				fmt.Println("NEEDDETAILS")
-				return fmt.Errorf("Belt stop")
+				//return fmt.Errorf("Belt stop")
 			}
 		}
 	}

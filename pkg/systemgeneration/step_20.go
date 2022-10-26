@@ -57,6 +57,9 @@ func (gs *GenerationState) PopulateBodies() error {
 				fmt.Println("gg", p)
 				for m, _ := range gg.moons {
 					fmt.Println("moon", m)
+					if err := gg.moons[m].populate(gs.Dice, mwuwp, gs.System.populationType); err != nil {
+						return err
+					}
 				}
 			}
 			if _, ok := star.orbit[orbit].(*belt); ok == true {
@@ -155,6 +158,7 @@ func (p *rockyPlanet) defineAsFuelBase(dice *dice.Dicepool, pop int) {
 func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType string) error {
 	mwTL := mwuwp.TL()
 	fmt.Println("===Populate planet", p.orbit, p.habZone, p.sizeType)
+	maxPopDM := mwuwp.Pops() - 5
 	switch popType {
 	default:
 		return fmt.Errorf("????")
@@ -177,7 +181,7 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 		case habZoneInner:
 			switch p.sizeType {
 			case sizeDwarf, sizeMercurian:
-				pop := dice.Sroll("1d6-3")
+				pop := maxPopDM + dice.Sroll("2d6-9")
 				fmt.Println("Pop =", pop)
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
@@ -201,7 +205,7 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 					p.defineAsIndependent(dice, pop)
 				}
 			case sizeSubterran:
-				pop := dice.Sroll("1d6-2")
+				pop := maxPopDM + dice.Sroll("2d6-8")
 				fmt.Println("Pop =", pop)
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
@@ -228,9 +232,9 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 				default:
 					pop = dice.Sroll("2d6-4")
 				case "0", "1", "2", "3", "4", "5":
-					pop = dice.Sroll("1d6-2")
+					pop = dice.Sroll("2d6-8")
 				case "A", "B", "C", "D", "E", "F":
-					pop = dice.Sroll("1d6-3")
+					pop = dice.Sroll("2d6-9")
 				}
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
@@ -255,7 +259,8 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 		case habZoneHabitable:
 			switch p.sizeType {
 			case sizeDwarf, sizeMercurian:
-				pop := dice.Sroll("1d6-3")
+				pop := maxPopDM + dice.Sroll("2d6-9")
+
 				fmt.Println("Pop =", pop)
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
@@ -279,7 +284,7 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 					p.defineAsIndependent(dice, pop)
 				}
 			case sizeSubterran:
-				pop := dice.Sroll("1d6-2")
+				pop := maxPopDM + dice.Sroll("2d6-8")
 				fmt.Println("Pop =", pop)
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
@@ -306,9 +311,9 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 				default:
 					pop = dice.Sroll("2d6-4")
 				case "0", "1", "2", "3", "4", "5":
-					pop = dice.Sroll("1d6-2")
+					pop = dice.Sroll("2d6-8")
 				case "A", "B", "C", "D", "E", "F":
-					pop = dice.Sroll("1d6-3")
+					pop = dice.Sroll("2d6-9")
 				}
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
@@ -334,7 +339,7 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 			fmt.Println("DO NOTHING YET")
 			switch p.sizeType {
 			case sizeDwarf, sizeMercurian:
-				pop := dice.Sroll("1d6-3")
+				pop := maxPopDM + dice.Sroll("2d6-9")
 				fmt.Println("Pop =", pop)
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
@@ -360,7 +365,7 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 					p.defineAsIndependent(dice, pop)
 				}
 			case sizeSubterran:
-				pop := dice.Sroll("1d6-2")
+				pop := maxPopDM + dice.Sroll("2d6-8")
 				fmt.Println("Pop =", pop)
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
@@ -386,7 +391,7 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 					p.defineAsIndependent(dice, pop)
 				}
 			case sizeTerran:
-				pop := dice.Sroll("1d6-2")
+				pop := maxPopDM + dice.Sroll("2d6-8")
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
 					return notSettledUWP(p)
@@ -409,7 +414,7 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 					p.defineAsIndependent(dice, pop)
 				}
 			case sizeSuperterran:
-				pop := dice.Sroll("1d6-3")
+				pop := maxPopDM + dice.Sroll("2d6-9")
 				if pop < 0 {
 					fmt.Println("NOT SETTLED")
 					return notSettledUWP(p)
@@ -432,6 +437,11 @@ func (p *rockyPlanet) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType strin
 			}
 		}
 	}
+	return nil
+}
+
+func (b *belt) populate(dice *dice.Dicepool, mwuwp uwp.UWP, popType string) error {
+
 	return nil
 }
 

@@ -159,7 +159,6 @@ func (gs *GenerationState) canPlaceBodies() [][]orbMarker {
 	om := [][]orbMarker{}
 	for s, star := range gs.System.Stars {
 		om = append(om, []orbMarker{})
-		//TODO: переписать чтобы шло по orbitDistance
 		for _, orb := range star.orbitDistances {
 			if v, ok := star.orbit[orb]; ok == true {
 				if strings.Contains(v.Describe(), "empty orbit") {
