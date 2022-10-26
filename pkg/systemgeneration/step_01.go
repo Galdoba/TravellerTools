@@ -147,12 +147,12 @@ func decodeStellar(stellar string) ([]string, error) {
 				break
 			}
 			if data.star == "" && try == 0 {
-				str = strings.ReplaceAll(str, "VI", "V")
+				str = strings.Replace(str, "VI", "V", -1)
 				try++
 				continue
 			}
 			if data.star == "" && try == 1 {
-				str = strings.ReplaceAll(str, "IV", "V")
+				str = strings.Replace(str, "IV", "V", -1)
 				try++
 				continue
 			}
