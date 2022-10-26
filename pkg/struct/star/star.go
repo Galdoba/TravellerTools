@@ -190,7 +190,7 @@ func baseStellarMass(class string) float64 {
 	if !CodeValid(class) {
 		return -1
 	}
-	class = strings.ReplaceAll(class, "O", "B")
+	class = strings.Replace(class, "O", "B", -1)
 	massMap := make(map[string]float64)
 	massMap["B0 Ia"] = 60
 	massMap["B1 Ia"] = 54
@@ -593,7 +593,7 @@ func baseStellarLuminocity(class string) float64 {
 	if !CodeValid(class) {
 		return -1
 	}
-	class = strings.ReplaceAll(class, "O", "B")
+	class = strings.Replace(class, "O", "B", -1)
 	lumaMap := make(map[string]float64)
 	lumaMap["B0 Ia"] = 27.36 //check 27.36
 	lumaMap["B1 Ia"] = 26.14
