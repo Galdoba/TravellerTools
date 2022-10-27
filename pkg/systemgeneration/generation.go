@@ -229,6 +229,10 @@ type rockyPlanet struct {
 	uwpStr        string
 }
 
+func (p *rockyPlanet) getUWP() string {
+	return p.uwpStr
+}
+
 type detailDataExport struct {
 	orbit        float64
 	sizeCode     string
@@ -308,6 +312,11 @@ type belt struct {
 	sizeCode     string
 	atmoCode     string
 	hydrCode     string
+	port         string
+	popCode      string
+	govCode      string
+	lawCode      string
+	tlCode       string
 	composition  string
 	majorSizeAst int
 	width        float64
@@ -316,6 +325,10 @@ type belt struct {
 	zone         string
 	comment      string
 	uwpStr       string
+}
+
+func (b *belt) getUWP() string {
+	return b.uwpStr
 }
 
 func (b *belt) Describe() string {
@@ -329,6 +342,9 @@ func (b *belt) Width() float64 {
 func (gs *GenerationState) GenerateData() error {
 	err := fmt.Errorf("initial error")
 	err = nil
+	if err := gs.callImport("MW_NAME"); err != nil {
+		return nil
+	}
 	for gs.ConcludedStep < 20 {
 		fmt.Printf("Generating Step %v: ", gs.NextStep)
 		switch gs.NextStep {

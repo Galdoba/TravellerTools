@@ -34,7 +34,8 @@ func printSystem(gs *GenerationState) {
 					data += "\n             Moon" + "        " + moon.uwpStr + "  " + moon.comment
 				}
 			case *belt:
-				data += "Belt        " + v.composition
+				data += "Belt        " + v.uwpStr + "  " + v.comment
+				data += "\n             " + v.composition
 			case *jumpZoneBorder:
 				data += "Jump Border " + v.zone
 			}
@@ -87,6 +88,7 @@ func (gs *GenerationState) Import(data ...importer) error {
 			gs.importedData = append(gs.importedData, importData{v.se.Stellar(), "Stellar", "STR"})
 			gs.importedData = append(gs.importedData, importData{v.se.PBG(), "PBG", "STR"})
 			gs.importedData = append(gs.importedData, importData{v.se.MW_UWP(), "MW_UWP", "STR"})
+			gs.importedData = append(gs.importedData, importData{v.se.MW_Name(), "MW_NAME", "STR"})
 		}
 
 	}
@@ -124,6 +126,8 @@ func (d seImporter) Read(key string) []importData {
 		imprt = append(imprt, importData{dataKey: key, dataType: "STR", data: d.se.PBG()})
 	case "MW_UWP":
 		imprt = append(imprt, importData{dataKey: key, dataType: "STR", data: d.se.MW_UWP()})
+	case "MW_NAME":
+		imprt = append(imprt, importData{dataKey: key, dataType: "STR", data: d.se.MW_Name()})
 
 	}
 	return imprt
@@ -146,6 +150,10 @@ func (gs *GenerationState) callImport(key string) error {
 			}
 		case "MW_UWP":
 			if err := gs.injectMW_UWP(imported.data); err != nil {
+				return err
+			}
+		case "MW_NAME":
+			if err := gs.injectMW_Seed(imported.data); err != nil {
 				return err
 			}
 		}

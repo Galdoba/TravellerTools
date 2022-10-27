@@ -41,7 +41,7 @@ func TestGeneration(t *testing.T) {
 	for i := 4; i < 5; i++ {
 		name := fmt.Sprintf("System %v", i)
 		gen, err := NewGenerator(name, AddOption(KEY_StarSystem_TYPE, StarSystemFantastic))
-		imp := InjectSecondSurveyData(*survey.Parse("|Drinax|2223|A43645A-E|714|||NaHu|M1 V|K|{ +1 }|1|(B34+3)|[657G]|B|9|396|10|5|-107|-17|Ni||Trojan Reach|Tlaiowaha|Troj|Non-Aligned, Human-dominated"))
+		imp := InjectSecondSurveyData(*survey.Parse("|Auitawry|3140|A56689A-C|514|A|KM|NaDr|G6 V|P|{ +4 }|4|(F7E+5)|[AC7E]|Bc|10|7350|15|5|-98|0|Ri Pa Ph An Pz|F|Trojan Reach|Binary|Troj|Non-Aligned, Droyne-dominated"))
 		gen.Import(imp)
 		if err != nil {
 			fmt.Println("==============", err.Error())

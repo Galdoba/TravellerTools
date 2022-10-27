@@ -50,6 +50,11 @@ func (gs *GenerationState) injectMW_UWP(uwp string) error {
 	return nil
 }
 
+func (gs *GenerationState) injectMW_Seed(seed string) error {
+	gs.Dice.SetSeed(seed)
+	return nil
+}
+
 func (gs *GenerationState) setOrbitSpots() error {
 	for _, star := range gs.System.Stars {
 		orb := 0

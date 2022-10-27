@@ -47,7 +47,7 @@ func Inject(uwpString string) *uwp {
 	u, err := FromString(uwpString)
 
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error(), uwpString)
 		return nil
 	}
 	return u
