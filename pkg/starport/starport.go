@@ -75,7 +75,10 @@ func (st *Starport) String() string {
 	str += fmt.Sprintf("UWP : %v\n", st.MW_UWP)
 	str += fmt.Sprintf("Stellar    : %v      %v\n", st.Stellar, st.PBG)
 	str += fmt.Sprintf("Trade Codes: %v\n", st.TradeCodes)
-	str += fmt.Sprintf("Remarks    : %v\n", st.Remarks)
+	if len(st.Remarks) > 0 {
+		str += fmt.Sprintf("Remarks    : %v\n", st.Remarks)
+	}
+
 	str += "--------------------------------------------------------------------------------\n"
 	if st.SecurityProfile != nil {
 		str += st.SecurityProfile.Describe()
