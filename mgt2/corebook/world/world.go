@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/language"
@@ -12,9 +13,24 @@ import (
 )
 
 const (
-	KEY_SEED      = "Seed"
-	KEY_NAME      = "Name"
-	DEFAULT_VALUE = iota
+	KEY_SEED              = "Seed"
+	KEY_NAME              = "Name"
+	KEY_HEX               = "Hex"
+	KEY_SECTOR_DENCITY    = "Sector Density"
+	DENSITY_FORCE_PRESENT = "FORCE_PRESENT"
+	DENSITY_FORCE_ABSENT  = "FORCE_ABSENT"
+	DENSITY_CORE          = "CORE"
+	DENSITY_CLUSTER       = "CLUSTER"
+	DENSITY_DENSE         = "DENSE"
+	DENSITY_STANDARD      = "STANDARD"
+	DENSITY_SCATTERED     = "SCATTERED"
+	DENSITY_SPARCE        = "SPARCE"
+	DENSITY_RIFT          = "RIFT"
+	DENSITY_VOID          = "VOID"
+	WORLD_PRESENT         = "WORLD_PRESENT"
+	TRUE                  = "TRUE"
+	FALSE                 = "FALSE"
+	DEFAULT_VALUE         = iota
 	TEMP_FROZEN
 	TEMP_COLD
 	TEMP_TEMPERATE
@@ -42,10 +58,60 @@ func NewConstructor(options ...instruction) *constructor {
 	for _, inst := range options {
 		c.addInstruction(inst)
 	}
-
 	seed := c.options[KEY_SEED]
 	c.dice = dice.New().SetSeed(seed)
+
+	dencity := c.options[KEY_SECTOR_DENCITY]
+	switch systemPresent(c.dice, dencity) {
+	case true:
+		c.options[WORLD_PRESENT] = TRUE
+	case false:
+		c.options[WORLD_PRESENT] = FALSE
+	}
+
 	return &c
+}
+
+func systemPresent(dp *dice.Dicepool, dencity string) bool {
+	switch dencity {
+	case DENSITY_FORCE_PRESENT:
+		return true
+	case DENSITY_FORCE_ABSENT:
+		return true
+	case DENSITY_CORE:
+		if dp.Sroll("2d6") <= 11 {
+			return true
+		}
+	case DENSITY_CLUSTER:
+		if dp.Sroll("1d6") <= 5 {
+			return true
+		}
+	case DENSITY_DENSE:
+		if dp.Sroll("1d6") <= 4 {
+			return true
+		}
+	case DENSITY_STANDARD, "":
+		if dp.Sroll("1d6") <= 3 {
+			return true
+		}
+	case DENSITY_SCATTERED:
+		if dp.Sroll("1d6") <= 2 {
+			return true
+		}
+	case DENSITY_SPARCE:
+		if dp.Sroll("1d6") <= 1 {
+			return true
+		}
+	case DENSITY_RIFT:
+		if dp.Sroll("2d6") <= 2 {
+			return true
+		}
+	case DENSITY_VOID:
+		if dp.Sroll("3d6") <= 3 {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *constructor) addInstruction(i instruction) {
@@ -70,9 +136,27 @@ type world struct {
 	pbg         string
 }
 
+type World interface {
+	Name() string
+	Location() hexagon.Hexagon
+	Bases() string
+	Statistics() string
+	TradeCodes() []string
+	TravelCode() string
+	Allegiance() string
+	GG() string
+}
+
 func (c *constructor) Create() (*world, error) {
+	if c.callInstruction(WORLD_PRESENT) == FALSE {
+		return nil, nil
+	}
+	if c.callInstruction(WORLD_PRESENT) != TRUE {
+		return nil, fmt.Errorf("world presence expected")
+	}
 	w := &world{}
 	w.name = c.callInstruction(KEY_NAME)
+	w.location = c.callInstruction(KEY_HEX)
 	if w.name == "" {
 		lang, _ := language.New("VILANI")
 		word := language.NewWord(c.dice, lang, 0)
@@ -465,6 +549,9 @@ func (w *world) getTradeCodes(c *constructor) error {
 		tc = append(tc, "Ho")
 	case TEMP_BOILING:
 		tc = append(tc, "Bo")
+	}
+	if w.nlife {
+		tc = append(tc, "(Natives)")
 	}
 	w.tradeCodes = tc
 	return nil

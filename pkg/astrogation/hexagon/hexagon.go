@@ -3,6 +3,7 @@ package hexagon
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 const (
@@ -22,6 +23,11 @@ const (
 type Hexagon struct {
 	cube cubeCoords
 	hex  hexCoords
+}
+
+func Global(x, y int) Hexagon {
+	return New_Unsafe(Feed_HEX, x, y)
+
 }
 
 func New_Unsafe(feed int, coordinates ...int) Hexagon {
@@ -355,4 +361,19 @@ func Spiral(cntr Cube, radius int) ([]Hexagon, error) {
 		output = append(output, hx)
 	}
 	return output, nil
+}
+
+func StdCoords(h Hexagon) string {
+	str := []string{}
+	for _, v := range []int{h.CoordX(), h.CoordY()} {
+		if v < 1 {
+			return ""
+		}
+		out := fmt.Sprintf("%v", v)
+		if len(out) == 1 {
+			out = "0" + out
+		}
+		str = append(str, out)
+	}
+	return strings.Join(str, "")
 }
