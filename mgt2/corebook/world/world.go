@@ -3,8 +3,8 @@ package world
 import (
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/language"
@@ -17,6 +17,7 @@ const (
 	KEY_NAME              = "Name"
 	KEY_HEX               = "Hex"
 	KEY_SECTOR_DENCITY    = "Sector Density"
+	KEY_DATA              = "Data"
 	DENSITY_FORCE_PRESENT = "FORCE_PRESENT"
 	DENSITY_FORCE_ABSENT  = "FORCE_ABSENT"
 	DENSITY_CORE          = "CORE"
@@ -70,6 +71,10 @@ func NewConstructor(options ...instruction) *constructor {
 	}
 
 	return &c
+}
+
+func (c *constructor) AddInstruction(inst instruction) {
+	c.addInstruction(inst)
 }
 
 func systemPresent(dp *dice.Dicepool, dencity string) bool {
@@ -136,25 +141,34 @@ type world struct {
 	pbg         string
 }
 
-type World interface {
-	Name() string
-	Location() hexagon.Hexagon
-	Bases() string
-	Statistics() string
-	TradeCodes() []string
-	TravelCode() string
-	Allegiance() string
-	GG() string
-}
-
 func (c *constructor) Create() (*world, error) {
+	time.Sleep(time.Microsecond * 5)
+	w := &world{}
+	if data := c.callInstruction(KEY_DATA); data != "" {
+		//ishsish 0203     0203  C   X760246-3  De Lo Lt               A  G
+
+		dt := strings.Split(data, "|")
+		if len(dt) < 7 {
+			return nil, fmt.Errorf("input data incorect: '%v'", data)
+		}
+		w.name = dt[0]
+		w.location = dt[1]
+		w.bases = dt[2]
+		w.uwp = uwp.Inject(dt[3])
+		for _, tc := range strings.Fields(dt[4]) {
+			w.tradeCodes = append(w.tradeCodes, tc)
+		}
+		w.travelCode = dt[5]
+		w.pbg = dt[6]
+		return w, nil
+	}
 	if c.callInstruction(WORLD_PRESENT) == FALSE {
 		return nil, nil
 	}
 	if c.callInstruction(WORLD_PRESENT) != TRUE {
 		return nil, fmt.Errorf("world presence expected")
 	}
-	w := &world{}
+
 	w.name = c.callInstruction(KEY_NAME)
 	w.location = c.callInstruction(KEY_HEX)
 	if w.name == "" {
@@ -173,6 +187,7 @@ func (c *constructor) Create() (*world, error) {
 		w.rollStprt(c),
 		w.rollTL(c),
 		w.enviromentalLimits(c),
+		w.getBases(c),
 		w.getTradeCodes(c),
 		w.getTravelCode(c),
 		w.setPBG(c),
@@ -587,6 +602,67 @@ func (w *world) getTravelCode(c *constructor) error {
 	return nil
 }
 
+func (w *world) getBases(c *constructor) error {
+	switch w.uwp.Starport() {
+	case "A":
+		if h := c.dice.Sroll("2d6"); h >= 6 {
+			w.bases += "h"
+		}
+		if m := c.dice.Sroll("2d6"); m >= 8 {
+			w.bases += "M"
+		}
+		if n := c.dice.Sroll("2d6"); n >= 8 {
+			w.bases += "N"
+		}
+		if s := c.dice.Sroll("2d6"); s >= 10 {
+			w.bases += "S"
+		}
+	case "B":
+		if h := c.dice.Sroll("2d6"); h >= 8 {
+			w.bases += "h"
+		}
+		if m := c.dice.Sroll("2d6"); m >= 8 {
+			w.bases += "M"
+		}
+		if n := c.dice.Sroll("2d6"); n >= 8 {
+			w.bases += "N"
+		}
+		if s := c.dice.Sroll("2d6"); s >= 9 {
+			w.bases += "S"
+		}
+	case "C":
+		if h := c.dice.Sroll("2d6"); h >= 10 {
+			w.bases += "h"
+		}
+		if m := c.dice.Sroll("2d6"); m >= 10 {
+			w.bases += "M"
+		}
+		if s := c.dice.Sroll("2d6"); s >= 9 {
+			w.bases += "S"
+		}
+	case "D":
+		if h := c.dice.Sroll("2d6"); h >= 12 {
+			w.bases += "h"
+		}
+		if s := c.dice.Sroll("2d6"); s >= 8 {
+			w.bases += "S"
+		}
+		if c := c.dice.Sroll("2d6"); c >= 12 {
+			w.bases += "C"
+		}
+	case "E":
+		if c := c.dice.Sroll("2d6"); c >= 10 {
+			w.bases += "C"
+		}
+	case "X":
+		if c := c.dice.Sroll("2d6"); c >= 10 {
+			w.bases += "C"
+		}
+
+	}
+	return nil
+}
+
 func (w *world) setPBG(c *constructor) error {
 	w.pbg = "G"
 	if c.dice.Sroll("2d6") > 9 {
@@ -614,4 +690,50 @@ func (w *world) ShortData() []string {
 	fields = append(fields, w.travelCode)
 	fields = append(fields, w.pbg)
 	return fields
+}
+
+/*
+type World interface {
+	Name() string
+	Location() string
+	Bases() string
+	Statistics() string
+	TradeCodes() string
+	TravelCode() string
+	Allegiance() string
+	GG() string
+}
+*/
+func (w *world) Name() string {
+	return w.name
+}
+
+func (w *world) Location() string {
+	return w.location
+}
+func (w *world) Bases() string {
+	return w.bases
+}
+func (w *world) Statistics() string {
+	return fmt.Sprintf("%v%v%v%v%v%v%v-%v", w.uwp.Starport(),
+		ehex.New().Set(w.uwp.Size()).Code(),
+		ehex.New().Set(w.uwp.Atmo()).Code(),
+		ehex.New().Set(w.uwp.Hydr()).Code(),
+		ehex.New().Set(w.uwp.Pops()).Code(),
+		ehex.New().Set(w.uwp.Govr()).Code(),
+		ehex.New().Set(w.uwp.Laws()).Code(),
+		ehex.New().Set(w.uwp.TL()).Code(),
+	)
+}
+func (w *world) TradeCodes() string {
+	return strings.Join(w.tradeCodes, " ")
+}
+func (w *world) TravelCode() string {
+	return w.travelCode
+}
+func (w *world) Allegiance() string {
+	return ""
+}
+func (w *world) GG() string {
+	return w.pbg
 }

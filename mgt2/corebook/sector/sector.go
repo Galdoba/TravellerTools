@@ -14,6 +14,22 @@ type SectorMap struct {
 	r          int
 	values     map[int]int
 	hex        map[globalCoords]hexagon.Hexagon
+	world      map[globalCoords]World
+}
+
+type World interface {
+	Name() string
+	Location() string
+	Bases() string
+	Statistics() string
+	TradeCodes() string
+	TravelCode() string
+	Allegiance() string
+	GG() string
+}
+
+func (sm *SectorMap) Name() string {
+	return sm.sectorName
 }
 
 const (
@@ -30,6 +46,7 @@ type globalCoords struct {
 func New(name string, w, h, r int) (*SectorMap, error) {
 	sm := SectorMap{}
 	sm.hex = make(map[globalCoords]hexagon.Hexagon)
+	sm.sectorName = name
 	switch {
 	default:
 		return &sm, fmt.Errorf("cannot create sector: bad input: w=%v h=%v r=%v", w, h, r)
@@ -108,4 +125,9 @@ func (sm *SectorMap) GridSorted() []hexagon.Hexagon {
 		}
 	}
 	return grid
+}
+
+func (sm *SectorMap) AddWorld(w World) {
+	glCo := Coords(1, 1)
+
 }
