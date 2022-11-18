@@ -128,8 +128,8 @@ func (c *constructor) callInstruction(key string) string {
 }
 
 type world struct {
-	name        string
-	location    string      //позже интерфейс "Координаты"
+	name string
+	//location    string      //позже интерфейс "Координаты"
 	statistics  []ehex.Ehex //позже интерфейс "Универсальный Планетарный Профайл"
 	uwp         uwp.UWP
 	bases       string
@@ -152,7 +152,7 @@ func (c *constructor) Create() (*world, error) {
 			return nil, fmt.Errorf("input data incorect: '%v'", data)
 		}
 		w.name = dt[0]
-		w.location = dt[1]
+		//w.location = dt[1]
 		w.bases = dt[2]
 		w.uwp = uwp.Inject(dt[3])
 		for _, tc := range strings.Fields(dt[4]) {
@@ -170,7 +170,7 @@ func (c *constructor) Create() (*world, error) {
 	}
 
 	w.name = c.callInstruction(KEY_NAME)
-	w.location = c.callInstruction(KEY_HEX)
+	//w.location = c.callInstruction(KEY_HEX)
 	if w.name == "" {
 		lang, _ := language.New("VILANI")
 		word := language.NewWord(c.dice, lang, 0)
@@ -326,7 +326,7 @@ func (w *world) rollHydr(c *constructor) error {
 		if w.temperature == TEMP_HOT {
 			dm += -2
 		}
-		if w.temperature == TEMP_COLD {
+		if w.temperature == TEMP_BOILING {
 			dm += -6
 		}
 	}
@@ -358,6 +358,9 @@ func (w *world) rollPops(c *constructor) error {
 			break
 		}
 		p++
+		if p > 15 {
+			p = 15
+		}
 	}
 	pop := ehex.New().Set(p)
 	w.statistics = append(w.statistics, pop)
@@ -386,6 +389,9 @@ func (w *world) rollLaws(c *constructor) error {
 	l := c.dice.Sroll("2d6-7") + w.statistics[4].Value()
 	if l < 0 {
 		l = 0
+	}
+	if l > 18 {
+		l = 18
 	}
 	w.statistics = append(w.statistics, ehex.New().Set(l))
 	return nil
@@ -431,23 +437,23 @@ func (w *world) rollTL(c *constructor) error {
 		return fmt.Errorf("No data on Starport")
 	}
 	tl := c.dice.Sroll("1d6")
-	switch w.statistics[0].Value() {
+	switch w.statistics[0].Value() { //Size
 	case 0, 1:
 		tl = tl + 2
 	case 2, 3, 4:
 		tl++
 	}
-	switch w.statistics[1].Value() {
+	switch w.statistics[1].Value() { //Atmo
 	case 0, 1, 2, 3, 10, 11, 12, 13, 14, 15:
 		tl++
 	}
-	switch w.statistics[2].Value() {
+	switch w.statistics[2].Value() { //Hydro
 	case 0, 9:
 		tl++
 	case 10:
 		tl = tl + 2
 	}
-	switch w.statistics[3].Value() {
+	switch w.statistics[3].Value() { //pop
 	case 1, 2, 3, 4, 5, 8:
 		tl++
 	case 9:
@@ -461,7 +467,7 @@ func (w *world) rollTL(c *constructor) error {
 	case 13:
 		tl = tl + 1
 	}
-	switch w.statistics[4].Value() {
+	switch w.statistics[4].Value() { //gov
 	case 0, 5:
 		tl++
 	case 7:
@@ -495,7 +501,15 @@ func (w *world) enviromentalLimits(c *constructor) error {
 		case 4, 5, 6, 7, 8, 9, 13, 14, 10, 11, 12, 15:
 			w.nlife = true
 		}
+	} else {
+		if w.statistics[3].Value() == 0 {
+			w.statistics[4] = ehex.New().Set(0)
+			w.statistics[5] = ehex.New().Set(0)
+			w.statistics[6] = ehex.New().Set("X")
+			w.statistics[7] = ehex.New().Set(0)
+		}
 	}
+
 	tlLimit := 0
 	switch w.statistics[1].Value() {
 	case 5, 6, 8:
@@ -523,22 +537,22 @@ func (w *world) enviromentalLimits(c *constructor) error {
 		w.statistics[7] = ehex.New().Set(0)
 	}
 	switch {
-	case w.statistics[7].Value() < 5 || w.statistics[3].Value() < 3:
+	case w.statistics[7].Value() < 5 || w.statistics[3].Value()+(w.statistics[7].Value()/2) < 3:
 		switch w.statistics[6].Code() {
 		case "A", "B", "C", "D":
 			w.statistics[6] = ehex.New().Set("E")
 		}
-	case w.statistics[7].Value() < 7 || w.statistics[3].Value() < 5:
+	case w.statistics[7].Value() < 7 || w.statistics[3].Value()+(w.statistics[7].Value()/2) < 5:
 		switch w.statistics[6].Code() {
 		case "A", "B", "C":
 			w.statistics[6] = ehex.New().Set("D")
 		}
-	case w.statistics[7].Value() < 8 || w.statistics[3].Value() < 6:
+	case w.statistics[7].Value() < 8 || w.statistics[3].Value()+(w.statistics[7].Value()/2) < 6:
 		switch w.statistics[6].Code() {
 		case "A", "B":
 			w.statistics[6] = ehex.New().Set("C")
 		}
-	case w.statistics[7].Value() < 9 || w.statistics[3].Value() < 7:
+	case w.statistics[7].Value() < 9 || w.statistics[3].Value()+(w.statistics[7].Value()/2) < 7:
 		switch w.statistics[6].Code() {
 		case "A":
 			w.statistics[6] = ehex.New().Set("B")
@@ -665,7 +679,7 @@ func (w *world) getBases(c *constructor) error {
 
 func (w *world) setPBG(c *constructor) error {
 	w.pbg = "G"
-	if c.dice.Sroll("2d6") > 9 {
+	if c.dice.Sroll("2d6") >= 10 {
 		w.pbg = ""
 	}
 	return nil
@@ -683,7 +697,7 @@ func listTC(sl []string) string {
 func (w *world) ShortData() []string {
 	fields := []string{}
 	fields = append(fields, w.name)
-	fields = append(fields, w.location)
+	//fields = append(fields, w.location)
 	fields = append(fields, w.bases)
 	fields = append(fields, fmt.Sprintf("%v", w.uwp))
 	fields = append(fields, listTC(w.tradeCodes))
@@ -707,23 +721,11 @@ type World interface {
 func (w *world) Name() string {
 	return w.name
 }
-
-func (w *world) Location() string {
-	return w.location
-}
 func (w *world) Bases() string {
 	return w.bases
 }
 func (w *world) Statistics() string {
-	return fmt.Sprintf("%v%v%v%v%v%v%v-%v", w.uwp.Starport(),
-		ehex.New().Set(w.uwp.Size()).Code(),
-		ehex.New().Set(w.uwp.Atmo()).Code(),
-		ehex.New().Set(w.uwp.Hydr()).Code(),
-		ehex.New().Set(w.uwp.Pops()).Code(),
-		ehex.New().Set(w.uwp.Govr()).Code(),
-		ehex.New().Set(w.uwp.Laws()).Code(),
-		ehex.New().Set(w.uwp.TL()).Code(),
-	)
+	return w.uwp.String()
 }
 func (w *world) TradeCodes() string {
 	return strings.Join(w.tradeCodes, " ")
@@ -731,9 +733,6 @@ func (w *world) TradeCodes() string {
 func (w *world) TravelCode() string {
 	return w.travelCode
 }
-func (w *world) Allegiance() string {
-	return ""
-}
-func (w *world) GG() string {
+func (w *world) PBG() string {
 	return w.pbg
 }

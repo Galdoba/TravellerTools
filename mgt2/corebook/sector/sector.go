@@ -2,30 +2,87 @@ package sector
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 )
 
-//SectorMap - Коллекция Хексов вызявается по кубическим координатам
+//SectorMap - Коллекция Хексов вызывается по кубическим координатам
 type SectorMap struct {
 	sectorName string
 	w          int
 	h          int
 	r          int
 	values     map[int]int
-	hex        map[globalCoords]hexagon.Hexagon
-	world      map[globalCoords]World
+	byHex      map[hexagon.Hexagon]*WorldData
+}
+
+func (sm *SectorMap) gridType() int {
+	if sm.w == 0 && sm.h == 0 && sm.r > 0 {
+		return Location_Type_Spiral
+	}
+	if sm.w > 0 && sm.h > 0 && sm.r == 0 {
+		return Location_Type_Square
+	}
+	return defaultValue
 }
 
 type World interface {
 	Name() string
-	Location() string
+	//Location() string
 	Bases() string
 	Statistics() string
 	TradeCodes() string
 	TravelCode() string
-	Allegiance() string
-	GG() string
+	//Allegiance() string
+	PBG() string
+}
+
+type WorldData struct {
+	w   World
+	loc string
+}
+
+func NewWorldData(hex hexagon.Hexagon, w World, sector_grid_type int) WorldData {
+	wd := WorldData{}
+	wd.w = w
+	wd.loc = Location(hex, sector_grid_type)
+	return wd
+}
+
+func (wd *WorldData) String() string {
+	switch {
+	case wd.w == nil:
+		return ""
+	}
+	return fmt.Sprintf("%v  %v  %v  %v  %v  %v  %v",
+		wd.w.Name(),
+		wd.loc,
+		wd.w.Bases(),
+		wd.w.Statistics(),
+		wd.w.TradeCodes(),
+		wd.w.TravelCode(),
+		wd.w.PBG(),
+	)
+}
+
+func Location(hex hexagon.Hexagon, lType int) string {
+	loc := ""
+	switch lType {
+	case Location_Type_Spiral:
+		loc = fmt.Sprintf("[%v %v %v]", hex.CoordQ(), hex.CoordR(), hex.CoordS())
+	case Location_Type_Square:
+		x, y := fmt.Sprintf("%v", hex.CoordX()), fmt.Sprintf("%v", hex.CoordY())
+		if len(x) == 1 {
+			x = "0" + x
+		}
+		if len(y) == 1 {
+			y = "0" + y
+		}
+		loc = x + y
+	}
+
+	return loc
 }
 
 func (sm *SectorMap) Name() string {
@@ -33,19 +90,18 @@ func (sm *SectorMap) Name() string {
 }
 
 const (
-	lowX  = 1
-	lowY  = 2
-	highX = 3
-	highY = 4
+	defaultValue = iota
+	Location_Type_Spiral
+	Location_Type_Square
+	lowX
+	lowY
+	highX
+	highY
 )
-
-type globalCoords struct {
-	x, y int
-}
 
 func New(name string, w, h, r int) (*SectorMap, error) {
 	sm := SectorMap{}
-	sm.hex = make(map[globalCoords]hexagon.Hexagon)
+	sm.byHex = make(map[hexagon.Hexagon]*WorldData)
 	sm.sectorName = name
 	switch {
 	default:
@@ -59,7 +115,7 @@ func New(name string, w, h, r int) (*SectorMap, error) {
 		}
 		for _, hx := range spiral {
 			x, y := hx.HexValues()
-			sm.hex[Coords(x, y)] = HexagonOnGrid(x, y)
+			sm.byHex[HexagonOnGrid(x, y)] = nil
 		}
 		//create by spiral
 	case w > 0 && h > 0 && r == 0:
@@ -67,13 +123,13 @@ func New(name string, w, h, r int) (*SectorMap, error) {
 		sm.h = h
 		for y := 1; y <= h; y++ {
 			for x := 1; x <= w; x++ {
-				sm.hex[Coords(x, y)] = HexagonOnGrid(x, y)
+				sm.byHex[HexagonOnGrid(x, y)] = nil
 			}
 		}
 	}
 	sm.values = make(map[int]int)
 	lX, lY, hX, hY := 1000000, 1000000, -1000000, -1000000
-	for _, v := range sm.hex {
+	for v, _ := range sm.byHex {
 		x, y := v.HexValues()
 		if x > hX {
 			hX = x
@@ -95,8 +151,13 @@ func New(name string, w, h, r int) (*SectorMap, error) {
 	return &sm, nil
 }
 
-func Coords(x, y int) globalCoords {
-	return globalCoords{x, y}
+func (sm *SectorMap) AddWorld(hex hexagon.Hexagon, w World) error {
+	if sm.gridType() == defaultValue {
+		return fmt.Errorf("sector grid type undefined")
+	}
+	wd := NewWorldData(hex, w, sm.gridType())
+	sm.byHex[hex] = &wd
+	return nil
 }
 
 func HexagonOnGrid(x, y int) hexagon.Hexagon {
@@ -111,7 +172,7 @@ func HexagonOnCube(q, r, s int) hexagon.Hexagon {
 
 func (sm *SectorMap) Grid() []hexagon.Hexagon {
 	grid := []hexagon.Hexagon{}
-	for _, v := range sm.hex {
+	for v, _ := range sm.byHex {
 		grid = append(grid, v)
 	}
 	return grid
@@ -127,7 +188,36 @@ func (sm *SectorMap) GridSorted() []hexagon.Hexagon {
 	return grid
 }
 
-func (sm *SectorMap) AddWorld(w World) {
-	glCo := Coords(1, 1)
+func (sm *SectorMap) PrintAsTable() {
+	data := [][]string{}
+	for _, h := range sm.GridSorted() {
+		wd := sm.byHex[h]
+		if wd == nil {
+			continue
+		}
+		dataline := strings.Split(wd.String(), "  ")
+		data = append(data, dataline)
+	}
+	printAsTable(data...)
+}
 
+func printAsTable(flds ...[]string) {
+	lMap := make(map[int]int)
+	for _, fld := range flds {
+		for i, f := range fld {
+			if lMap[i] < len(f) {
+				lMap[i] = len(f)
+			}
+		}
+
+	}
+	for _, fld := range flds {
+		for i, f := range fld {
+			for len(f) < lMap[i] {
+				f += " "
+			}
+			fmt.Print(f + "  ")
+		}
+		fmt.Print("\n")
+	}
 }

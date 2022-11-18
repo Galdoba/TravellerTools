@@ -5,34 +5,14 @@ import (
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/mgt2/corebook/world"
+	"github.com/Galdoba/TravellerTools/mgt2/gypsy/world/starport"
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/language"
 )
 
-func PrintAsTable(flds ...[]string) {
-	lMap := make(map[int]int)
-	for _, fld := range flds {
-		for i, f := range fld {
-			if lMap[i] < len(f) {
-				lMap[i] = len(f)
-			}
-		}
-
-	}
-	for _, fld := range flds {
-		for i, f := range fld {
-			for len(f) < lMap[i] {
-				f += " "
-			}
-			fmt.Print(f + "  ")
-		}
-		fmt.Print("\n")
-	}
-}
-
 func TestInSector(t *testing.T) {
-	sector, err := New("Test", 8, 10, 0)
+	sector, err := New("Test", 3, 4, 0)
 	fmt.Println(sector.Name())
 	if err != nil {
 		t.Errorf(err.Error())
@@ -44,19 +24,14 @@ func TestInSector(t *testing.T) {
 		name := language.NewWord(dice.New(), lang, 0)
 		c := world.NewConstructor(
 			world.Instruction(world.KEY_HEX, hex),
-			world.Instruction(world.KEY_NAME, name+" "+hex),
+			world.Instruction(world.KEY_NAME, name+" "),
 			//Instruction(KEY_SECTOR_DENCITY, DENSITY_FORCE_PRESENT),
 		)
-		if hex == "0505" {
+		if hex == "0101" {
 			//ishsish 0203     0203  C   X760246-3  De Lo Lt               A  G
-			c.AddInstruction(world.Instruction(world.KEY_DATA, "Earth|0505|MNSR|A876A79-B|Ga Hi||G"))
-			fmt.Println("-----")
+			c.AddInstruction(world.Instruction(world.KEY_DATA, "Drinax|0101||A434507-F|Ni||G"))
 		}
-		if hex == "0506" {
-			//ishsish 0203     0203  C   X760246-3  De Lo Lt               A  G
-			c.AddInstruction(world.Instruction(world.KEY_DATA, "Lun Escarpa|0506|N|B400310-C|Ht Lo Va||G"))
-			fmt.Println("+++++")
-		}
+
 		w, err := c.Create()
 		if w == nil {
 			continue
@@ -65,7 +40,19 @@ func TestInSector(t *testing.T) {
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		sector.AddWorld(w)
+		if err := sector.AddWorld(v, w); err != nil {
+			t.Errorf(err.Error())
+		}
+
 	}
-	PrintAsTable(data...)
+	for hex, wd := range sector.byHex {
+		if wd == nil {
+			continue
+		}
+		fmt.Println(hex, wd.String())
+		fmt.Println("FUEL COST", starport.FuelCost(wd.w, 1.0))
+		fmt.Println("Item Price", starport.ItemProceAdjustment(wd.w))
+	}
+	fmt.Println("--------------")
+	sector.PrintAsTable()
 }

@@ -7,16 +7,17 @@ import (
 
 func TestConstructor(t *testing.T) {
 	data := [][]string{}
-	for i := 100; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		c := NewConstructor(
 			Instruction(KEY_SEED, fmt.Sprintf("Test %v", i+25)),
-			Instruction(KEY_NAME, ""),
+			//Instruction(KEY_NAME, ""),
 			Instruction(KEY_SECTOR_DENCITY, DENSITY_FORCE_PRESENT),
 		)
 		w, err := c.Create()
 		if w == nil {
 			continue
 		}
+		fmt.Println(i, w.ShortData())
 		data = append(data, w.ShortData())
 		if err != nil {
 			t.Errorf(err.Error())

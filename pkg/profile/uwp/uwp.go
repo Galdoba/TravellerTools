@@ -26,6 +26,7 @@ type uwp struct {
 
 type UWP interface {
 	profile.Profile
+	fmt.Stringer
 	Starport() string
 	Size() int
 	Atmo() int
