@@ -3,13 +3,14 @@ package family
 import (
 	"fmt"
 
+	"github.com/Galdoba/TravellerTools/pkg/calendar"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
-	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/calendar"
 )
 
 const (
-	def = iota
+	timeTick = calendar.Day
+	def      = iota
 	spouse
 	child
 )
@@ -34,19 +35,18 @@ func (m *Member) String() string {
 	for _, c := range m.StatsCurrent {
 		upp += ehex.New().Set(c).Code()
 	}
-	str := fmt.Sprintf("%v [%v]", m.Name, upp)
+	str := fmt.Sprintf("%v [%v] %v", m.Name, upp, m.Age)
 	if m.dead {
 		str += " (dead)"
 	}
 	return str
 }
 
-func (fm *Family) AddMember(relative *Member, currentDate calendar.Date) {
+func (fm *Family) AddMember(relative *Member, currentDate *calendar.Time) {
 	m := Member{}
 	m.Name = fm.FamilyName + fmt.Sprintf(" %v", len(fm.Membrs))
 	if relative.spouse == nil {
 		m.spouse = relative
-		m.Birthdate = calendar.Add(currentDate, fm.dice.Sroll("1d365")*-1, fm.dice.Flux()-18)
 		m.generation = relative.generation
 		m.rollUPP()
 		relative.spouse = &m
@@ -55,7 +55,6 @@ func (fm *Family) AddMember(relative *Member, currentDate calendar.Date) {
 		return
 	}
 	if len(relative.children) < 3 {
-		m.Birthdate = currentDate
 		m.generation = relative.generation + 1
 		m.rollUPP()
 		fm.Membrs[len(fm.Membrs)] = &m
@@ -64,41 +63,48 @@ func (fm *Family) AddMember(relative *Member, currentDate calendar.Date) {
 	}
 }
 
-func (fm *Family) Grow(currentDate calendar.Date) {
+func (m *Member) AgeNow(now *calendar.Time) int {
+	switch m.dead {
+	case true:
+	case false:
+	}
+	return -1
+}
+
+func (fm *Family) Grow(currentDate *calendar.Time) {
 	for _, mem := range fm.Membrs {
-		age := calendar.After(currentDate, mem.Birthdate)
-		fmt.Println(mem, age.String())
-		if age.Year() > 80 {
-			fmt.Println("----------")
-			if fm.dice.Sroll("3d6") == 18 {
-				mem.dead = true
-				mem.deathdate = currentDate
-			}
+		if mem.dead {
+			panic(mem)
 		}
-		if age.Year() < 21 {
-			continue
+		age := mem.AgeNow(currentDate)
+		if age > 80 {
+			//fmt.Println("----------")
+			//CHECK FOR DEATH
+			fmt.Println("CHECK FOR DEATH")
 		}
-		if age.Year() < 41 {
-			fmt.Println("+++++++++++")
-			r := fm.dice.Sroll("3d6")
-			if r == 18 {
-				fm.AddMember(mem, currentDate)
-			}
-		}
+		// if age.Year() < 21 {
+		// 	continue
+		// }
+		// if age.Year() < 41 {
+		// 	//fmt.Println("+++++++++++")
+		// 	r := fm.dice.Sroll("4d6")
+		// 	if r == 4 {
+		// 		fm.AddMember(mem, currentDate)
+		// 	}
+		// }
 	}
 }
 
 type Member struct {
 	Name         string
-	Birthdate    calendar.Date
 	Birthworld   string
 	Homeworld    string
 	StatsCurrent []int
 	StatsGenetic []int
+	Age          int
 	comments     string
 	generation   int
 	dead         bool
-	deathdate    calendar.Date
 	spouse       *Member
 	father       *Member
 	mother       *Member
@@ -108,7 +114,6 @@ type Member struct {
 func Archont(name string) *Member {
 	m := Member{}
 	m.generation = 0
-	m.Birthdate = *calendar.New().Set(1, 1)
 	m.rollUPP()
 	return &m
 }
