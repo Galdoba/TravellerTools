@@ -1,6 +1,8 @@
 package calendar
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	Holiday = iota
@@ -11,49 +13,140 @@ const (
 	Fiday
 	Sixday
 	Senday
-	Minute  = 60
-	Hour    = 3600
-	Day     = 86400
-	Year    = 31536000
-	bigBang = 1000000000000000
+	NEXT_DAY   = "NEXT_DAY"
+	NEXT_WEEK  = "NEXT_WEEK"
+	NEXT_MONTH = "NEXT_MONTH"
+	NEXT_YEAR  = "NEXT_YEAR"
 )
 
 /*
 
 int64  : -9223372036854775808 to 922 3372036 854 77 58 07
 */
-type Time struct {
-	val uint64
+type Date struct {
+	val  uint64
+	year int
+	day  int
 }
 
-func Encode(code uint64) *Time {
-	return &Time{code}
+func New(code uint64) Date {
+	t := Date{
+		val: code,
+	}
+	t.evaluate()
+	return t
 }
 
-func (t *Time) Second() uint64 {
-	return t.val % 60
-}
-func (t *Time) Minute() uint64 {
-	return (t.val / Minute) % 60
-}
-func (t *Time) Hour() uint64 {
-	return (t.val / Hour) % 24
-}
-func (t *Time) Day() uint64 {
-	return (t.val / Day) % 365
-}
-func (t *Time) Year() uint64 {
-	return t.val / Year
+func SetDate(day, year int) Date {
+	return Date{
+		val:  uint64(day + year*365),
+		day:  day,
+		year: year,
+	}
 }
 
-func (t *Time) String() string {
-	return fmt.Sprintf("%v-%v %v:%v:%v", formatInt(t.Day(), 3), formatInt(t.Year(), 3), formatInt(t.Hour(), 2), formatInt(t.Minute(), 2), formatInt(t.Second(), 2))
+func reverse(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }
 
-func formatInt(i uint64, power int) string {
-	s := fmt.Sprintf("%v", i)
-	for len(s) < power {
+func (t *Date) evaluate() {
+	if t.val == 0 {
+		t.val = 1
+	}
+	t.day = 0
+	t.year = 0
+	val := t.val
+	for val > 3650000 {
+		t.year += 10000
+		val -= 3650000
+	}
+	for val > 365000 {
+		t.year += 1000
+		val -= 365000
+	}
+	for val > 36500 {
+		t.year += 100
+		val -= 36500
+	}
+	for val > 3650 {
+		t.year += 10
+		val -= 3650
+	}
+	for val > 365 {
+		t.year += 1
+		val -= 365
+	}
+	t.day = int(val)
+
+}
+
+func (t *Date) String() string {
+	return fmt.Sprintf("%v-%v", formatUnits(t.day, 3), formatUnits(t.year, 3))
+
+}
+
+func formatUnits(i int, unit int) string {
+	s := ""
+	s = fmt.Sprintf("%v", i)
+	for len(s) < unit {
 		s = "0" + s
 	}
 	return s
+}
+
+func (t *Date) Next(code string) {
+	switch code {
+	case NEXT_DAY:
+		t.val++
+		t.evaluate()
+	case NEXT_WEEK:
+		for {
+			t.val++
+			t.evaluate()
+			if isWeekStart(t.day) {
+				return
+			}
+		}
+	case NEXT_MONTH:
+		for {
+			t.val++
+			t.evaluate()
+			if isMonthStart(t.day) {
+				return
+			}
+		}
+	case NEXT_YEAR:
+		for {
+			t.val++
+			t.evaluate()
+			if t.day == 1 {
+				return
+			}
+		}
+	}
+}
+
+func isWeekStart(i int) bool {
+	if i == 1 {
+		return true
+	}
+	for w := 1; w < 53; w++ {
+		if 2+w*7 == i {
+			return true
+		}
+	}
+	return false
+}
+
+func isMonthStart(i int) bool {
+	for _, w := range []int{1, 30, 58, 93, 121, 149, 184, 212, 240, 275, 303, 330} {
+		if w == i {
+			return true
+		}
+	}
+	return false
 }

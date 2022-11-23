@@ -513,4 +513,18 @@ func (u *uwp) AddValue(data string, val int) error {
 	return nil
 }
 
+func (u *uwp) ChangeValue(data string, val int) error {
+	switch data {
+	default:
+		return fmt.Errorf("unknown data type '%v'", data)
+	case Size, Atmo, Hydr, Pops, Govr, Laws, TL:
+		newVal := ehex.New().Set(val)
+		err := u.Encode(data, newVal)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 //err := u.Encode(Size, ehex.New().Set(hex))
