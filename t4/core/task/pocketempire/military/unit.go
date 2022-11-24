@@ -28,7 +28,7 @@ func (un *Unit) UMP() string {
 }
 
 func (un *Unit) Size() int {
-	return un.force + un.attack + un.defence + un.transport
+	return un.attack + un.defence + un.transport + un.jump
 }
 
 func (un *Unit) JumpCapability() int {
@@ -72,98 +72,135 @@ func (un *Unit) PurchaseCost() int {
 		10,    //21
 	}
 	tCost := []int{
-		-1, //0
-		-1, //1
-		-1, //2
-		-1, //3
-		-1, //4
-		-1, //5
-		-1, //6
-		40, //7
-		20, //8
-		10, //9
-		10, //10
-		10, //11
-		10, //12
-		10, //13
-		10, //14
-		10, //15
-		10, //16
-		10, //17
-		10, //18
-		10, //19
-		10, //20
-		10, //21
+		1000000, //0
+		1000000, //1
+		1000000, //2
+		1000000, //3
+		1000000, //4
+		1000000, //5
+		1000000, //6
+		40,      //7
+		20,      //8
+		10,      //9
+		10,      //10
+		10,      //11
+		10,      //12
+		10,      //13
+		10,      //14
+		10,      //15
+		10,      //16
+		10,      //17
+		10,      //18
+		10,      //19
+		10,      //20
+		10,      //21
 	}
 	jCost := []int{
-		-1, //0
-		-1, //1
-		-1, //2
-		-1, //3
-		-1, //4
-		-1, //5
-		-1, //6
-		40, //7
-		20, //8
-		10, //9
-		10, //10
-		10, //11
-		10, //12
-		10, //13
-		10, //14
-		10, //15
-		10, //16
-		10, //17
-		10, //18
-		10, //19
-		10, //20
-		10, //21
-
+		1000000, //0
+		1000000, //1
+		1000000, //2
+		1000000, //3
+		1000000, //4
+		1000000, //5
+		1000000, //6
+		40,      //7
+		20,      //8
+		10,      //9
+		10,      //10
+		10,      //11
+		10,      //12
+		10,      //13
+		10,      //14
+		10,      //15
+		10,      //16
+		10,      //17
+		10,      //18
+		10,      //19
+		10,      //20
+		10,      //21
 	}
-	switch un.tl {
-	case 0, 1, 2, 3:
-		if un.force != TYPE_DEPOT && un.force != TYPE_GROUND {
-			return -1
-		}
-		if un.transport != 0 {
-			return -1
-		}
-		if un.jump != 0 {
-			return -1
-		}
-		return (un.attack + un.defence) * adCost[un.tl]
-	case 4, 5, 6:
-		if un.force != TYPE_DEPOT && un.force != TYPE_GROUND && un.force != TYPE_AIR {
-			return -1
-		}
-		if un.transport > 0 {
-			return -1
-		}
-		if un.jump > 0 {
-			return -1
-		}
-		return (un.attack + un.defence) * adCost[un.tl]
-	case 7, 8:
-		if un.jump > 0 {
-			return -1
-		}
-		return ((un.attack + un.defence) * adCost[un.tl]) + (un.transport * tCost[un.tl])
-	default:
-		if un.tl < 0 {
-			return -1
-		}
+	df := len(un.DesignFlaw())
+	switch df {
+	case 0:
 		return ((un.attack + un.defence) * adCost[un.tl]) + (un.transport * tCost[un.tl]) + (un.jump * jCost[un.tl])
+	default:
+		return -1 * df
 	}
 }
 
 func (un *Unit) DesignFlaw() []string {
 	df := []string{}
-	switch un.tl {
-	case 0:
-		if un.force == TYPE_AIR {
-			df = append(df, fmt.Sprintf( "Cann't have Air Force on TL%v", un.tl)
+	switch {
+	case un.tl < 0:
+		df = append(df, fmt.Sprintf("TL is less than 0"))
+	case un.attack < 0:
+		df = append(df, fmt.Sprintf("Attack is less than 0"))
+	case un.defence < 0:
+		df = append(df, fmt.Sprintf("Defence is less than 0"))
+	case un.transport < 0:
+		df = append(df, fmt.Sprintf("Transport is less than 0"))
+	case un.jump < 0:
+		df = append(df, fmt.Sprintf("Jump is less than 0"))
+	}
+	switch un.force {
+	case TYPE_GROUND:
+		if un.transport > 0 {
+			df = append(df, fmt.Sprintf("Ground Force cann't have Transport value"))
 		}
-
+		if un.jump > 0 {
+			df = append(df, fmt.Sprintf("Ground Force cann't have Jump value"))
+		}
+	case TYPE_AIR:
+		if un.transport > 0 {
+			df = append(df, fmt.Sprintf("Air Force cann't have Transport value"))
+		}
+		if un.jump > 0 {
+			df = append(df, fmt.Sprintf("Air Force cann't have Jump value"))
+		}
+	case TYPE_SPACESHIP:
+		if un.jump > 0 {
+			df = append(df, fmt.Sprintf("Spaceship Force cann't have Jump value"))
+		}
+	case TYPE_DEPOT:
+		if un.jump > 0 {
+			df = append(df, fmt.Sprintf("Depot Force cann't have Jump value"))
+		}
+	}
+	switch un.tl {
+	case 0, 1, 2, 3:
+		if un.force == TYPE_AIR {
+			df = append(df, fmt.Sprintf("Cann't have Air Force on TL%v", un.tl))
+		}
+		if un.force == TYPE_SPACESHIP {
+			df = append(df, fmt.Sprintf("Cann't have Spaceship Force on TL%v", un.tl))
+		}
+		if un.force == TYPE_STARSHIP {
+			df = append(df, fmt.Sprintf("Cann't have Starship Force on TL%v", un.tl))
+		}
+		if un.transport > 0 {
+			df = append(df, fmt.Sprintf("Cann't have Transport > 0 on TL%v", un.tl))
+		}
+		if un.jump > 0 {
+			df = append(df, fmt.Sprintf("Cann't have Jump > 0 on TL%v", un.tl))
+		}
+	case 4, 5, 6:
+		if un.force == TYPE_SPACESHIP {
+			df = append(df, fmt.Sprintf("Cann't have Spaceship Force on TL%v", un.tl))
+		}
+		if un.force == TYPE_STARSHIP {
+			df = append(df, fmt.Sprintf("Cann't have Starship Force on TL%v", un.tl))
+		}
+		if un.transport > 0 {
+			df = append(df, fmt.Sprintf("Cann't have Transport > 0 on TL%v", un.tl))
+		}
+		if un.jump > 0 {
+			df = append(df, fmt.Sprintf("Cann't have Jump > 0 on TL%v", un.tl))
+		}
+	case 7, 8:
+		if un.jump > 0 {
+			df = append(df, fmt.Sprintf("Cann't have Jump > 0 on TL%v", un.tl))
+		}
+	default:
 	}
 	return df
 }

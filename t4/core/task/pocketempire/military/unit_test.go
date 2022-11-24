@@ -7,13 +7,20 @@ import (
 
 func TestUnit(t *testing.T) {
 	u := Unit{
-		force:     TYPE_GROUND,
-		tl:        13,
-		attack:    1,
-		defence:   2,
+		force:     TYPE_STARSHIP,
+		tl:        9,
+		attack:    6,
+		defence:   6,
 		transport: 6,
-		jump:      12,
+		jump:      18,
 	}
 	fmt.Println(u.UMP())
-	fmt.Println(u.PurchaseCost())
+	pc := u.PurchaseCost()
+	if pc < 0 {
+		for _, df := range u.DesignFlaw() {
+			fmt.Println(df)
+		}
+	} else {
+		fmt.Println("Cost:", u.PurchaseCost())
+	}
 }
