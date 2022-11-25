@@ -2,6 +2,7 @@ package empire
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
@@ -26,7 +27,8 @@ type worldCharacter struct {
 	uwp               uwp.UWP
 	pbg               string
 	tradecodes        []string
-	culturalExtention []ehex.Ehex
+	tradeGoods        []string
+	economicExtention []ehex.Ehex
 	selfDetermination ehex.Ehex //0-10
 	localPopularity   ehex.Ehex //0-15
 	progression       int
@@ -57,14 +59,27 @@ func WorldCharacter(indWrld individualWorld) *worldCharacter {
 	hex := hexagon.FromHex(indWrld)
 	wc.hex = hex
 	wc.tradecodes = setupTradeCodes(wc.uwp, dice)
-
+	wc.tradeGoods = availableResources(wc.uwp, wc.tradecodes, dice)
 	wc.selfDetermination = ehex.New().Set(dice.Sroll("2d6-2"))
-
 	wc.progression = 0
 	return &wc
 }
 
+func generateEconomicExtention(u uwp.UWP, tg []string, pbg string, dice *dice.Dicepool) {
+
+}
+
+func haveLife(tc []string) bool {
+	for _, t := range tc {
+		if strings.Contains(t, "NL") {
+			return true
+		}
+	}
+	return false
+}
+
 func availableResources(u uwp.UWP, tc []string, dice *dice.Dicepool) []string {
+	availRes := []string{}
 	cd := coreDensity(u, tc, dice)
 	resourceMap := make(map[string][]int)
 	resourceMap["Agricultural"] = []int{1, 4, 4, -4, 1, -3, 0, 0, 1, 0, -1, -2, 5, 0}
@@ -83,7 +98,126 @@ func availableResources(u uwp.UWP, tc []string, dice *dice.Dicepool) []string {
 	resourceMap["Artforms"] = []int{0, 2, 3, 0, 1, 2, 0, 0, 0, 0, 0, 2, 1, 1, 1}
 	resourceMap["Software"] = []int{0, 1, 4, 0, 1, 1, 1, 0, 1, 2, 3, -9, 0, 1, 4}
 	resourceMap["Documents"] = []int{-1, 0, 1, 0, 1, 2, 4, 0, 2, 4, 6, 0, 1, 3, 1}
-	return tc
+	res := []string{"Agricultural", "Ores", "Radioactives", "Crystals", "Compounds", "Agroproducts", "Metals", "Non-Metals", "Parts", "Durables", "Consumables", "Weapons", "Recordings", "Artforms", "Software", "Documents"}
+	for _, rs := range res {
+		tn := 0
+		switch rs {
+		case "Agricultural", "Ores", "Radioactives", "Crystals", "Compounds", "Agroproducts", "Metals", "Non-Metals":
+			tn += resourceMap[rs][cd]
+			switch u.Atmo() {
+			case 4, 5, 6, 7, 8, 9:
+				tn += resourceMap[rs][4]
+			default:
+				tn += resourceMap[rs][5]
+			}
+			switch u.Pops() {
+			case 0, 1, 2, 3, 4:
+				tn += resourceMap[rs][6]
+			default:
+				tn += resourceMap[rs][7]
+			}
+			switch u.TL() {
+			case 0, 1, 2, 3:
+				tn += resourceMap[rs][8]
+			case 4, 5, 6:
+				tn += resourceMap[rs][9]
+			case 7, 8, 9, 10, 11:
+				tn += resourceMap[rs][10]
+			default:
+				tn += resourceMap[rs][11]
+			}
+			switch haveLife(tc) {
+			case true:
+				tn += resourceMap[rs][12]
+			case false:
+				tn += resourceMap[rs][13]
+			}
+		case "Parts", "Durables", "Consumables", "Weapons":
+			switch u.Atmo() {
+			case 4, 5, 6, 7, 8, 9:
+				tn += resourceMap[rs][0]
+			default:
+				tn += resourceMap[rs][1]
+			}
+			switch u.Pops() {
+			case 0, 1, 2, 3, 4:
+				tn += resourceMap[rs][2]
+			case 5, 6, 7, 8:
+				tn += resourceMap[rs][3]
+			default:
+				tn += resourceMap[rs][4]
+			}
+			switch u.Govr() {
+			case 0, 1:
+				tn += resourceMap[rs][5]
+			case 2, 3, 4, 5, 6:
+				tn += resourceMap[rs][6]
+			case 7:
+				tn += resourceMap[rs][7]
+			default:
+				tn += resourceMap[rs][8]
+			}
+			switch u.TL() {
+			case 0, 1, 2, 3:
+				tn += resourceMap[rs][9]
+			case 4, 5, 6:
+				tn += resourceMap[rs][10]
+			case 7, 8, 9, 10, 11:
+				tn += resourceMap[rs][11]
+			default:
+				tn += resourceMap[rs][12]
+			}
+			switch haveLife(tc) {
+			case true:
+				tn += resourceMap[rs][13]
+			case false:
+				tn += resourceMap[rs][14]
+			}
+		case "Recordings", "Artforms", "Software", "Documents":
+			switch u.Pops() {
+			case 0, 1, 2, 3, 4:
+				tn += resourceMap[rs][0]
+			case 5, 6, 7, 8:
+				tn += resourceMap[rs][1]
+			default:
+				tn += resourceMap[rs][2]
+			}
+			switch u.Govr() {
+			case 0, 1:
+				tn += resourceMap[rs][3]
+			case 2, 3, 4, 5, 6:
+				tn += resourceMap[rs][4]
+			case 7:
+				tn += resourceMap[rs][5]
+			default:
+				tn += resourceMap[rs][6]
+			}
+			switch u.Laws() {
+			case 0, 1, 2:
+				tn += resourceMap[rs][7]
+			case 3, 4, 5, 6:
+				tn += resourceMap[rs][8]
+			case 7, 8, 9:
+				tn += resourceMap[rs][9]
+			default:
+				tn += resourceMap[rs][10]
+			}
+			switch u.TL() {
+			case 0, 1, 2, 3:
+				tn += resourceMap[rs][11]
+			case 4, 5, 6:
+				tn += resourceMap[rs][12]
+			case 7, 8, 9, 10, 11:
+				tn += resourceMap[rs][13]
+			default:
+				tn += resourceMap[rs][14]
+			}
+		}
+		if dice.Sroll("2d6") <= tn {
+			availRes = append(availRes, rs)
+		}
+	}
+	return availRes
 }
 
 func coreDensity(u uwp.UWP, tc []string, dice *dice.Dicepool) int {
@@ -131,7 +265,7 @@ func setupTradeCodes(u uwp.UWP, dice *dice.Dicepool) []string {
 	nl := nativeLifeRoll(u, dice, tc)
 	fmt.Println(nl)
 	if nl > 0 {
-		tc = append(tc, fmt.Sprintf("Nl%v", nl))
+		tc = append(tc, fmt.Sprintf("NL%v", nl))
 	}
 	return tc
 }
