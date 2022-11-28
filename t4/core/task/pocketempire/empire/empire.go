@@ -9,8 +9,19 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/economics"
 	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/family"
 	"github.com/Galdoba/utils"
+)
+
+const (
+	PROGRESSION_STAT = "Progression"
+	PLANNING_STAT    = "Planning"
+	ADVANCEMENT_STAT = "Advancement"
+	GROWTH_STAT      = "Growth"
+	MILITANCY_STAT   = "Militancy"
+	UNITY_STAT       = "Unity"
+	TOLERANCE_STAT   = "Tolerance"
 )
 
 type PocketEmpire struct {
@@ -28,12 +39,13 @@ type worldCharacter struct {
 	pbg               string
 	tradecodes        []string
 	tradeGoods        []string
-	economicExtention []ehex.Ehex
+	econEx            economics.EconomicPower
 	selfDetermination ehex.Ehex //0-10
 	localPopularity   ehex.Ehex //0-15
 	progression       int
 	factions          []int //распределение по фракциям суммарно 100%
 	hex               hexagon.Hexagon
+	baseRolls         []int //всего 7 Progression/Planning/Advancment/Grown/Militancy/Unity/Tolerance
 }
 
 type individualWorld interface {
@@ -59,14 +71,34 @@ func WorldCharacter(indWrld individualWorld) *worldCharacter {
 	hex := hexagon.FromHex(indWrld)
 	wc.hex = hex
 	wc.tradecodes = setupTradeCodes(wc.uwp, dice)
-	wc.tradeGoods = availableResources(wc.uwp, wc.tradecodes, dice)
-	wc.selfDetermination = ehex.New().Set(dice.Sroll("2d6-2"))
-	wc.progression = 0
+	//wc.tradeGoods = availableResources(wc.uwp, wc.tradecodes, dice)
+	wc.econEx = economics.GenerateInitialEconomicPower(&wc, dice)
+
+	wc.setupBaseRolls(dice)
+	wc.selfDetermination = ehex.New().Set(wc.baseRolls[0] - 2)
 	return &wc
 }
 
-func generateEconomicExtention(u uwp.UWP, tg []string, pbg string, dice *dice.Dicepool) {
+func (wc *worldCharacter) setupBaseRolls(dice *dice.Dicepool) {
+	wc.baseRolls = nil
+	for i := 0; i < 8; i++ {
+		wc.baseRolls = append(wc.baseRolls, dice.Sroll("2d6"))
+	}
+}
 
+func (wc *worldCharacter) Progression() int {
+
+}
+
+type economicExtention struct {
+	resource       ehex.Ehex
+	labor          ehex.Ehex
+	infrastructure ehex.Ehex
+	culture        ehex.Ehex
+}
+
+func (ee *economicExtention) String() string {
+	return fmt.Sprintf("%v%v%v%v", ee.resource.Code(), ee.labor.Code(), ee.infrastructure.Code(), ee.culture.Code())
 }
 
 func haveLife(tc []string) bool {
@@ -78,6 +110,161 @@ func haveLife(tc []string) bool {
 	return false
 }
 
+func coreDensity(u uwp.UWP, tc []string, dice *dice.Dicepool) int {
+	dm := 0
+	if u.Size() < 5 {
+		dm += 1
+	}
+	if u.Size() > 5 {
+		dm -= 2
+	}
+	if u.Atmo() < 4 {
+		dm += 1
+	}
+	if u.Atmo() < 5 {
+		dm -= 2
+	}
+	if utils.ListContains(tc, "Fr") {
+		dm += 6
+	}
+	r := dice.Sroll("2d6") + dm
+	if r < 2 {
+		return 0
+	}
+	if r < 11 {
+		return 1
+	}
+	if r < 15 {
+		return 2
+	}
+	return 3
+}
+
+func setupTradeCodes(u uwp.UWP, dice *dice.Dicepool) []string {
+	tc, _ := tradecodes.FromUWP(u)
+	switch rollTemp(u, dice) {
+	case 1:
+		tc = append(tc, "Fr")
+	case 2:
+		tc = append(tc, "Co")
+	case 4:
+		tc = append(tc, "Ho")
+	case 5:
+		tc = append(tc, "Bo")
+	}
+	nl := nativeLifeRoll(u, dice, tc)
+	fmt.Println(nl)
+	if nl > 0 {
+		tc = append(tc, fmt.Sprintf("NL%v", nl))
+	}
+	return tc
+}
+
+func nativeLifeRoll(u uwp.UWP, dice *dice.Dicepool, tc []string) int {
+	dm := 0
+	switch u.Atmo() {
+	case 0:
+		dm = dm - 3
+	case 4, 5, 6, 7, 8, 9:
+		dm = dm + 4
+	}
+	switch u.Hydr() {
+	case 0:
+		dm = dm - 2
+	case 2, 3, 4, 5, 6, 7, 8:
+		dm = dm + 1
+	}
+	for _, t := range tc {
+		switch t {
+		case "Fr", "Co", "Ho", "Bo":
+			dm = dm - 1
+		}
+	}
+	return dice.Sroll("2d6") + dm - 10
+}
+
+type Constructor struct {
+	dice *dice.Dicepool
+}
+
+func (c *Constructor) SetupEmpire(worlds ...individualWorld) (*PocketEmpire, error) {
+	empire := New()
+
+	return empire, nil
+}
+
+func (wc *worldCharacter) Descr() string {
+	s := fmt.Sprintf("World: %v\n", wc.name)
+	s += fmt.Sprintf("UWP  : %v-%v\n", wc.uwp.String(), wc.econEx.String())
+	s += fmt.Sprintf("HEX  : %v\n", wc.hex.String())
+	s += fmt.Sprintf("PBG: : %v\n", wc.pbg)
+	s += fmt.Sprintf("SD   : %v\n", wc.selfDetermination.Code())
+	s += fmt.Sprintf("TC   : ")
+	for _, tc := range wc.tradecodes {
+		s += tc + " "
+	}
+	s += "\n"
+	s += "DEBUG INFO:-------------\n"
+	s += fmt.Sprintf("%v\n", wc.baseRolls)
+
+	return s
+}
+
+func rollTemp(u uwp.UWP, dice *dice.Dicepool) int {
+	dm := 0
+	temperature := 0
+	extreme := false
+	size := ehex.ToCode(u.Size())
+	switch size {
+	case "0", "1":
+		extreme = true
+	case "2", "3":
+		dm = -2
+	case "4", "5", "E":
+		dm = -1
+	case "6", "7":
+		dm = 0
+	case "8", "9":
+		dm = 1
+	case "A", "D", "F":
+		dm = 2
+	case "B", "C":
+		dm = 6
+	}
+	r := dice.Sroll("2d6") + dm
+	switch r {
+	case 3, 4:
+		temperature = 2
+		if extreme {
+			temperature = 1
+		}
+	case 5, 6, 7, 8, 9:
+		temperature = 3
+		if extreme {
+			switch dice.Sroll("1d2") {
+			case 1:
+				temperature = 1
+			case 2:
+				temperature = 5
+			}
+		}
+	case 10, 11:
+		temperature = 4
+		if extreme {
+			temperature = 5
+		}
+	}
+	if r <= 2 {
+		temperature = 1
+	}
+	if r >= 12 {
+		temperature = 5
+	}
+	return temperature
+}
+
+/*
+TRADEGOODS
 func availableResources(u uwp.UWP, tc []string, dice *dice.Dicepool) []string {
 	availRes := []string{}
 	cd := coreDensity(u, tc, dice)
@@ -219,154 +406,16 @@ func availableResources(u uwp.UWP, tc []string, dice *dice.Dicepool) []string {
 	}
 	return availRes
 }
+*/
 
-func coreDensity(u uwp.UWP, tc []string, dice *dice.Dicepool) int {
-	dm := 0
-	if u.Size() < 5 {
-		dm += 1
-	}
-	if u.Size() > 5 {
-		dm -= 2
-	}
-	if u.Atmo() < 4 {
-		dm += 1
-	}
-	if u.Atmo() < 5 {
-		dm -= 2
-	}
-	if utils.ListContains(tc, "Fr") {
-		dm += 6
-	}
-	r := dice.Sroll("2d6") + dm
-	if r < 2 {
-		return 0
-	}
-	if r < 11 {
-		return 1
-	}
-	if r < 15 {
-		return 2
-	}
-	return 3
+func (wc *worldCharacter) UWP() uwp.UWP {
+	return wc.uwp
 }
 
-func setupTradeCodes(u uwp.UWP, dice *dice.Dicepool) []string {
-	tc, _ := tradecodes.FromUWP(u)
-	switch rollTemp(u, dice) {
-	case 1:
-		tc = append(tc, "Fr")
-	case 2:
-		tc = append(tc, "Co")
-	case 4:
-		tc = append(tc, "Ho")
-	case 5:
-		tc = append(tc, "Bo")
-	}
-	nl := nativeLifeRoll(u, dice, tc)
-	fmt.Println(nl)
-	if nl > 0 {
-		tc = append(tc, fmt.Sprintf("NL%v", nl))
-	}
-	return tc
+func (wc *worldCharacter) TradeCodes() []string {
+	return wc.tradecodes
 }
 
-func nativeLifeRoll(u uwp.UWP, dice *dice.Dicepool, tc []string) int {
-	dm := 0
-	switch u.Atmo() {
-	case 0:
-		dm = dm - 3
-	case 4, 5, 6, 7, 8, 9:
-		dm = dm + 4
-	}
-	switch u.Hydr() {
-	case 0:
-		dm = dm - 2
-	case 2, 3, 4, 5, 6, 7, 8:
-		dm = dm + 1
-	}
-	for _, t := range tc {
-		switch t {
-		case "Fr", "Co", "Ho", "Bo":
-			dm = dm - 1
-		}
-	}
-	return dice.Sroll("2d6") + dm - 10
-}
-
-type Constructor struct {
-	dice *dice.Dicepool
-}
-
-func (c *Constructor) SetupEmpire(worlds ...individualWorld) (*PocketEmpire, error) {
-	empire := New()
-
-	return empire, nil
-}
-
-func (wc *worldCharacter) Descr() string {
-	s := fmt.Sprintf("World: %v\n", wc.name)
-	s += fmt.Sprintf("UWP  : %v\n", wc.uwp.String())
-	s += fmt.Sprintf("HEX  : %v\n", wc.hex.String())
-	s += fmt.Sprintf("PBG: : %v\n", wc.pbg)
-	s += fmt.Sprintf("SD   : %v\n", wc.selfDetermination.Code())
-	s += fmt.Sprintf("TC   : ")
-	for _, tc := range wc.tradecodes {
-		s += tc + " "
-	}
-	s += "\n"
-
-	return s
-}
-
-func rollTemp(u uwp.UWP, dice *dice.Dicepool) int {
-	dm := 0
-	temperature := 0
-	extreme := false
-	size := ehex.ToCode(u.Size())
-	switch size {
-	case "0", "1":
-		extreme = true
-	case "2", "3":
-		dm = -2
-	case "4", "5", "E":
-		dm = -1
-	case "6", "7":
-		dm = 0
-	case "8", "9":
-		dm = 1
-	case "A", "D", "F":
-		dm = 2
-	case "B", "C":
-		dm = 6
-	}
-	r := dice.Sroll("2d6") + dm
-	switch r {
-	case 3, 4:
-		temperature = 2
-		if extreme {
-			temperature = 1
-		}
-	case 5, 6, 7, 8, 9:
-		temperature = 3
-		if extreme {
-			switch dice.Sroll("1d2") {
-			case 1:
-				temperature = 1
-			case 2:
-				temperature = 5
-			}
-		}
-	case 10, 11:
-		temperature = 4
-		if extreme {
-			temperature = 5
-		}
-	}
-	if r <= 2 {
-		temperature = 1
-	}
-	if r >= 12 {
-		temperature = 5
-	}
-	return temperature
+func (wc *worldCharacter) PBG() string {
+	return wc.pbg
 }
