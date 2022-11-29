@@ -31,7 +31,7 @@ func Create(name string, foundationDate calendar.Date) *Family {
 		Homeworld:  "[Unset]",
 		FamilyName: name,
 		birthDate:  foundationDate,
-		deathDate:  calendar.Date{},
+		deathDate:  nil,
 		Age:        20,
 		generation: 0,
 		dead:       false,

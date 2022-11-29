@@ -37,8 +37,9 @@ type economicPower struct {
 	infrastructure ehex.Ehex
 	culture        ehex.Ehex
 	///world Data
-	uwp        uwp.UWP
-	tradeCodes []string
+	uwp               uwp.UWP
+	tradeCodes        []string
+	resourceAvailable int
 }
 
 type eventMod struct {
@@ -59,6 +60,61 @@ func GenerateInitialEconomicPower(wrld World, dice *dice.Dicepool) *economicPowe
 	ep := economicPower{}
 	ep.setupBase(wrld, dice)
 	return &ep
+}
+
+func (ep *economicPower) RecalculateRA(dice *dice.Dicepool) error {
+	switch {
+	case ep.infrastructure.Value()-ep.resource.Value() <= 0:
+	case ep.infrastructure.Value()-ep.resource.Value() > 0:
+		return fmt.Errorf("state not implemented")
+
+	}
+	return fmt.Errorf("not complete")
+}
+
+func totalDemandTable(r, pop, cult int) int {
+	dm := 0
+	utils.BoundInt(pop, 0, 15)
+	switch cult {
+	case 0, 1:
+		dm = dm - 3
+	case 2, 3:
+		dm = dm - 2
+	case 4, 5:
+		dm = dm - 1
+	case 6, 7:
+		dm = dm + 0
+	case 8, 9, 10:
+		dm = dm + 1
+	case 11, 12, 13:
+		dm = dm + 2
+	case 14, 15:
+		dm = dm + 3
+	}
+	switch pop {
+	case 0, 1:
+		dm = dm - 3
+	case 2, 3:
+		dm = dm - 2
+	case 4, 5:
+		dm = dm - 1
+	case 6:
+		dm = dm - 0
+	case 7, 8:
+		dm = dm + 1
+	case 9, 10:
+		dm = dm + 2
+	default:
+		dm = dm + 3
+	}
+	roll := r + dm
+	utils.BoundInt(roll, 0, 15)
+	baseDemand := make(map[int][]int)
+	baseDemand[0] = []int{0, 0, 0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7}
+	baseDemand[1] = []int{0, 0, 0, 1, 2, 2, 3, 4, 5, 5, 6, 6, 8, 8, 9, 9}
+	baseDemand[2] = []int{0, 0, 1, 1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11}
+	baseDemand[3] = []int{0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
+	return baseDemand[pop][roll]
 }
 
 func (ep *economicPower) Resources() int {

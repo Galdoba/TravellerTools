@@ -19,7 +19,7 @@ func TestFamily(t *testing.T) {
 	}
 	fm.AddMember(fm.Membrs[0], date, spouse)
 	for len(fm.Membrs) < 5 {
-		date.Next(calendar.NEXT_WEEK)
+		date.Advance(calendar.NEXT_WEEK)
 		fmt.Printf("Date: %v \r", date)
 		time.Sleep(time.Millisecond * 250)
 		fm.AddMember(fm.Membrs[0], date, child)

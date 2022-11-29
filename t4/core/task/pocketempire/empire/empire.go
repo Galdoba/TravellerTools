@@ -4,84 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
-	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
-	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/economics"
+	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/empire/worldcharacter"
 	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/family"
 	"github.com/Galdoba/utils"
 )
-
-const (
-	selfDetermination_Roll   = 0
-	progression_Roll         = 1
-	planning_Roll            = 2
-	advancement_Roll         = 3
-	growth_Roll              = 4
-	militancy_Roll           = 5
-	unity_Roll               = 6
-	tolerance_Roll           = 7
-	PROGRESSION_STAT         = "Progression"
-	PLANNING_STAT            = "Planning"
-	ADVANCEMENT_STAT         = "Advancement"
-	GROWTH_STAT              = "Growth"
-	MILITANCY_STAT           = "Militancy"
-	UNITY_STAT               = "Unity"
-	TOLERANCE_STAT           = "Tolerance"
-	RADICAL_Progression      = "Radical"
-	PROGRESSIVE_Progression  = "Progressive"
-	CONSERVATIVE_Progression = "Conservative"
-	REACTIONARY_Progression  = "Reactionary"
-	VERY_SHORT_TERM_Planning = "Very Short Term (1 year)"
-	SHORT_TERM_Planning      = "Short Term (2-5 years)"
-	MEDIUM_TERM_Planning     = "Medium Term (6-10 years)"
-	LONG_TERM_Planning       = "Long Term (11-50 years)"
-	VERY_LONG_TERM_Planning  = "Very Long Term (51-100 years)"
-	FAR_FUTURE_Planning      = "Far Future (>100 years)"
-	ENTERPRISING_Advancement = "Enterprising"
-	ADVANCING_Advancement    = "Advancing"
-	INDIFFIRENT_Advancement  = "Indiffirent"
-	STAGNANT_Advancement     = "Stagnant"
-	MILITANT_Militancy       = "Militant"
-	NEUTRAL_Militancy        = "Neutral"
-	PEACEABLE_Militancy      = "Peaceable"
-	CONCILIATORY_Militancy   = "Conciliatory"
-	EXPANSIONIST_Growth      = "Expansionist"
-	COMPETITIVE_Growth       = "Competitive"
-	UNAGRESSIVE_Growth       = "Unagressive"
-	PASSIVE_Growth           = "Passive"
-	MONOLITHIC_Unity = "Monolithic"
-	HARMONIOUS_Unity = "Harmonious"
-	DISCORDANT_Unity = "Discordant"
-	FRAGMENTED_Unity = "Fragmented"
-	
-)
-
-type PocketEmpire struct {
-	RulingFamily  *family.Family
-	World         map[int]*worldCharacter
-	Size          ehex.Ehex
-	MilitaryPower ehex.Ehex
-	EconomicPower ehex.Ehex
-	Prestige      int //0-15
-}
-
-type worldCharacter struct {
-	name              string
-	uwp               uwp.UWP
-	pbg               string
-	tradecodes        []string
-	tradeGoods        []string
-	econEx            economics.EconomicPower
-	selfDetermination ehex.Ehex //0-10
-	localPopularity   ehex.Ehex //0-15
-	progression       int
-	factions          []int //распределение по фракциям суммарно 100%
-	hex               hexagon.Hexagon
-	baseRolls         []int //всего 7 Progression/Planning/Advancment/Grown/Militancy/Unity/Tolerance
-}
 
 type individualWorld interface {
 	MW_Name() string
@@ -91,183 +20,19 @@ type individualWorld interface {
 	CoordY() int
 }
 
+type PocketEmpire struct {
+	RulingFamily  *family.Family
+	World         map[int]worldcharacter.World
+	Size          ehex.Ehex
+	MilitaryPower ehex.Ehex
+	EconomicPower ehex.Ehex
+	Prestige      int //0-15
+}
+
 func New() *PocketEmpire {
 	empire := PocketEmpire{}
-	empire.World = make(map[int]*worldCharacter)
+	empire.World = make(map[int]worldcharacter.World)
 	return &empire
-}
-
-func WorldCharacter(indWrld individualWorld) *worldCharacter {
-	dice := dice.New().SetSeed(indWrld.MW_Name() + indWrld.MW_UWP() + indWrld.PBG())
-	wc := worldCharacter{}
-	wc.name = indWrld.MW_Name()
-	wc.uwp = uwp.Inject(indWrld.MW_UWP())
-	wc.pbg = indWrld.PBG()
-	hex := hexagon.FromHex(indWrld)
-	wc.hex = hex
-	wc.tradecodes = setupTradeCodes(wc.uwp, dice)
-	//wc.tradeGoods = availableResources(wc.uwp, wc.tradecodes, dice)
-	wc.econEx = economics.GenerateInitialEconomicPower(&wc, dice)
-
-	wc.setupBaseRolls(dice)
-	wc.selfDetermination = ehex.New().Set(wc.baseRolls[selfDetermination_Roll] - 2)
-	return &wc
-}
-
-func (wc *worldCharacter) setupBaseRolls(dice *dice.Dicepool) {
-	wc.baseRolls = nil
-	for i := 0; i < 8; i++ {
-		wc.baseRolls = append(wc.baseRolls, dice.Sroll("2d6"))
-	}
-}
-
-func (wc *worldCharacter) Attitude(stat string) string {
-	switch stat {
-	default: 
-		return "Unknown Stat"
-	case PROGRESSION_STAT:
-		return progressionAttutude(wc.Progression())
-	case PLANNING_STAT:
-		return planningAttutude(wc.Planning())	
-	case ADVANCEMENT_STAT:
-		return advancementAttitude(wc.Advancement())	
-	}
-}
-
-func progressionAttutude(val int) string {
-	if val <= 3 {
-		return RADICAL_Progression
-	}
-	if val <= 7 {
-		return PROGRESSIVE_Progression
-	}
-	if val <= 11 {
-		return CONSERVATIVE_Progression
-	}
-	return REACTIONARY_Progression
-}
-
-func planningAttutude(val int) string {
-	if val <= 3 {
-		return VERY_SHORT_TERM_Planning
-	}
-	if val <= 5 {
-		return SHORT_TERM_Planning
-	}
-	if val <= 7 {
-		return MEDIUM_TERM_Planning
-	}
-	if val <= 9 {
-		return LONG_TERM_Planning
-	}
-	if val <= 11 {
-		return VERY_LONG_TERM_Planning
-	}
-	return FAR_FUTURE_Planning
-}
-
-func advancementAttitude(val int) string {
-	if val <= 5 {
-		return ENTERPRISING_Advancement
-	}
-	if val <= 9 {
-		return ADVANCING_Advancement
-	}
-	if val <= 12 {
-		return INDIFFIRENT_Advancement
-	}
-	return STAGNANT_Advancement
-}
-
-func growthAttitude(val int) string {
-	if val <= 3 {
-		return ENTERPRISING_Advancement
-	}
-	if val <= 9 {
-		return ADVANCING_Advancement
-	}
-	if val <= 12 {
-		return INDIFFIRENT_Advancement
-	}
-	return STAGNANT_Advancement
-}
- 
-
-func (wc *worldCharacter) Progression() int {
-	dm := 0
-	if wc.uwp.Pops() >= 6 {
-		dm++
-	}
-	if wc.uwp.Pops() >= 9 {
-		dm++
-	}
-	if wc.uwp.Laws() >= 10 {
-		dm++
-	}
-	if wc.econEx.Culture() <= 3 {
-		dm--
-	}
-	if wc.econEx.Culture() >= 8 {
-		dm++
-	}
-	return wc.baseRolls[progression_Roll]+dm
-}
-
-func (wc *worldCharacter) Planning() int {
-	dm := 0
-	if wc.Attitude(PROGRESSION_STAT) == CONSERVATIVE_Progression {
-		dm = dm + 2
-	}
-	if wc.Attitude(PROGRESSION_STAT) == REACTIONARY_Progression {
-		dm = dm + 2
-	}
-	if wc.Attitude(PROGRESSION_STAT) == RADICAL_Progression {
-		dm = dm - 2
-	}
-	return wc.baseRolls[planning_Roll]+dm
-}
-
-func (wc *worldCharacter) Advancement() int {
-	dm := 0
-	if wc.uwp.Laws() >= 10 {
-		dm = dm + 1
-	}
-	if wc.Attitude(PROGRESSION_STAT) == CONSERVATIVE_Progression {
-		dm = dm + 3
-	}
-	if wc.Attitude(PROGRESSION_STAT) == REACTIONARY_Progression {
-		dm = dm + 6
-	}
-	return wc.baseRolls[advancement_Roll]+dm
-}
-
-func (wc *worldCharacter) Growth() int {
-	dm := 0
-	if wc.uwp.Laws() >= 10 {
-		dm = dm + 1
-	}
-	if wc.Culture() <= 3 {
-		dm = dm -1
-	}
-	if wc.Culture() >= 8 {
-		dm = dm + 1
-	}
-	return wc.baseRolls[advancement_Roll]+dm
-}
-
-func (wc *worldCharacter) Militancy() int {
-	dm := 0
-	return wc.baseRolls[militancy_Roll]+dm
-}
-
-func (wc *worldCharacter) Unity() int {
-	dm := 0
-	return wc.baseRolls[unity_Roll]+dm
-}
-
-func (wc *worldCharacter) Tolerance() int {
-	dm := 0
-	return wc.baseRolls[tolerance_Roll]+dm
 }
 
 type economicExtention struct {
@@ -320,49 +85,6 @@ func coreDensity(u uwp.UWP, tc []string, dice *dice.Dicepool) int {
 	return 3
 }
 
-func setupTradeCodes(u uwp.UWP, dice *dice.Dicepool) []string {
-	tc, _ := tradecodes.FromUWP(u)
-	switch rollTemp(u, dice) {
-	case 1:
-		tc = append(tc, "Fr")
-	case 2:
-		tc = append(tc, "Co")
-	case 4:
-		tc = append(tc, "Ho")
-	case 5:
-		tc = append(tc, "Bo")
-	}
-	nl := nativeLifeRoll(u, dice, tc)
-	fmt.Println(nl)
-	if nl > 0 {
-		tc = append(tc, fmt.Sprintf("NL%v", nl))
-	}
-	return tc
-}
-
-func nativeLifeRoll(u uwp.UWP, dice *dice.Dicepool, tc []string) int {
-	dm := 0
-	switch u.Atmo() {
-	case 0:
-		dm = dm - 3
-	case 4, 5, 6, 7, 8, 9:
-		dm = dm + 4
-	}
-	switch u.Hydr() {
-	case 0:
-		dm = dm - 2
-	case 2, 3, 4, 5, 6, 7, 8:
-		dm = dm + 1
-	}
-	for _, t := range tc {
-		switch t {
-		case "Fr", "Co", "Ho", "Bo":
-			dm = dm - 1
-		}
-	}
-	return dice.Sroll("2d6") + dm - 10
-}
-
 type Constructor struct {
 	dice *dice.Dicepool
 }
@@ -371,78 +93,6 @@ func (c *Constructor) SetupEmpire(worlds ...individualWorld) (*PocketEmpire, err
 	empire := New()
 
 	return empire, nil
-}
-
-func (wc *worldCharacter) Descr() string {
-	s := fmt.Sprintf("World: %v\n", wc.name)
-	s += fmt.Sprintf("UWP  : %v-%v\n", wc.uwp.String(), wc.econEx.String())
-	s += fmt.Sprintf("HEX  : %v\n", wc.hex.String())
-	s += fmt.Sprintf("PBG: : %v\n", wc.pbg)
-	s += fmt.Sprintf("SD   : %v\n", wc.selfDetermination.Code())
-	s += fmt.Sprintf("TC   : ")
-	for _, tc := range wc.tradecodes {
-		s += tc + " "
-	}
-	s += "\n"
-	s += "DEBUG INFO:-------------\n"
-	s += fmt.Sprintf("%v\n", wc.baseRolls)
-	s += fmt.Sprintf("Progression: %v (%v)\n", wc.Progression(), wc.Attitude(PROGRESSION_STAT))
-	s += fmt.Sprintf("Planning   : %v (%v)\n", wc.Planning(), wc.Attitude(PLANNING_STAT))
-	s += fmt.Sprintf("Advancement: %v (%v)\n", wc.Advancement(), wc.Attitude(ADVANCEMENT_STAT))
-	return s
-}
-
-func rollTemp(u uwp.UWP, dice *dice.Dicepool) int {
-	dm := 0
-	temperature := 0
-	extreme := false
-	size := ehex.ToCode(u.Size())
-	switch size {
-	case "0", "1":
-		extreme = true
-	case "2", "3":
-		dm = -2
-	case "4", "5", "E":
-		dm = -1
-	case "6", "7":
-		dm = 0
-	case "8", "9":
-		dm = 1
-	case "A", "D", "F":
-		dm = 2
-	case "B", "C":
-		dm = 6
-	}
-	r := dice.Sroll("2d6") + dm
-	switch r {
-	case 3, 4:
-		temperature = 2
-		if extreme {
-			temperature = 1
-		}
-	case 5, 6, 7, 8, 9:
-		temperature = 3
-		if extreme {
-			switch dice.Sroll("1d2") {
-			case 1:
-				temperature = 1
-			case 2:
-				temperature = 5
-			}
-		}
-	case 10, 11:
-		temperature = 4
-		if extreme {
-			temperature = 5
-		}
-	}
-	if r <= 2 {
-		temperature = 1
-	}
-	if r >= 12 {
-		temperature = 5
-	}
-	return temperature
 }
 
 /*
@@ -589,15 +239,3 @@ func availableResources(u uwp.UWP, tc []string, dice *dice.Dicepool) []string {
 	return availRes
 }
 */
-
-func (wc *worldCharacter) UWP() uwp.UWP {
-	return wc.uwp
-}
-
-func (wc *worldCharacter) TradeCodes() []string {
-	return wc.tradecodes
-}
-
-func (wc *worldCharacter) PBG() string {
-	return wc.pbg
-}

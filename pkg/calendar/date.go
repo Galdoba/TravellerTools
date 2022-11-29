@@ -28,26 +28,81 @@ const (
 
 int64  : -9223372036854775808 to 922 3372036 854 77 58 07
 */
-type Date struct {
+type date struct {
 	val  uint64
 	year int
 	day  int
 }
 
-func New(code uint64) Date {
-	t := Date{
+type Date interface {
+	String() string
+	AsInts() (int, int)
+	IsPast(Date) bool
+	Advance(string)
+	Day() int
+	Year() int
+}
+
+func (d *date) Day() int {
+	return d.day
+}
+
+func (d *date) Year() int {
+	return d.year
+}
+
+func (d *date) AsInts() (int, int) {
+	return d.day, d.year
+}
+
+func (d *date) IsPast(check Date) bool {
+	valD := (d.year * 365) + d.day
+	valCheck := (check.Year() * 365) + check.Day()
+	if valCheck > valD {
+		return true
+	}
+	return false
+}
+
+func After(d Date, period int) Date {
+	newDate := d
+	for i := 0; i < period; i++ {
+		newDate.Advance(NEXT_DAY)
+	}
+	return newDate
+}
+
+func TimeBetween(d1, d2 *date) (int, int) {
+	valD1 := (d1.year * 365) + d1.day
+	valD2 := (d2.year * 365) + d2.day
+	diff := valD1 - valD2
+	if diff < 0 {
+		diff = diff * -1
+	}
+	dif := New(uint64(diff))
+	return dif.day, dif.year
+}
+
+func IsEqual(d1, d2 *date) bool {
+	return d1.day == d2.day && d1.year == d2.year
+}
+
+func New(code uint64) *date {
+	t := date{
 		val: code,
 	}
 	t.evaluate()
-	return t
+	return &t
 }
 
-func SetDate(day, year int) Date {
-	return Date{
+func SetDate(day, year int) *date {
+	d := date{
 		val:  uint64(day + year*365),
 		day:  day,
 		year: year,
 	}
+	d.evaluate()
+	return &d
 }
 
 func reverse(s string) string {
@@ -58,7 +113,7 @@ func reverse(s string) string {
 	return string(runes)
 }
 
-func (t *Date) evaluate() {
+func (t *date) evaluate() {
 	if t.val == 0 {
 		t.val = 1
 	}
@@ -89,7 +144,7 @@ func (t *Date) evaluate() {
 
 }
 
-func (t *Date) String() string {
+func (t *date) String() string {
 	return fmt.Sprintf("%v-%v", formatUnits(t.day, 3), formatUnits(t.year, 3))
 
 }
@@ -103,7 +158,7 @@ func formatUnits(i int, unit int) string {
 	return s
 }
 
-func (t *Date) Next(code string) {
+func (t *date) Advance(code string) {
 	switch code {
 	case NEXT_DAY:
 		t.val++

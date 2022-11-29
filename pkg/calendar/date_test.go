@@ -36,18 +36,22 @@ func TestTime(t *testing.T) {
 	for i := uint64(360); i < 367; i = i + 1 {
 		t1 := New(i)
 		fmt.Printf("test %v - %v\n", i, t1)
+		if t1.Day() > 365 {
+			t.Errorf("Days can't be more than 365 | %v - %v", i, t1.String())
+			break
+		}
 	}
 	t2 := New(123456)
 	fmt.Println(t2)
-	t2.Next(NEXT_DAY)
+	t2.Advance(NEXT_DAY)
 	fmt.Println(t2)
-	t2.Next(NEXT_WEEK)
+	t2.Advance(NEXT_WEEK)
 	fmt.Println(t2)
-	t2.Next(NEXT_MONTH)
+	t2.Advance(NEXT_MONTH)
 	fmt.Println(t2)
-	t2.Next(NEXT_YEAR)
+	t2.Advance(NEXT_YEAR)
 	fmt.Println(t2)
-	t2.Next(NEXT_WEEK)
+	t2.Advance(NEXT_WEEK)
 	fmt.Println(t2)
 	// for i := uint64(500); i < 50000000; i = i + 127345 {
 
