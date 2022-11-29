@@ -21,6 +21,9 @@ const (
 
 type EconomicPower interface {
 	Resources() int
+	Labor() int
+	Infrastructure() int
+	Culture() int
 	String() string
 }
 

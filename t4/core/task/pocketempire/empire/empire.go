@@ -15,13 +15,48 @@ import (
 )
 
 const (
-	PROGRESSION_STAT = "Progression"
-	PLANNING_STAT    = "Planning"
-	ADVANCEMENT_STAT = "Advancement"
-	GROWTH_STAT      = "Growth"
-	MILITANCY_STAT   = "Militancy"
-	UNITY_STAT       = "Unity"
-	TOLERANCE_STAT   = "Tolerance"
+	selfDetermination_Roll   = 0
+	progression_Roll         = 1
+	planning_Roll            = 2
+	advancement_Roll         = 3
+	growth_Roll              = 4
+	militancy_Roll           = 5
+	unity_Roll               = 6
+	tolerance_Roll           = 7
+	PROGRESSION_STAT         = "Progression"
+	PLANNING_STAT            = "Planning"
+	ADVANCEMENT_STAT         = "Advancement"
+	GROWTH_STAT              = "Growth"
+	MILITANCY_STAT           = "Militancy"
+	UNITY_STAT               = "Unity"
+	TOLERANCE_STAT           = "Tolerance"
+	RADICAL_Progression      = "Radical"
+	PROGRESSIVE_Progression  = "Progressive"
+	CONSERVATIVE_Progression = "Conservative"
+	REACTIONARY_Progression  = "Reactionary"
+	VERY_SHORT_TERM_Planning = "Very Short Term (1 year)"
+	SHORT_TERM_Planning      = "Short Term (2-5 years)"
+	MEDIUM_TERM_Planning     = "Medium Term (6-10 years)"
+	LONG_TERM_Planning       = "Long Term (11-50 years)"
+	VERY_LONG_TERM_Planning  = "Very Long Term (51-100 years)"
+	FAR_FUTURE_Planning      = "Far Future (>100 years)"
+	ENTERPRISING_Advancement = "Enterprising"
+	ADVANCING_Advancement    = "Advancing"
+	INDIFFIRENT_Advancement  = "Indiffirent"
+	STAGNANT_Advancement     = "Stagnant"
+	MILITANT_Militancy       = "Militant"
+	NEUTRAL_Militancy        = "Neutral"
+	PEACEABLE_Militancy      = "Peaceable"
+	CONCILIATORY_Militancy   = "Conciliatory"
+	EXPANSIONIST_Growth      = "Expansionist"
+	COMPETITIVE_Growth       = "Competitive"
+	UNAGRESSIVE_Growth       = "Unagressive"
+	PASSIVE_Growth           = "Passive"
+	MONOLITHIC_Unity = "Monolithic"
+	HARMONIOUS_Unity = "Harmonious"
+	DISCORDANT_Unity = "Discordant"
+	FRAGMENTED_Unity = "Fragmented"
+	
 )
 
 type PocketEmpire struct {
@@ -75,7 +110,7 @@ func WorldCharacter(indWrld individualWorld) *worldCharacter {
 	wc.econEx = economics.GenerateInitialEconomicPower(&wc, dice)
 
 	wc.setupBaseRolls(dice)
-	wc.selfDetermination = ehex.New().Set(wc.baseRolls[0] - 2)
+	wc.selfDetermination = ehex.New().Set(wc.baseRolls[selfDetermination_Roll] - 2)
 	return &wc
 }
 
@@ -86,8 +121,153 @@ func (wc *worldCharacter) setupBaseRolls(dice *dice.Dicepool) {
 	}
 }
 
-func (wc *worldCharacter) Progression() int {
+func (wc *worldCharacter) Attitude(stat string) string {
+	switch stat {
+	default: 
+		return "Unknown Stat"
+	case PROGRESSION_STAT:
+		return progressionAttutude(wc.Progression())
+	case PLANNING_STAT:
+		return planningAttutude(wc.Planning())	
+	case ADVANCEMENT_STAT:
+		return advancementAttitude(wc.Advancement())	
+	}
+}
 
+func progressionAttutude(val int) string {
+	if val <= 3 {
+		return RADICAL_Progression
+	}
+	if val <= 7 {
+		return PROGRESSIVE_Progression
+	}
+	if val <= 11 {
+		return CONSERVATIVE_Progression
+	}
+	return REACTIONARY_Progression
+}
+
+func planningAttutude(val int) string {
+	if val <= 3 {
+		return VERY_SHORT_TERM_Planning
+	}
+	if val <= 5 {
+		return SHORT_TERM_Planning
+	}
+	if val <= 7 {
+		return MEDIUM_TERM_Planning
+	}
+	if val <= 9 {
+		return LONG_TERM_Planning
+	}
+	if val <= 11 {
+		return VERY_LONG_TERM_Planning
+	}
+	return FAR_FUTURE_Planning
+}
+
+func advancementAttitude(val int) string {
+	if val <= 5 {
+		return ENTERPRISING_Advancement
+	}
+	if val <= 9 {
+		return ADVANCING_Advancement
+	}
+	if val <= 12 {
+		return INDIFFIRENT_Advancement
+	}
+	return STAGNANT_Advancement
+}
+
+func growthAttitude(val int) string {
+	if val <= 3 {
+		return ENTERPRISING_Advancement
+	}
+	if val <= 9 {
+		return ADVANCING_Advancement
+	}
+	if val <= 12 {
+		return INDIFFIRENT_Advancement
+	}
+	return STAGNANT_Advancement
+}
+ 
+
+func (wc *worldCharacter) Progression() int {
+	dm := 0
+	if wc.uwp.Pops() >= 6 {
+		dm++
+	}
+	if wc.uwp.Pops() >= 9 {
+		dm++
+	}
+	if wc.uwp.Laws() >= 10 {
+		dm++
+	}
+	if wc.econEx.Culture() <= 3 {
+		dm--
+	}
+	if wc.econEx.Culture() >= 8 {
+		dm++
+	}
+	return wc.baseRolls[progression_Roll]+dm
+}
+
+func (wc *worldCharacter) Planning() int {
+	dm := 0
+	if wc.Attitude(PROGRESSION_STAT) == CONSERVATIVE_Progression {
+		dm = dm + 2
+	}
+	if wc.Attitude(PROGRESSION_STAT) == REACTIONARY_Progression {
+		dm = dm + 2
+	}
+	if wc.Attitude(PROGRESSION_STAT) == RADICAL_Progression {
+		dm = dm - 2
+	}
+	return wc.baseRolls[planning_Roll]+dm
+}
+
+func (wc *worldCharacter) Advancement() int {
+	dm := 0
+	if wc.uwp.Laws() >= 10 {
+		dm = dm + 1
+	}
+	if wc.Attitude(PROGRESSION_STAT) == CONSERVATIVE_Progression {
+		dm = dm + 3
+	}
+	if wc.Attitude(PROGRESSION_STAT) == REACTIONARY_Progression {
+		dm = dm + 6
+	}
+	return wc.baseRolls[advancement_Roll]+dm
+}
+
+func (wc *worldCharacter) Growth() int {
+	dm := 0
+	if wc.uwp.Laws() >= 10 {
+		dm = dm + 1
+	}
+	if wc.Culture() <= 3 {
+		dm = dm -1
+	}
+	if wc.Culture() >= 8 {
+		dm = dm + 1
+	}
+	return wc.baseRolls[advancement_Roll]+dm
+}
+
+func (wc *worldCharacter) Militancy() int {
+	dm := 0
+	return wc.baseRolls[militancy_Roll]+dm
+}
+
+func (wc *worldCharacter) Unity() int {
+	dm := 0
+	return wc.baseRolls[unity_Roll]+dm
+}
+
+func (wc *worldCharacter) Tolerance() int {
+	dm := 0
+	return wc.baseRolls[tolerance_Roll]+dm
 }
 
 type economicExtention struct {
@@ -206,7 +386,9 @@ func (wc *worldCharacter) Descr() string {
 	s += "\n"
 	s += "DEBUG INFO:-------------\n"
 	s += fmt.Sprintf("%v\n", wc.baseRolls)
-
+	s += fmt.Sprintf("Progression: %v (%v)\n", wc.Progression(), wc.Attitude(PROGRESSION_STAT))
+	s += fmt.Sprintf("Planning   : %v (%v)\n", wc.Planning(), wc.Attitude(PLANNING_STAT))
+	s += fmt.Sprintf("Advancement: %v (%v)\n", wc.Advancement(), wc.Attitude(ADVANCEMENT_STAT))
 	return s
 }
 
