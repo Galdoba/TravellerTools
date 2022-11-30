@@ -25,6 +25,28 @@ type EconomicPower interface {
 	Infrastructure() int
 	Culture() int
 	String() string
+	RecalculateRA(*dice.Dicepool) error
+	StatBlock() string
+}
+
+type economicValue struct {
+	val float64
+}
+
+func (ev *economicValue) Code() string {
+	return ehex.New().Set(int(ev.val)).Code()
+}
+
+func (ev *economicValue) Value() int {
+	return int(ev.val)
+}
+
+func (ev *economicValue) ValueFl64() float64 {
+	return ev.val
+}
+
+func setEconomicValue(i int) *economicValue {
+	return &economicValue{float64(i)}
 }
 
 type economicPower struct {
@@ -32,14 +54,17 @@ type economicPower struct {
 	baseRolls2     []int
 	pbgStash       []int
 	eventMods      map[string][]eventMod
-	resource       ehex.Ehex
-	labor          ehex.Ehex
-	infrastructure ehex.Ehex
-	culture        ehex.Ehex
+	resource       *economicValue
+	labor          *economicValue
+	infrastructure *economicValue
+	culture        *economicValue
 	///world Data
 	uwp               uwp.UWP
 	tradeCodes        []string
-	resourceAvailable int
+	totalDemand       float64
+	resourceAvailable float64
+	excess            float64
+	deficit           float64
 }
 
 type eventMod struct {
@@ -62,35 +87,86 @@ func GenerateInitialEconomicPower(wrld World, dice *dice.Dicepool) *economicPowe
 	return &ep
 }
 
-func (ep *economicPower) RecalculateRA(dice *dice.Dicepool) error {
-	switch {
-	case ep.infrastructure.Value()-ep.resource.Value() <= 0:
-	case ep.infrastructure.Value()-ep.resource.Value() > 0:
-		return fmt.Errorf("state not implemented")
-
+func minFl64(fl1, fl2 float64) float64 {
+	if fl1 <= fl2 {
+		return fl1
 	}
-	return fmt.Errorf("not complete")
+	return fl2
 }
 
-func totalDemandTable(r, pop, cult int) int {
-	dm := 0
-	utils.BoundInt(pop, 0, 15)
-	switch cult {
-	case 0, 1:
-		dm = dm - 3
-	case 2, 3:
-		dm = dm - 2
-	case 4, 5:
-		dm = dm - 1
-	case 6, 7:
-		dm = dm + 0
-	case 8, 9, 10:
-		dm = dm + 1
-	case 11, 12, 13:
-		dm = dm + 2
-	case 14, 15:
-		dm = dm + 3
+func (ep *economicPower) RecalculateRA(dice *dice.Dicepool) error {
+	baseDemand := 0.0
+	ep.excess = 0.0
+	ep.deficit = 0.0
+	ep.resourceAvailable = 0.0
+	r := dice.Sroll("2d6")
+	switch {
+	case ep.infrastructure.Value()-ep.resource.Value() <= 0:
+		switch {
+		case ep.uwp.Pops() >= 4:
+			baseDemand = ep.resource.ValueFl64()
+		case ep.uwp.Pops() < 4:
+			baseDemand = float64(ep.uwp.Pops())
+		}
+		ep.totalDemand = totalDemandTable(r, int(baseDemand), ep.uwp.Pops(), ep.Culture())
+		ep.resourceAvailable = minFl64(ep.totalDemand, ep.resource.ValueFl64())
+		ep.excess = ep.resource.ValueFl64() - ep.totalDemand
+	case ep.infrastructure.Value()-ep.resource.Value() > 0:
+		switch {
+		case ep.uwp.Pops() >= 4:
+			baseDemand = ep.infrastructure.ValueFl64()
+		case ep.uwp.Pops() < 4:
+			baseDemand = float64(ep.uwp.Pops())
+		}
+		ep.totalDemand = totalDemandTable(r, int(baseDemand), ep.uwp.Pops(), ep.Culture())
+		switch {
+		//case 1
+		case ep.totalDemand <= ep.resource.ValueFl64():
+			ep.resourceAvailable = ep.totalDemand
+			ep.excess = ep.resource.ValueFl64() - ep.totalDemand
+		//case 2
+		case ep.totalDemand > ep.resource.ValueFl64():
+			ep.resourceAvailable = ep.resource.ValueFl64()
+			ep.deficit = ep.resource.ValueFl64() - ep.totalDemand
+			ep.resourceAvailable = ep.resourceAvailable - ep.deficit
+			//case 2.5
+			if ep.resourceAvailable < 0 {
+				ep.infrastructure.val = ep.infrastructure.val - (ep.deficit / 10)
+				ep.resourceAvailable = 0
+			}
+		}
 	}
+	ep.excess = utils.RoundFloat64(ep.excess, 1)
+	ep.deficit = utils.RoundFloat64(ep.deficit, 1)
+	ep.resourceAvailable = utils.RoundFloat64(ep.resourceAvailable, 1)
+	ep.totalDemand = utils.RoundFloat64(ep.totalDemand, 1)
+	ep.ResourceTrade(dice)
+	return nil
+}
+
+func (ep *economicPower) ResourceTrade(dice *dice.Dicepool) {
+	if ep.excess > 0 {
+		resExport := ep.resource.val - ep.totalDemand
+		ep.resourceAvailable = ep.resourceAvailable + (resExport * exportBenefit(dice.Sroll("2d6")))
+	}
+	if ep.deficit > 0 {
+		resImport := ep.totalDemand - ep.resource.val
+		ep.resourceAvailable = ep.resourceAvailable + (resImport * exportBenefit(dice.Sroll("2d6")))
+	}
+	ep.resourceAvailable = utils.RoundFloat64(ep.resourceAvailable, 1)
+}
+
+func exportBenefit(i int) float64 {
+	return []float64{0.3, 0.3, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.6, 0.6, 0.7}[i-2]
+}
+
+func importBenefit(i int) float64 {
+	return []float64{0.2, 0.2, 0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.6}[i-2]
+}
+
+func totalDemandTable(r, baseDemandVal, pop, cult int) float64 {
+	dm := 0
+	baseDemandVal = utils.BoundInt(baseDemandVal, 0, 15)
 	switch pop {
 	case 0, 1:
 		dm = dm - 3
@@ -107,14 +183,42 @@ func totalDemandTable(r, pop, cult int) int {
 	default:
 		dm = dm + 3
 	}
+	switch cult {
+	case 0, 1:
+		dm = dm - 3
+	case 2, 3:
+		dm = dm - 2
+	case 4, 5:
+		dm = dm - 1
+	case 6, 7:
+		dm = dm + 0
+	case 8, 9, 10:
+		dm = dm + 1
+	case 11, 12, 13:
+		dm = dm + 2
+	case 14, 15:
+		dm = dm + 3
+	}
 	roll := r + dm
-	utils.BoundInt(roll, 0, 15)
-	baseDemand := make(map[int][]int)
-	baseDemand[0] = []int{0, 0, 0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7}
-	baseDemand[1] = []int{0, 0, 0, 1, 2, 2, 3, 4, 5, 5, 6, 6, 8, 8, 9, 9}
-	baseDemand[2] = []int{0, 0, 1, 1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11}
-	baseDemand[3] = []int{0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
-	return baseDemand[pop][roll]
+	roll = utils.BoundInt(roll, 0, 15)
+	baseDemand := make(map[int][]float64)
+	baseDemand[0] = []float64{0, 0, 0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7}
+	baseDemand[1] = []float64{0, 0, 0, 1, 2, 2, 3, 4, 5, 5, 6, 6, 8, 8, 9, 9}
+	baseDemand[2] = []float64{0, 0, 1, 1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11}
+	baseDemand[3] = []float64{0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
+	baseDemand[4] = []float64{0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+	baseDemand[5] = []float64{0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+	baseDemand[6] = []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	baseDemand[7] = []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	baseDemand[8] = []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	baseDemand[9] = []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	baseDemand[10] = []float64{1, 2, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+	baseDemand[11] = []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17}
+	baseDemand[12] = []float64{1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18}
+	baseDemand[13] = []float64{1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19}
+	baseDemand[14] = []float64{1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20}
+	baseDemand[15] = []float64{1, 2, 4, 5, 7, 8, 9, 11, 12, 13, 15, 16, 18, 19, 21, 22}
+	return baseDemand[baseDemandVal][roll]
 }
 
 func (ep *economicPower) Resources() int {
@@ -159,13 +263,13 @@ func (ep *economicPower) setupBase(wrld World, dice *dice.Dicepool) {
 		}
 		switch i {
 		case 0:
-			ep.resource = ehex.New().Set(base)
+			ep.resource = setEconomicValue(base)
 		case 1:
-			ep.labor = ehex.New().Set(base)
+			ep.labor = setEconomicValue(base)
 		case 2:
-			ep.infrastructure = ehex.New().Set(base)
+			ep.infrastructure = setEconomicValue(base)
 		case 3:
-			ep.culture = ehex.New().Set(base)
+			ep.culture = setEconomicValue(base)
 		}
 	}
 }
@@ -334,4 +438,14 @@ func extractPBG(pbg string) []int {
 		}
 	}
 	return pbgInt
+}
+
+func (ep *economicPower) StatBlock() string {
+	s := "-----------\n"
+	s += fmt.Sprintf("EconPower=%v\n", ep.String())
+	s += fmt.Sprintf("totalDemand=%v\n", ep.totalDemand)
+	s += fmt.Sprintf("excess=%v\n", ep.excess)
+	s += fmt.Sprintf("deficit=%v\n", ep.deficit)
+	s += fmt.Sprintf("resourceAvailable=%v\n", ep.resourceAvailable)
+	return s
 }
