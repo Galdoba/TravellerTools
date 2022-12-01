@@ -66,7 +66,7 @@ type world struct {
 	pbg               string
 	tradecodes        []string
 	tradeGoods        []string
-	EconEx            economics.EconomicPower
+	econEx            economics.EconomicPower
 	selfDetermination ehex.Ehex //0-10
 	localPopularity   ehex.Ehex //0-15
 	progression       int
@@ -88,7 +88,7 @@ type World interface {
 }
 
 func WorldCharacter(worldName, uwpStr, pbgStr string, x, y int) (*world, error) {
-	dice := dice.New().SetSeed(worldName + uwpStr + pbgStr)
+	dice := dice.New().SetSeed(worldName + pbgStr + fmt.Sprintf("%v%v", x, y))
 	wc := world{}
 	wc.name = worldName
 	wc.uwp = uwp.Inject(uwpStr)
@@ -100,11 +100,19 @@ func WorldCharacter(worldName, uwpStr, pbgStr string, x, y int) (*world, error) 
 	wc.hex = hex
 	wc.tradecodes = setupTradeCodes(wc.uwp, dice)
 	//wc.tradeGoods = availableResources(wc.uwp, wc.tradecodes, dice)
-	wc.EconEx = economics.GenerateInitialEconomicPower(&wc, dice)
+	wc.econEx = economics.GenerateInitialEconomicPower(&wc, dice)
 
 	wc.setupBaseRolls(dice)
 	wc.selfDetermination = ehex.New().Set(wc.baseRolls[selfDetermination_Roll] - 2)
 	return &wc, nil
+}
+
+func (wc *world) EconomicProcess(seed string, id economics.InterstellarDemand) error {
+	return wc.econEx.Process(dice.New().SetSeed(seed), id)
+}
+
+func (wc *world) EconomyState() economics.EconomicPower {
+	return wc.econEx
 }
 
 func (wc *world) setupBaseRolls(dice *dice.Dicepool) {
@@ -246,10 +254,10 @@ func (wc *world) Progression() int {
 	if wc.uwp.Laws() >= 10 {
 		dm++
 	}
-	if wc.EconEx.Culture() <= 3 {
+	if wc.econEx.Culture() <= 3 {
 		dm--
 	}
-	if wc.EconEx.Culture() >= 8 {
+	if wc.econEx.Culture() >= 8 {
 		dm++
 	}
 	return wc.baseRolls[progression_Roll] + dm
@@ -288,10 +296,10 @@ func (wc *world) Growth() int {
 	if wc.uwp.Laws() >= 10 {
 		dm = dm + 1
 	}
-	if wc.EconEx.Culture() <= 3 {
+	if wc.econEx.Culture() <= 3 {
 		dm = dm - 1
 	}
-	if wc.EconEx.Culture() >= 8 {
+	if wc.econEx.Culture() >= 8 {
 		dm = dm + 1
 	}
 	return wc.baseRolls[growth_Roll] + dm
@@ -477,7 +485,7 @@ func (wc *world) PBG() string {
 
 func (wc *world) Descr() string {
 	s := fmt.Sprintf("World: %v\n", wc.name)
-	s += fmt.Sprintf("UWP  : %v-%v\n", wc.uwp.String(), wc.EconEx.String())
+	s += fmt.Sprintf("UWP  : %v-%v\n", wc.uwp.String(), wc.econEx.String())
 	s += fmt.Sprintf("HEX  : %v\n", wc.hex.String())
 	s += fmt.Sprintf("PBG: : %v\n", wc.pbg)
 	s += fmt.Sprintf("SD   : %v\n", wc.selfDetermination.Code())

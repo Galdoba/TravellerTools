@@ -2,6 +2,7 @@ package economics
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -25,7 +26,7 @@ type EconomicPower interface {
 	Infrastructure() int
 	Culture() int
 	String() string
-	RecalculateRA(*dice.Dicepool) error
+	Process(*dice.Dicepool, InterstellarDemand) error
 	StatBlock() string
 }
 
@@ -65,6 +66,11 @@ type economicPower struct {
 	resourceAvailable float64
 	excess            float64
 	deficit           float64
+	baseGWP           float64
+	finalGWP          float64
+	actionLog         []string
+	tradePartners     int
+	tradeMultipler    float64
 }
 
 type eventMod struct {
@@ -81,6 +87,21 @@ type World interface {
 	PBG() string
 }
 
+func (ep *economicPower) Process(dice *dice.Dicepool, demand InterstellarDemand) error {
+	for _, err := range []error{
+		ep.determinePlanetaryDemand(dice),
+		ep.engageInResourceTrade(dice),
+		ep.computeBaseGrossWorldProduct(),
+		ep.calculateFinalGrossWorldProduct(demand),
+	} {
+		if err != nil {
+			return err
+		}
+	}
+
+	return fmt.Errorf("steps implemented 2/11")
+}
+
 func GenerateInitialEconomicPower(wrld World, dice *dice.Dicepool) *economicPower {
 	ep := economicPower{}
 	ep.setupBase(wrld, dice)
@@ -94,7 +115,7 @@ func minFl64(fl1, fl2 float64) float64 {
 	return fl2
 }
 
-func (ep *economicPower) RecalculateRA(dice *dice.Dicepool) error {
+func (ep *economicPower) determinePlanetaryDemand(dice *dice.Dicepool) error {
 	baseDemand := 0.0
 	ep.excess = 0.0
 	ep.deficit = 0.0
@@ -102,20 +123,22 @@ func (ep *economicPower) RecalculateRA(dice *dice.Dicepool) error {
 	r := dice.Sroll("2d6")
 	switch {
 	case ep.infrastructure.Value()-ep.resource.Value() <= 0:
-		switch {
-		case ep.uwp.Pops() >= 4:
-			baseDemand = ep.resource.ValueFl64()
-		case ep.uwp.Pops() < 4:
+		baseDemand = ep.resource.ValueFl64()
+		if ep.uwp.Pops() < 4 {
 			baseDemand = float64(ep.uwp.Pops())
 		}
 		ep.totalDemand = totalDemandTable(r, int(baseDemand), ep.uwp.Pops(), ep.Culture())
-		ep.resourceAvailable = minFl64(ep.totalDemand, ep.resource.ValueFl64())
-		ep.excess = ep.resource.ValueFl64() - ep.totalDemand
-	case ep.infrastructure.Value()-ep.resource.Value() > 0:
 		switch {
-		case ep.uwp.Pops() >= 4:
-			baseDemand = ep.infrastructure.ValueFl64()
-		case ep.uwp.Pops() < 4:
+		case ep.totalDemand <= ep.resource.val:
+			ep.resourceAvailable = ep.totalDemand
+			ep.excess = ep.resource.ValueFl64() - ep.totalDemand
+		case ep.totalDemand > ep.resource.val:
+			ep.resourceAvailable = ep.resource.val
+			ep.deficit = ep.totalDemand - ep.resource.val
+		}
+	case ep.infrastructure.Value()-ep.resource.Value() > 0:
+		baseDemand = ep.infrastructure.ValueFl64()
+		if ep.uwp.Pops() < 4 {
 			baseDemand = float64(ep.uwp.Pops())
 		}
 		ep.totalDemand = totalDemandTable(r, int(baseDemand), ep.uwp.Pops(), ep.Culture())
@@ -127,7 +150,7 @@ func (ep *economicPower) RecalculateRA(dice *dice.Dicepool) error {
 		//case 2
 		case ep.totalDemand > ep.resource.ValueFl64():
 			ep.resourceAvailable = ep.resource.ValueFl64()
-			ep.deficit = ep.resource.ValueFl64() - ep.totalDemand
+			ep.deficit = ep.totalDemand - ep.resource.ValueFl64()
 			ep.resourceAvailable = ep.resourceAvailable - ep.deficit
 			//case 2.5
 			if ep.resourceAvailable < 0 {
@@ -136,24 +159,151 @@ func (ep *economicPower) RecalculateRA(dice *dice.Dicepool) error {
 			}
 		}
 	}
+
+	return nil
+}
+
+func (ep *economicPower) roundValues() {
 	ep.excess = utils.RoundFloat64(ep.excess, 1)
 	ep.deficit = utils.RoundFloat64(ep.deficit, 1)
 	ep.resourceAvailable = utils.RoundFloat64(ep.resourceAvailable, 1)
 	ep.totalDemand = utils.RoundFloat64(ep.totalDemand, 1)
-	ep.ResourceTrade(dice)
-	return nil
+	ep.baseGWP = utils.RoundFloat64(ep.baseGWP, 6)
+	ep.finalGWP = utils.RoundFloat64(ep.finalGWP, 1)
 }
 
-func (ep *economicPower) ResourceTrade(dice *dice.Dicepool) {
+func (ep *economicPower) engageInResourceTrade(dice *dice.Dicepool) error {
+	if ep.excess != 0 && ep.deficit != 0 {
+		return fmt.Errorf("invalid ep.excess/ep.deficit data (%v/%v)", ep.excess, ep.deficit)
+	}
 	if ep.excess > 0 {
 		resExport := ep.resource.val - ep.totalDemand
-		ep.resourceAvailable = ep.resourceAvailable + (resExport * exportBenefit(dice.Sroll("2d6")))
+		benefit := exportBenefit(dice.Sroll("2d6"))
+		ep.resourceAvailable = ep.resourceAvailable + (resExport * benefit)
+		ep.actionLog = append(ep.actionLog, fmt.Sprintf("exported %vx%v=%v resource points", resExport, benefit, resExport*benefit))
 	}
 	if ep.deficit > 0 {
 		resImport := ep.totalDemand - ep.resource.val
-		ep.resourceAvailable = ep.resourceAvailable + (resImport * exportBenefit(dice.Sroll("2d6")))
+		benefit := importBenefit(dice.Sroll("2d6"))
+		ep.resourceAvailable = ep.resourceAvailable + (resImport * benefit)
+		ep.actionLog = append(ep.actionLog, fmt.Sprintf("imported %vx%v=%v resource points", resImport, benefit, resImport*benefit))
 	}
-	ep.resourceAvailable = utils.RoundFloat64(ep.resourceAvailable, 1)
+	ep.roundValues()
+	return nil
+}
+
+func (ep *economicPower) computeBaseGrossWorldProduct() error {
+	re := utils.RoundFloat64(float64(ep.uwp.TL())*0.1*ep.resourceAvailable, 1) //resouces exploitable rounded
+	fmt.Println(ep.uwp.TL(), 0.1, ep.resourceAvailable, "=", re)
+	lf := laborFactor(ep.Labor()) * float64(ep.pbgStash[0])
+	i := ep.infrastructure.val
+	c := ep.culture.val
+	ep.baseGWP = (re * lf * i) / (c + 1.0)
+	if ep.baseGWP < 0 {
+		return fmt.Errorf("negative base GWP")
+	}
+	fmt.Println(ep.baseGWP, re, lf, i, c, 1.0)
+	ep.roundValues()
+	credits := utils.RoundFloat64(1000000/(re*i), 1)
+	ep.actionLog = append(ep.actionLog, fmt.Sprintf("Base GWP estimated: %v RU", ep.baseGWP))
+	ep.actionLog = append(ep.actionLog, fmt.Sprintf("                  : %v MCr", credits))
+	return nil
+}
+
+func (ep *economicPower) calculateFinalGrossWorldProduct(id InterstellarDemand) error {
+	fgt := 0.0
+	port := ep.uwp.Starport()
+	switch port {
+	case "A":
+		fgt = 2.0 - (2.0 / math.Sqrt(float64(ep.tradePartners)+3.0))
+	case "B":
+		fgt = 1.7 - (1.7 / math.Sqrt(float64(ep.tradePartners)+4.89796))
+	case "C":
+		fgt = 1.4 - (1.4 / math.Sqrt(float64(ep.tradePartners)+11.25))
+	case "D":
+		fgt = 1.1 - (1.1 / math.Sqrt(float64(ep.tradePartners)+120.0))
+	case "E":
+		fgt = 1.01 - (1.01 / math.Sqrt(float64(ep.tradePartners)+10200.0))
+	default:
+		fgt = 1.000
+	}
+	fgt = fgt * id.Demand()
+	fgt = utils.RoundFloat64(fgt, 3)
+	ep.finalGWP = ep.baseGWP * fgt
+	ep.roundValues()
+	//ep.actionLog = append(ep.actionLog, fmt.Sprintf("FGTM for Starport %v with %v worlds is %v", port, ep.tradePartners, fgt))
+	ep.actionLog = append(ep.actionLog, fmt.Sprintf("Final GWP         : %v RU", ep.finalGWP))
+	return nil
+}
+
+func (ep *economicPower) determineinterstellarDemandMultipler(id InterstellarDemand) error {
+	return nil
+}
+
+func finishedGoodsTradeTable(ep *economicPower) float64 {
+	fgt := 0.0
+	tmaMap := make(map[int][]float64)
+	tmaMap[1] = []float64{1.000, 1.000, 1.000, 1.000}
+	tmaMap[2] = []float64{1.106, 1.053, 1.015, 1.000}
+	tmaMap[3] = []float64{1.184, 1.095, 1.029, 1.001}
+	tmaMap[4] = []float64{1.244, 1.130, 1.041, 1.001}
+	tmaMap[5] = []float64{1.293, 1.160, 1.053, 1.002}
+	tp := ep.tradePartners
+	if ep.tradePartners > 5 {
+		tp = 5
+	}
+	i := 3
+	switch ep.uwp.Starport() {
+	case "A":
+		i = 0
+	case "B":
+		i = 1
+	case "C":
+		i = 2
+	case "D":
+		i = 3
+	}
+	fgt = tmaMap[tp][i]
+	return fgt
+}
+
+func laborFactor(pop int) float64 {
+	lf := -999.9
+	switch pop {
+	case 0:
+		lf = 0.0000001
+	case 1:
+		lf = 0.000001
+	case 2:
+		lf = 0.00001
+	case 3:
+		lf = 0.0001
+	case 4:
+		lf = 0.001
+	case 5:
+		lf = 0.01
+	case 6:
+		lf = 0.1
+	case 7:
+		lf = 1
+	case 8:
+		lf = 10
+	case 9:
+		lf = 100
+	case 10:
+		lf = 1000
+	case 11:
+		lf = 10000
+	case 12:
+		lf = 100000
+	case 13:
+		lf = 1000000
+	case 14:
+		lf = 10000000
+	case 15:
+		lf = 100000000
+	}
+	return lf
 }
 
 func exportBenefit(i int) float64 {
@@ -272,6 +422,7 @@ func (ep *economicPower) setupBase(wrld World, dice *dice.Dicepool) {
 			ep.culture = setEconomicValue(base)
 		}
 	}
+	ep.tradePartners = 1
 }
 
 func (ep *economicPower) String() string {
@@ -447,5 +598,94 @@ func (ep *economicPower) StatBlock() string {
 	s += fmt.Sprintf("excess=%v\n", ep.excess)
 	s += fmt.Sprintf("deficit=%v\n", ep.deficit)
 	s += fmt.Sprintf("resourceAvailable=%v\n", ep.resourceAvailable)
+	s += fmt.Sprintf("LOG:\n")
+	for _, v := range ep.actionLog {
+		s += fmt.Sprintf("%v\n", v)
+	}
+	return s
+}
+
+type interstellarDemand struct {
+	//history []float64 - потенциально пишем в файл
+	//TODO: написать аналитику шансов на ближайшее изменение
+	demand float64
+	dice   *dice.Dicepool
+}
+
+type InterstellarDemand interface {
+	Demand() float64
+	Aggregate()
+}
+
+func (id *interstellarDemand) Demand() float64 {
+	return id.demand
+}
+
+func NewAggregatedDemand(seed ...string) *interstellarDemand {
+	dice := *dice.New()
+	switch len(seed) {
+	default:
+		dice.SetSeed(seed[0])
+	case 0:
+	}
+	id := interstellarDemand{1.00, &dice}
+	return &id
+}
+
+func (id *interstellarDemand) Aggregate() {
+
+	dm := 0
+	switch {
+	case inRangeFl64(id.demand, -999.9, 0.49):
+		dm = 5
+	case inRangeFl64(id.demand, 0.5, 0.69):
+		dm = 4
+	case inRangeFl64(id.demand, 0.70, 0.79):
+		dm = 3
+	case inRangeFl64(id.demand, 0.8, 0.89):
+		dm = 2
+	case inRangeFl64(id.demand, 0.9, 0.95):
+		dm = 1
+	case inRangeFl64(id.demand, 1.06, 1.10):
+		dm = -1
+	case inRangeFl64(id.demand, 1.11, 1.20):
+		dm = -2
+	case inRangeFl64(id.demand, 1.21, 1.30):
+		dm = -3
+	case inRangeFl64(id.demand, 1.31, 1.4):
+		dm = -4
+	case inRangeFl64(id.demand, 1.41, 999.9):
+		dm = -5
+	}
+	r := id.dice.Sroll("2d6") + dm
+	r = utils.BoundInt(r, 2, 12) - 2
+	changeBy := []float64{-0.06, -0.04, -0.03, -0.02, -0.01, 0, 0.01, 0.02, 0.03, 0.04, 0.06}
+	id.demand = id.demand + changeBy[r]
+	id.demand = utils.RoundFloat64(id.demand, 2)
+}
+
+func inRangeFl64(fl, min, max float64) bool {
+	if fl < min {
+		return false
+	}
+	if fl > max {
+		return false
+	}
+	return true
+}
+
+func (id *interstellarDemand) String() string {
+	return fmt.Sprintf("Aggregated Interstellar Demand: %v", id.demand)
+}
+
+func (id *interstellarDemand) Bar() string {
+	s := fmt.Sprintf("Interstellar Demand: ")
+	for i := 0; i < 200; i++ {
+		if i <= int(id.demand*100) {
+			s += "|"
+		} else {
+			s += " "
+		}
+	}
 	return s
 }
