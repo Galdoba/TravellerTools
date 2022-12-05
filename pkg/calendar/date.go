@@ -41,6 +41,11 @@ type Date interface {
 	Advance(string)
 	Day() int
 	Year() int
+	Global() uint64
+}
+
+func (d *date) Global() uint64 {
+	return d.val
 }
 
 func (d *date) Day() int {
@@ -58,7 +63,7 @@ func (d *date) AsInts() (int, int) {
 func (d *date) IsPast(check Date) bool {
 	valD := (d.year * 365) + d.day
 	valCheck := (check.Year() * 365) + check.Day()
-	if valCheck > valD {
+	if valCheck < valD {
 		return true
 	}
 	return false

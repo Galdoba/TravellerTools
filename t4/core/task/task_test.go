@@ -22,13 +22,11 @@ func taskInputExamples() []taskExample {
 func TestTask(t *testing.T) {
 	for i, input := range taskInputExamples() {
 		fmt.Printf("Test %v: %v\n", i, input)
-		tsk, err := New(input.descr, input.diff, input.tn, input.mods...)
+		tsk := New(input.tn, input.diff)
 		if tsk == nil {
 			t.Errorf("func returned no object")
 		}
-		if err != nil {
-			t.Errorf("func returned error: %v", err.Error())
-		}
+
 		if tsk.description == "" {
 			t.Errorf("task description is not set (expect %v)", input.descr)
 		}

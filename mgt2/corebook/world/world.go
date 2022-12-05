@@ -587,32 +587,7 @@ func (w *world) getTradeCodes(c *constructor) error {
 }
 
 func (w *world) getTravelCode(c *constructor) error {
-	warn := 0
-	if w.uwp.Atmo() >= 10 {
-		warn++
-	}
-	switch w.uwp.Govr() {
-	case 0, 7, 10:
-		if w.uwp.Laws() == 0 || w.uwp.Laws() >= 9 {
-			warn++
-		}
-	}
-	if w.uwp.Govr()+w.uwp.Laws() >= 20 {
-		warn++
-	}
-	if w.uwp.Govr()+w.uwp.Laws() >= 22 {
-		warn++
-	}
-	if w.uwp.Starport() == "X" {
-		warn++
-	}
-	switch warn {
-	default:
-	case 1, 2:
-		w.travelCode = "A"
-	case 3, 4, 5:
-		w.travelCode = "R"
-	}
+	w.travelCode = uwp.RecomendTravelZone(w.uwp)
 	return nil
 }
 
@@ -735,4 +710,8 @@ func (w *world) TravelCode() string {
 }
 func (w *world) PBG() string {
 	return w.pbg
+}
+
+func (w *world) Temperature() int {
+	return w.temperature
 }

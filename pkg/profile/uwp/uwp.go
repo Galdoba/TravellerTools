@@ -528,3 +528,37 @@ func (u *uwp) ChangeValue(data string, val int) error {
 }
 
 //err := u.Encode(Size, ehex.New().Set(hex))
+
+func RecomendTravelZone(u UWP) string {
+	warn := 0
+	if u.Atmo() >= 10 {
+		warn++
+	}
+	switch u.Govr() {
+	case 0, 7, 10:
+		warn++
+	}
+	if u.Laws() == 0 {
+		warn++
+	}
+	if u.Laws() >= 9 {
+		warn++
+	}
+	if u.Govr()+u.Laws() >= 20 {
+		warn++
+	}
+	if u.Govr()+u.Laws() >= 22 {
+		warn++
+	}
+	if u.Starport() == "X" || u.Starport() == "Y" {
+		warn++
+	}
+	switch warn {
+	default:
+		return ""
+	case 1, 2:
+		return "A"
+	case 3, 4, 5, 6, 7:
+		return "R"
+	}
+}

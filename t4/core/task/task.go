@@ -7,21 +7,24 @@ import (
 )
 
 const (
-	DefaultValue       = -1000
-	Unresolved         = 10
-	SpectacularFailure = 11
-	Failure            = 12
-	Success            = 13
-	SpectacularSuccess = 14
+	DefaultValue = -1000
+
+	Unresolved         = 110
+	SpectacularFailure = 111
+	Failure            = 112
+	Success            = 113
+	SpectacularSuccess = 114
 	TaskEasy           = 1000
 	TaskAverage        = 2000
 	TaskDifficult      = 3000
 	TaskFormidable     = 4000
 	TaskStaggering     = 5000
 	TaskImpossible     = 6000
+	TN_Random          = 10000
 )
 
 type Task struct {
+	resolver     *dice.Dicepool
 	description  string
 	difficulty   int
 	targetNumber int
@@ -36,19 +39,39 @@ type mod struct {
 	modInfluence int
 }
 
-func New(descr string, diff, tn int, mods ...mod) (*Task, error) {
+func New(tn int, dificulty int) *Task {
 	tsk := Task{}
-	tsk.difficulty = diff
+	tsk.difficulty = dificulty
 	tsk.targetNumber = tn
 	tsk.result = Unresolved
-	tsk.description = descr
-	for _, m := range mods {
-		if err := checkMod(m); err != nil {
-			return &tsk, err
-		}
-	}
-	return &tsk, nil
+	return &tsk
 }
+
+func (t *Task) SetResolver(dice *dice.Dicepool) {
+	t.resolver = dice
+}
+
+func (t *Task) AddDescription(descr string) {
+	t.description = descr
+}
+
+func (t *Task) Result() int {
+	return t.result
+}
+
+// func New(descr string, diff, tn int, mods ...mod) (*Task, error) {
+// 	tsk := Task{}
+// 	tsk.difficulty = diff
+// 	tsk.targetNumber = tn
+// 	tsk.result = Unresolved
+// 	tsk.description = descr
+// 	for _, m := range mods {
+// 		if err := checkMod(m); err != nil {
+// 			return &tsk, err
+// 		}
+// 	}
+// 	return &tsk, nil
+// }
 
 func checkMod(m mod) error {
 	//testChange
@@ -64,15 +87,13 @@ func checkMod(m mod) error {
 	return nil
 }
 
-func (t *Task) Resolve() {
-	dp := dice.New()
-	if t.seedFixed {
-		dp = dp.SetSeed(t.description + t.description)
+func (t *Task) Resolve() int {
+	if t.resolver == nil {
+		t.resolver = dice.New()
 	}
-
 	switch t.difficulty {
 	case TaskEasy:
-		t.roll = dp.Roll("1d6").Sum() + dp.Roll("1d3").Sum()
+		t.roll = t.resolver.Sroll("1d6") + t.resolver.Sroll("1d3")
 		if t.roll == 2 {
 			t.result = SpectacularFailure
 		}
@@ -80,7 +101,7 @@ func (t *Task) Resolve() {
 			t.result = SpectacularSuccess
 		}
 	case TaskAverage:
-		t.roll = dp.Roll("2d6").Sum()
+		t.roll = t.resolver.Sroll("2d6")
 		if t.roll == 2 {
 			t.result = SpectacularFailure
 		}
@@ -88,7 +109,7 @@ func (t *Task) Resolve() {
 			t.result = SpectacularSuccess
 		}
 	case TaskDifficult:
-		t.roll = dp.Roll("2d6").Sum() + dp.Roll("1d3").Sum()
+		t.roll = t.resolver.Sroll("2d6") + t.resolver.Sroll("1d3")
 		if t.roll == 3 {
 			t.result = SpectacularFailure
 		}
@@ -96,7 +117,7 @@ func (t *Task) Resolve() {
 			t.result = SpectacularSuccess
 		}
 	case TaskFormidable:
-		t.roll = dp.Roll("3d6").Sum()
+		t.roll = t.resolver.Sroll("3d6")
 		if t.roll == 3 {
 			t.result = SpectacularFailure
 		}
@@ -104,7 +125,7 @@ func (t *Task) Resolve() {
 			t.result = SpectacularSuccess
 		}
 	case TaskStaggering:
-		t.roll = dp.Roll("3d6").Sum() + dp.Roll("1d3").Sum()
+		t.roll = t.resolver.Sroll("3d6") + t.resolver.Sroll("1d3")
 		if t.roll == 4 {
 			t.result = SpectacularFailure
 		}
@@ -112,7 +133,7 @@ func (t *Task) Resolve() {
 			t.result = SpectacularSuccess
 		}
 	case TaskImpossible:
-		t.roll = dp.Roll("4d6").Sum()
+		t.roll = t.resolver.Sroll("4d6")
 		if t.roll == 4 {
 			t.result = SpectacularFailure
 		}
@@ -121,17 +142,14 @@ func (t *Task) Resolve() {
 		}
 	}
 	if t.result != Unresolved {
-		return
+		return t.result
 	}
-	modTN := t.targetNumber
-	for _, m := range t.modifiers {
-		modTN += m.modInfluence
-	}
+
 	t.result = Failure
-	if t.roll <= modTN {
+	if t.roll <= t.targetNumber {
 		t.result = Success
 	}
-	return
+	return t.result
 }
 
 func (t *Task) String() string {

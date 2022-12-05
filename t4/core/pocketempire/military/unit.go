@@ -2,6 +2,8 @@ package military
 
 import (
 	"fmt"
+
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 )
 
 const (
@@ -12,15 +14,28 @@ const (
 	TYPE_DEPOT
 )
 
+func NewUnit(origin hexagon.Hexagon, uType int) *Unit {
+	unit := Unit{}
+	unit.homeLocation = origin
+	unit.currentLocation = origin
+	unit.force = uType
+	return &unit
+}
+
 type Unit struct {
-	force          int
-	tl             int
-	attack         int
-	defence        int
-	transport      int
-	jump           int
-	size           int // Att + def + trn + jmp
-	jumpCapability int //jmp / (att + def + jmp)
+	name            string
+	homeLocation    hexagon.Hexagon
+	currentLocation hexagon.Hexagon
+	force           int
+	tl              int
+	attack          int
+	defence         int
+	transport       int
+	jump            int
+	size            int // Att + def + trn + jmp
+	jumpCapability  int //jmp / (att + def + jmp)
+	mothballed      bool
+	deployed        bool
 }
 
 func (un *Unit) UMP() string {
@@ -46,7 +61,7 @@ func (un *Unit) ExtendedRange() int {
 	return un.JumpCapability() * 3
 }
 
-func (un *Unit) PurchaseCost() int {
+func (un *Unit) PurchaseCost() float64 {
 	adCost := []int{
 		18000, //0
 		12000, //1
@@ -122,9 +137,9 @@ func (un *Unit) PurchaseCost() int {
 	df := len(un.DesignFlaw())
 	switch df {
 	case 0:
-		return ((un.attack + un.defence) * adCost[un.tl]) + (un.transport * tCost[un.tl]) + (un.jump * jCost[un.tl])
+		return float64(((un.attack + un.defence) * adCost[un.tl]) + (un.transport * tCost[un.tl]) + (un.jump * jCost[un.tl]))
 	default:
-		return -1 * df
+		return float64(-1 * df)
 	}
 }
 
@@ -203,4 +218,19 @@ func (un *Unit) DesignFlaw() []string {
 	default:
 	}
 	return df
+}
+
+func (un *Unit) MaintainanceCost() float64 {
+	if !un.deployed {
+		return 0.0
+	}
+	cost := float64(un.Size())
+	if un.mothballed {
+		cost = cost * 1.2
+	} else {
+		cost = cost * 3.0
+	}
+	dist := float64(hexagon.Distance(un.homeLocation, un.currentLocation))
+	cost = cost + (dist * 2)
+	return cost
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
+	"github.com/Galdoba/TravellerTools/t4/core/task"
 	"github.com/Galdoba/utils"
 )
 
@@ -50,6 +51,15 @@ func setEconomicValue(i int) *economicValue {
 	return &economicValue{float64(i)}
 }
 
+type Pawn interface {
+	//берет статы от персонажа
+}
+
+type MilitaryUnits interface {
+	//берет статы от армии
+	Maintainance() float64
+}
+
 type economicPower struct {
 	baseRolls1     []int
 	baseRolls2     []int
@@ -71,6 +81,13 @@ type economicPower struct {
 	actionLog         []string
 	tradePartners     int
 	tradeMultipler    float64
+	descridetoryTax   float64
+	govermentalBudget float64
+	civilExpenses     float64
+	militaryExpenses  float64
+	//other
+	administrator Pawn
+	units         []MilitaryUnits
 }
 
 type eventMod struct {
@@ -93,6 +110,8 @@ func (ep *economicPower) Process(dice *dice.Dicepool, demand InterstellarDemand)
 		ep.engageInResourceTrade(dice),
 		ep.computeBaseGrossWorldProduct(),
 		ep.calculateFinalGrossWorldProduct(demand),
+		ep.calculateGovermentalBudget(),
+		ep.calculateExpenses(dice),
 	} {
 		if err != nil {
 			return err
@@ -113,6 +132,112 @@ func minFl64(fl1, fl2 float64) float64 {
 		return fl1
 	}
 	return fl2
+}
+
+func (ep *economicPower) calculateExpenses(dice *dice.Dicepool) error {
+	c := ep.culture.val
+	i := ep.infrastructure.val
+	l := float64(ep.uwp.Laws())
+	a := ep.administratorMult(dice)
+	g := ep.govermentalExpenceFactor()
+	gb := ep.govermentalBudget
+	ce := ((c + i + l) / 100.0) * a * g * gb
+	ep.civilExpenses = utils.RoundFloat64(ce, 1)
+	ep.actionLog = append(ep.actionLog, fmt.Sprintf("civil expences: %v RU", ep.civilExpenses))
+	m := ep.militaryCost()
+	me := m * a * g
+	ep.militaryExpenses = utils.RoundFloat64(me, 1)
+	ep.actionLog = append(ep.actionLog, fmt.Sprintf("military expences: %v RU", ep.militaryExpenses))
+	return nil
+}
+
+func (ep *economicPower) militaryCost() float64 {
+	summ := 0.0
+	for _, unit := range ep.units {
+		summ += unit.Maintainance()
+	}
+	return summ
+}
+
+func (ep *economicPower) administratorMult(dice *dice.Dicepool) float64 {
+	a := 1.1
+	tn := 0
+	if ep.administrator == nil {
+		randomTaskNumber(dice)
+	}
+	tsk := task.New(tn, task.TaskFormidable)
+	tsk.SetResolver(dice)
+	switch tsk.Resolve() {
+	case task.SpectacularSuccess:
+		a = 0.9
+	case task.Success:
+		a = 1.0
+	case task.Failure:
+		a = 1.1
+	case task.SpectacularFailure:
+		a = 1.2
+	default:
+		a = 1.1
+	}
+	return a
+}
+
+func (ep *economicPower) govermentalExpenceFactor() float64 {
+	switch ep.uwp.Govr() {
+	case 0:
+		return 0.95
+	case 1, 14:
+		return 1.10
+	case 2:
+		return 1.40
+	case 3, 8:
+		return 1.30
+	case 4:
+		return 1.15
+	case 5, 9:
+		return 1.35
+	case 10, 13:
+		return 1.05
+	case 11:
+		return 1.00
+	case 12:
+		return 1.25
+	case 15:
+		return 1.20
+	}
+	return 1.18
+}
+
+func randomTaskNumber(dice *dice.Dicepool) int {
+	i := dice.Sroll("1d6-1")
+	return []int{18, 16, 14, 12, 10, 8}[i]
+}
+
+func (ep *economicPower) baseTax() float64 {
+	switch ep.uwp.Govr() {
+	case 0:
+		return 0.05
+	case 1, 3:
+		return 0.20
+	case 4, 5, 11:
+		return 0.25
+	case 2, 10, 12:
+		return 0.30
+	case 9, 14, 15:
+		return 0.35
+	case 8, 13:
+		return 0.40
+	}
+	//0.26 - это среднее ориентироваться по хозяину
+	return 0.26
+}
+
+func (ep *economicPower) socialTax() float64 {
+	return float64(ep.uwp.Laws()+ep.Culture()) / 100
+}
+
+func (ep *economicPower) TotalTax() float64 {
+	return ep.baseTax() + ep.socialTax() + ep.descridetoryTax
 }
 
 func (ep *economicPower) determinePlanetaryDemand(dice *dice.Dicepool) error {
@@ -168,7 +293,7 @@ func (ep *economicPower) roundValues() {
 	ep.deficit = utils.RoundFloat64(ep.deficit, 1)
 	ep.resourceAvailable = utils.RoundFloat64(ep.resourceAvailable, 1)
 	ep.totalDemand = utils.RoundFloat64(ep.totalDemand, 1)
-	ep.baseGWP = utils.RoundFloat64(ep.baseGWP, 6)
+	ep.baseGWP = utils.RoundFloat64(ep.baseGWP, 1)
 	ep.finalGWP = utils.RoundFloat64(ep.finalGWP, 1)
 }
 
@@ -211,7 +336,7 @@ func (ep *economicPower) computeBaseGrossWorldProduct() error {
 }
 
 func (ep *economicPower) calculateFinalGrossWorldProduct(id InterstellarDemand) error {
-	fgt := 0.0
+	fgt := 1.0
 	port := ep.uwp.Starport()
 	switch port {
 	case "A":
@@ -237,6 +362,13 @@ func (ep *economicPower) calculateFinalGrossWorldProduct(id InterstellarDemand) 
 }
 
 func (ep *economicPower) determineinterstellarDemandMultipler(id InterstellarDemand) error {
+	return nil
+}
+
+func (ep *economicPower) calculateGovermentalBudget() error {
+	gb := utils.RoundFloat64(ep.finalGWP*ep.TotalTax(), 1)
+	ep.govermentalBudget = gb
+	ep.actionLog = append(ep.actionLog, fmt.Sprintf("Govermental Budget: %v RU", gb))
 	return nil
 }
 

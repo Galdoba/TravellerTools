@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/survey"
-	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/economics"
-	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/empire/worldcharacter"
+	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/economics"
+	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/empire/worldcharacter"
 )
 
 func TestWorldCharacter(t *testing.T) {

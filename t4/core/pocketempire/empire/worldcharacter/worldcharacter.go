@@ -8,7 +8,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
-	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/economics"
+	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/economics"
 )
 
 const (
@@ -60,12 +60,16 @@ const (
 	XENOPHOBIC_Tolerance     = "Xenophobic"
 )
 
+type Pawn interface {
+	//интерфейс берущий статы от персонажа
+}
+
 type world struct {
-	name              string
-	uwp               uwp.UWP
-	pbg               string
-	tradecodes        []string
-	tradeGoods        []string
+	name       string
+	uwp        uwp.UWP
+	pbg        string
+	tradecodes []string
+
 	econEx            economics.EconomicPower
 	selfDetermination ehex.Ehex //0-10
 	localPopularity   ehex.Ehex //0-15
@@ -99,7 +103,6 @@ func WorldCharacter(worldName, uwpStr, pbgStr string, x, y int) (*world, error) 
 	}
 	wc.hex = hex
 	wc.tradecodes = setupTradeCodes(wc.uwp, dice)
-	//wc.tradeGoods = availableResources(wc.uwp, wc.tradecodes, dice)
 	wc.econEx = economics.GenerateInitialEconomicPower(&wc, dice)
 
 	wc.setupBaseRolls(dice)

@@ -27,9 +27,10 @@ const (
 
 type classifications struct {
 	confirmedByUWP []string
-	excludeMWonly  bool
-	excludeSWonly  bool
-	errors         []error
+
+	excludeMWonly bool
+	excludeSWonly bool
+	errors        []error
 }
 
 type tcInput struct {
@@ -38,6 +39,12 @@ type tcInput struct {
 
 func Input(key, val string) tcInput {
 	return tcInput{key, val}
+}
+
+type World interface {
+	UWP() string
+	Stellar() string
+	HZ() int
 }
 
 func Analize(input ...tcInput) *classifications {
@@ -121,12 +128,12 @@ func mapCLS() map[int]clssfctn {
 	clMap[38] = clssfctn{"Cs", []int{0, 0, 1, 0, 0, 1, 0}}
 	clMap[39] = clssfctn{"Cx", []int{0, 0, 1, 0, 0, 1, 0}}
 	clMap[40] = clssfctn{"Cy", []int{1, 0, 1, 0, 0, 1, 0}}
-	clMap[41] = clssfctn{"Sa", []int{}}
-	clMap[42] = clssfctn{"Fo", []int{}}
-	clMap[43] = clssfctn{"Pz", []int{}}
-	clMap[44] = clssfctn{"Da", []int{}}
-	clMap[45] = clssfctn{"Ab", []int{}}
-	clMap[46] = clssfctn{"An", []int{}}
+	clMap[41] = clssfctn{"Sa", []int{0, 0, 0, 0, 0, 0, 1}}
+	clMap[42] = clssfctn{"Fo", []int{0, 0, 0, 0, 0, 1, 0}}
+	clMap[43] = clssfctn{"Pz", []int{1, 0, 0, 0, 0, 1, 0}}
+	clMap[44] = clssfctn{"Da", []int{1, 0, 0, 0, 0, 1, 0}}
+	clMap[45] = clssfctn{"Ab", []int{0, 0, 0, 0, 0, 0, 1}}
+	clMap[46] = clssfctn{"An", []int{0, 0, 0, 0, 0, 0, 1}}
 	return clMap
 }
 

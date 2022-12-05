@@ -7,10 +7,15 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
-	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/empire/worldcharacter"
-	"github.com/Galdoba/TravellerTools/t4/core/task/pocketempire/family"
+	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/empire/worldcharacter"
+	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/family"
 	"github.com/Galdoba/utils"
 )
+
+/*
+GAME FLOW:
+
+*/
 
 type individualWorld interface {
 	MW_Name() string
