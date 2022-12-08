@@ -54,7 +54,7 @@ type positions struct {
 
 func Test_PlotCourse(t *testing.T) {
 
-	ast, _ := astarhex.New(astarhex.Config{2, 1})
+	ast, _ := astarhex.New(astarhex.Config{MaxJumpDistance: 2, MaxConseuqnceJumps: 1})
 	start, _ := survey.Search("Drinax")
 	strtHex := hexagon.FromHex(start[0])
 	fmt.Println(start)

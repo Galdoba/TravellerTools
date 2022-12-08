@@ -56,7 +56,7 @@ type Plot struct {
 
 func PlotCource(start, end hexagon.Hex, MaxJumpDistance int, MaxConseuqnceJumps int) (Plot, error) {
 	jc := Plot{}
-	ast, err := astarhex.New(astarhex.Config{MaxJumpDistance, MaxConseuqnceJumps})
+	ast, err := astarhex.New(astarhex.Config{MaxJumpDistance: MaxJumpDistance, MaxConseuqnceJumps: MaxConseuqnceJumps})
 	if err != nil {
 		return jc, err
 	}

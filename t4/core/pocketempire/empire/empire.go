@@ -25,19 +25,51 @@ type individualWorld interface {
 	CoordY() int
 }
 
+// type PocketEmpire struct {
+// 	RulingFamily  *family.Family
+// 	World         map[int]worldcharacter.World
+// 	Size          ehex.Ehex
+// 	MilitaryPower ehex.Ehex
+// 	EconomicPower ehex.Ehex
+// 	Prestige      int //0-15
+// }
+
 type PocketEmpire struct {
-	RulingFamily  *family.Family
-	World         map[int]worldcharacter.World
-	Size          ehex.Ehex
-	MilitaryPower ehex.Ehex
-	EconomicPower ehex.Ehex
-	Prestige      int //0-15
+	Name          string
+	RullingFamily *family.Family //перевести в интерфейс
+	World         []worldcharacter.World
 }
 
 func New() *PocketEmpire {
 	empire := PocketEmpire{}
-	empire.World = make(map[int]worldcharacter.World)
+
 	return &empire
+}
+
+//integrateWorld - добавляет мир в империю, если его нет
+func (e *PocketEmpire) integrateWorld(wIntegrated worldcharacter.World) error {
+	for _, wHave := range e.World {
+		if worldcharacter.AreSame(wIntegrated, wHave) {
+			return fmt.Errorf("%v was already integrated", wIntegrated.Name())
+		}
+	}
+	e.World = append(e.World, wIntegrated)
+	return nil
+}
+
+//excludeWorld - исключает мир из империи, если его нет
+func (e *PocketEmpire) excludeWorld(wExcluded worldcharacter.World) error {
+	err := fmt.Errorf("%v is not belong to %v", wExcluded.Name(), e.Name)
+	var wrldsLeft []worldcharacter.World
+	for _, wHave := range e.World {
+		if worldcharacter.AreSame(wExcluded, wHave) {
+			err = nil
+			continue
+		}
+		wrldsLeft = append(wrldsLeft, wHave)
+	}
+	e.World = wrldsLeft
+	return err
 }
 
 type economicExtention struct {

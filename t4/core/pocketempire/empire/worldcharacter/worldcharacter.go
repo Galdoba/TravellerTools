@@ -2,8 +2,11 @@ package worldcharacter
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon/location"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
@@ -65,9 +68,12 @@ type Pawn interface {
 }
 
 type world struct {
-	name       string
-	uwp        uwp.UWP
-	pbg        string
+	name string
+	uwp  uwp.UWP
+	//pbg        string
+	popMod     int
+	belts      int
+	gg         int
 	tradecodes []string
 
 	econEx            economics.EconomicPower
@@ -79,7 +85,18 @@ type world struct {
 	baseRolls         []int //всего 7 Progression/Planning/Advancment/Grown/Militancy/Unity/Tolerance
 }
 
+func AreSame(w1, w2 World) bool {
+	if w1.Name()+w1.UWPs()+w1.PBG()+w1.Location() == w2.Name()+w2.UWPs()+w2.PBG()+w2.Location() {
+		return true
+	}
+	return false
+}
+
 type World interface {
+	Name() string
+	UWPs() string
+	PBG() string
+	Location() string
 	Attitude(string) string
 	SelfDetermination() int
 	Progression() int
@@ -91,12 +108,42 @@ type World interface {
 	Tolerance() int
 }
 
+func (wc *world) Name() string {
+	return wc.name
+}
+
+func (wc *world) UWPs() string {
+	return wc.uwp.String()
+}
+
+func (wc *world) PBG() string {
+	return fmt.Sprintf("%v%v%v", wc.popMod, wc.belts, wc.gg)
+}
+
+func (wc *world) Location() string {
+	loc := location.New(wc.hex, location.COORDINATE_STANDARD_OTU)
+	return loc.String()
+}
+
 func WorldCharacter(worldName, uwpStr, pbgStr string, x, y int) (*world, error) {
 	dice := dice.New().SetSeed(worldName + pbgStr + fmt.Sprintf("%v%v", x, y))
 	wc := world{}
 	wc.name = worldName
 	wc.uwp = uwp.Inject(uwpStr)
-	wc.pbg = pbgStr
+	//wc.pbg = pbgStr
+	for i, s := range strings.Split(pbgStr, "") {
+		d, e := strconv.Atoi(s)
+		if e == nil {
+			switch i {
+			case 0:
+				wc.popMod = d
+			case 1:
+				wc.belts = d
+			case 2:
+				wc.gg = d
+			}
+		}
+	}
 	hex, err := hexagon.New(hexagon.Feed_HEX, x, y)
 	if err != nil {
 		return &wc, err
@@ -482,15 +529,11 @@ func (wc *world) TradeCodes() []string {
 	return wc.tradecodes
 }
 
-func (wc *world) PBG() string {
-	return wc.pbg
-}
-
 func (wc *world) Descr() string {
 	s := fmt.Sprintf("World: %v\n", wc.name)
 	s += fmt.Sprintf("UWP  : %v-%v\n", wc.uwp.String(), wc.econEx.String())
-	s += fmt.Sprintf("HEX  : %v\n", wc.hex.String())
-	s += fmt.Sprintf("PBG: : %v\n", wc.pbg)
+	s += fmt.Sprintf("HEX  : %v\n", wc.Location())
+	s += fmt.Sprintf("PBG: : %v\n", wc.PBG())
 	s += fmt.Sprintf("SD   : %v\n", wc.selfDetermination.Code())
 	s += fmt.Sprintf("TC   : ")
 	for _, tc := range wc.tradecodes {
@@ -506,5 +549,13 @@ func (wc *world) Descr() string {
 	s += fmt.Sprintf("Militancy  : %v (%v)\n", wc.Militancy(), wc.Attitude(MILITANCY_STAT))
 	s += fmt.Sprintf("Unity      : %v (%v)\n", wc.Unity(), wc.Attitude(UNITY_STAT))
 	s += fmt.Sprintf("Tolerance  : %v (%v)\n", wc.Tolerance(), wc.Attitude(TOLERANCE_STAT))
+	return s
+}
+
+func (wc *world) Base() string {
+	s := fmt.Sprintf("World: %v\n", wc.name)
+	s += fmt.Sprintf("UWP  : %v\n", wc.uwp.String())
+	s += fmt.Sprintf("HEX  : %v\n", wc.hex.String())
+	s += fmt.Sprintf("PBG: : %v\n", wc.PBG())
 	return s
 }
