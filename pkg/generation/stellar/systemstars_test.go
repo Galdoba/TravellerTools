@@ -10,9 +10,10 @@ import (
 )
 
 func TestNewStellar(t *testing.T) {
+	return
 	lenMap := make(map[int]int)
-	d := 1000
-	for i := d; i < d+50; i++ {
+	d := 500
+	for i := d; i < d+30; i++ {
 		name := fmt.Sprintf("Test Stellar %v", i)
 		stellar := calculations.GenerateNewStellar(name)
 		stars, err := star.ParseStellar(stellar)
@@ -34,6 +35,7 @@ func testLines() []string {
 }
 
 func TestStarNexus(t *testing.T) {
+	return
 	for _, input := range testLines() {
 		fmt.Println(input)
 		ssd := survey.Parse(input)

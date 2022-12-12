@@ -12,6 +12,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/mgt2trade/traffic/tradecodes"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/economics"
+	"github.com/Galdoba/utils"
 )
 
 const (
@@ -106,6 +107,7 @@ type World interface {
 	Militancy() int
 	Unity() int
 	Tolerance() int
+	EstimatedPopulation() float64
 }
 
 func (wc *world) Name() string {
@@ -464,7 +466,6 @@ func nativeLifeRoll(u uwp.UWP, dice *dice.Dicepool, tc []string) int {
 			dm = dm - 1
 		}
 	}
-	fmt.Println("NL dm:", dm)
 	return dice.Sroll("2d6") + dm - 10
 }
 
@@ -558,4 +559,79 @@ func (wc *world) Base() string {
 	s += fmt.Sprintf("HEX  : %v\n", wc.hex.String())
 	s += fmt.Sprintf("PBG: : %v\n", wc.PBG())
 	return s
+}
+
+func (wc *world) UWPE() string {
+	return wc.uwp.String() + "-" + wc.econEx.String()
+}
+
+func (w *world) EstimatedPopulation() float64 {
+	return float64((10^w.uwp.Pops())*w.popMod) / 1000000.0
+}
+
+func (w *world) calculatePopularity() int {
+	/*
+		popul = base + actionBonus + leadershipBonus
+		actionBonus = w.popularityActionBonus()
+		leadershipBonus = w.leadershipBonus()
+		base = t + c + i - l - g - d + a
+	*/
+	t := w.uwp.TL()
+	c := w.econEx.Culture()
+	i := w.econEx.Infrastructure()
+	l := abs(w.uwp.Laws() - w.SelfDetermination())
+	g := abs(pluralism(w.uwp.Govr()) - w.SelfDetermination())
+	d := int(w.econEx.DescridetoryTax() * 100)
+	//a := 'from events'
+	a := 0
+	base := t + c + i - l - g - d + a
+	base = utils.BoundInt(base, 0, 15)
+	return 0
+}
+
+func abs(a int) int {
+	if a > 0 {
+		return a
+	}
+	return a * -1
+}
+
+func pluralism(g int) int {
+	p := 0
+	switch g {
+	case 0:
+		p = 0
+	case 1:
+		p = 6
+	case 2:
+		p = 1
+	case 3:
+		p = 7
+	case 4:
+		p = 2
+	case 5:
+		p = 5
+	case 6:
+		p = -1
+	case 7:
+		p = -2
+	case 8:
+		p = 3
+	case 9:
+		p = 4
+	case 10:
+		p = 9
+	case 11:
+		p = 10
+	case 12:
+		p = 8
+	case 13:
+		p = 11
+	case 14:
+		p = 12
+	case 15:
+		p = 13
+	}
+
+	return p
 }

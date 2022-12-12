@@ -2,6 +2,7 @@ package empire
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
@@ -38,6 +39,9 @@ type PocketEmpire struct {
 	Name          string
 	RullingFamily *family.Family //перевести в интерфейс
 	World         []worldcharacter.World
+	//
+	selfDetermination int
+	totalPopulation   float64
 }
 
 func New() *PocketEmpire {
@@ -55,6 +59,52 @@ func (e *PocketEmpire) integrateWorld(wIntegrated worldcharacter.World) error {
 	}
 	e.World = append(e.World, wIntegrated)
 	return nil
+}
+
+func (e *PocketEmpire) UEP() string {
+	p := ""
+	p += e.SelfDeterminationCode()
+	//p += e.PopularityCode()
+	//p += e.PopulationCode()
+	//p += e.GovermentCode()
+	//p += e.LawLevelCode()
+	//p += e.TechLevelCode()
+	//p += e.SizeCode()
+	//p += e.MilitaryPowerCode()
+	//p += e.EconomicPowerCode()
+	//p += e.PrestigeCode()
+	return p
+}
+
+func (e *PocketEmpire) SelfDeterminationCode() string {
+	return ehex.ToCode(e.selfDetermination)
+}
+
+func calculateSelfDetermination(e *PocketEmpire) {
+	sd := 0.0
+	for _, w := range e.World {
+		sd += float64(w.SelfDetermination())
+	}
+	sd = sd / float64(len(e.World))
+	e.selfDetermination = int(math.Round(sd))
+}
+
+func populationCode(e *PocketEmpire) string {
+	tp := int(e.totalPopulation)
+	f := 1
+	for tp > 0 {
+		tp = tp / 10
+		f++
+	}
+	return ehex.ToCode(f)
+}
+
+func (e *PocketEmpire) calculatePopulation() {
+	totalPop := 0.0
+	for _, w := range e.World {
+		totalPop += w.EstimatedPopulation()
+	}
+	e.totalPopulation = totalPop
 }
 
 //excludeWorld - исключает мир из империи, если его нет

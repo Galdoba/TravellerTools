@@ -27,6 +27,7 @@ type EconomicPower interface {
 	Infrastructure() int
 	Culture() int
 	String() string
+	DescridetoryTax() float64
 	Process(*dice.Dicepool, InterstellarDemand) error
 	StatBlock() string
 }
@@ -118,7 +119,7 @@ func (ep *economicPower) Process(dice *dice.Dicepool, demand InterstellarDemand)
 		}
 	}
 
-	return fmt.Errorf("steps implemented 2/11")
+	return nil
 }
 
 func GenerateInitialEconomicPower(wrld World, dice *dice.Dicepool) *economicPower {
@@ -240,6 +241,10 @@ func (ep *economicPower) TotalTax() float64 {
 	return ep.baseTax() + ep.socialTax() + ep.descridetoryTax
 }
 
+func (ep *economicPower) DescridetoryTax() float64 {
+	return ep.descridetoryTax
+}
+
 func (ep *economicPower) determinePlanetaryDemand(dice *dice.Dicepool) error {
 	baseDemand := 0.0
 	ep.excess = 0.0
@@ -319,7 +324,6 @@ func (ep *economicPower) engageInResourceTrade(dice *dice.Dicepool) error {
 
 func (ep *economicPower) computeBaseGrossWorldProduct() error {
 	re := utils.RoundFloat64(float64(ep.uwp.TL())*0.1*ep.resourceAvailable, 1) //resouces exploitable rounded
-	fmt.Println(ep.uwp.TL(), 0.1, ep.resourceAvailable, "=", re)
 	lf := laborFactor(ep.Labor()) * float64(ep.pbgStash[0])
 	i := ep.infrastructure.val
 	c := ep.culture.val
@@ -327,7 +331,6 @@ func (ep *economicPower) computeBaseGrossWorldProduct() error {
 	if ep.baseGWP < 0 {
 		return fmt.Errorf("negative base GWP")
 	}
-	fmt.Println(ep.baseGWP, re, lf, i, c, 1.0)
 	ep.roundValues()
 	credits := utils.RoundFloat64(1000000/(re*i), 1)
 	ep.actionLog = append(ep.actionLog, fmt.Sprintf("Base GWP estimated: %v RU", ep.baseGWP))
