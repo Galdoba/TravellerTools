@@ -5,11 +5,13 @@ import (
 	"math"
 	"strings"
 
+	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/empire/worldcharacter"
 	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/family"
+	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/military"
 	"github.com/Galdoba/utils"
 )
 
@@ -39,15 +41,28 @@ type PocketEmpire struct {
 	Name          string
 	RullingFamily *family.Family //перевести в интерфейс
 	World         []worldcharacter.World
+	Military      []military.Unit
 	//
 	selfDetermination int
+	popularity        int
+	prestige          int
 	totalPopulation   float64
 }
 
 func New() *PocketEmpire {
 	empire := PocketEmpire{}
-
+	empire.AddMilitary(military.NewUnit(hexagon.Global(0, 0), military.TYPE_GROUND, 5).SetName("test Unit"))
 	return &empire
+}
+
+func (e *PocketEmpire) AddMilitary(unit *military.Unit) error {
+	for _, wHave := range e.Military {
+		if military.AreSame(unit, &wHave) {
+			return fmt.Errorf("unit was already integrated")
+		}
+	}
+	e.Military = append(e.Military, *unit)
+	return nil
 }
 
 //integrateWorld - добавляет мир в империю, если его нет
@@ -63,24 +78,149 @@ func (e *PocketEmpire) integrateWorld(wIntegrated worldcharacter.World) error {
 
 func (e *PocketEmpire) UEP() string {
 	p := ""
-	p += e.SelfDeterminationCode()
-	//p += e.PopularityCode()
-	//p += e.PopulationCode()
-	//p += e.GovermentCode()
-	//p += e.LawLevelCode()
-	//p += e.TechLevelCode()
-	//p += e.SizeCode()
-	//p += e.MilitaryPowerCode()
-	//p += e.EconomicPowerCode()
-	//p += e.PrestigeCode()
+	p += ehex.ToCode(e.selfDetermination)
+	p += ehex.ToCode(e.popularity)
+	p += ehex.ToCode(populationCode(e))
+	p += "-"
+	p += e.GovermentCode()
+	p += e.LawLevelCode()
+	p += e.TechLevelCode()
+	p += "-"
+	p += ehex.ToCode(sizeCode(len(e.World)))
+	p += ehex.ToCode(sizeCode(len(e.Military)))
+	p += e.EconomicPowerCode()
+	p += ehex.ToCode(e.Prestige())
 	return p
 }
 
-func (e *PocketEmpire) SelfDeterminationCode() string {
-	return ehex.ToCode(e.selfDetermination)
+func (e *PocketEmpire) GovermentCode() string {
+	maxPop := 0.0
+	wrld := 0
+	for i, w := range e.World {
+		pop := w.EstimatedPopulation()
+		if maxPop < pop {
+			maxPop = pop
+			wrld = i
+		}
+	}
+	uwps, _ := uwp.FromString(e.World[wrld].UWPs())
+	return ehex.ToCode(uwps.Govr())
 }
 
-func calculateSelfDetermination(e *PocketEmpire) {
+func (e *PocketEmpire) LawLevelCode() string {
+	sumLaw := 0
+	for _, w := range e.World {
+		uwps, _ := uwp.FromString(w.UWPs())
+		sumLaw += uwps.Laws()
+	}
+	return ehex.ToCode(sumLaw / len(e.World))
+}
+
+func (e *PocketEmpire) TechLevelCode() string {
+	tl := 0
+	for _, w := range e.World {
+		uwps, _ := uwp.FromString(w.UWPs())
+		tl += uwps.TL()
+	}
+	return ehex.ToCode(tl / len(e.World))
+}
+
+func sizeCode(i int) int {
+	val := 0
+	switch {
+	case i == 1:
+		val = 1
+	case i == 2:
+		val = 2
+	case utils.InRange(i, 3, 4):
+		val = 3
+	case utils.InRange(i, 5, 8):
+		val = 4
+	case utils.InRange(i, 9, 16):
+		val = 5
+	case utils.InRange(i, 17, 32):
+		val = 6
+	case utils.InRange(i, 33, 64):
+		val = 7
+	case utils.InRange(i, 65, 128):
+		val = 8
+	case utils.InRange(i, 129, 256):
+		val = 9
+	case utils.InRange(i, 257, 512):
+		val = 10
+	case utils.InRange(i, 513, 1024):
+		val = 11
+	case utils.InRange(i, 1025, 2048):
+		val = 12
+	case utils.InRange(i, 2049, 4096):
+		val = 13
+	case utils.InRange(i, 4097, 8192):
+		val = 14
+	case utils.InRange(i, 8193, 16392):
+		val = 15
+
+	}
+	return val
+}
+
+func (e *PocketEmpire) EconomicPowerCode() string {
+	ru := 0
+	for _, w := range e.World {
+		ru += w.GetGWP()
+	}
+	return GEPcode(ru)
+}
+
+func GEPcode(ru int) string {
+	val := 0
+	switch {
+	case ru == 0:
+		val = 0
+	case ru == 1:
+		val = 1
+	case utils.InRange(ru, 2, 3):
+		val = 2
+	case utils.InRange(ru, 4, 10):
+		val = 3
+	case utils.InRange(ru, 11, 30):
+		val = 4
+	case utils.InRange(ru, 31, 100):
+		val = 5
+	case utils.InRange(ru, 101, 250):
+		val = 6
+	case utils.InRange(ru, 251, 1000):
+		val = 7
+	case utils.InRange(ru, 1001, 2500):
+		val = 8
+	case utils.InRange(ru, 2501, 10000):
+		val = 9
+	case utils.InRange(ru, 10001, 25000):
+		val = 10
+	case utils.InRange(ru, 25001, 60000):
+		val = 11
+	case utils.InRange(ru, 60001, 180000):
+		val = 12
+	case utils.InRange(ru, 180001, 600000):
+		val = 13
+	case utils.InRange(ru, 600001, 1800000):
+		val = 14
+	case utils.InRange(ru, 1800001, 1800000000):
+		val = 15
+	}
+
+	return ehex.ToCode(val)
+}
+
+func (e *PocketEmpire) calculatePopularity() {
+	pp := 0.0
+	for _, w := range e.World {
+		pp += float64(w.Popularity())
+	}
+	pp = pp / float64(len(e.World))
+	e.popularity = int(math.Round(pp))
+}
+
+func (e *PocketEmpire) calculateSelfDetermination() {
 	sd := 0.0
 	for _, w := range e.World {
 		sd += float64(w.SelfDetermination())
@@ -89,14 +229,14 @@ func calculateSelfDetermination(e *PocketEmpire) {
 	e.selfDetermination = int(math.Round(sd))
 }
 
-func populationCode(e *PocketEmpire) string {
+func populationCode(e *PocketEmpire) int {
 	tp := int(e.totalPopulation)
 	f := 1
 	for tp > 0 {
 		tp = tp / 10
 		f++
 	}
-	return ehex.ToCode(f)
+	return f
 }
 
 func (e *PocketEmpire) calculatePopulation() {
@@ -326,3 +466,21 @@ func availableResources(u uwp.UWP, tc []string, dice *dice.Dicepool) []string {
 	return availRes
 }
 */
+func (e *PocketEmpire) Prestige() int {
+	return e.prestige
+}
+
+func (e *PocketEmpire) calculatePrestige() {
+	avp := 0
+	for _, w := range e.World {
+		avp += w.Popularity()
+	}
+	avp = avp / len(e.World)
+	p := populationCode(e)
+	n := sizeCode(len(e.World))
+	m := sizeCode(len(e.Military))
+	ec := ehex.ValueOf(e.EconomicPowerCode())
+	base := (avp + p + n + m + ec) / 5
+	ab := 0
+	e.prestige = utils.BoundInt(base+ab, 0, 15)
+}

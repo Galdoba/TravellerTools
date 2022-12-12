@@ -44,6 +44,13 @@ func Test_EmpireOfSevenStars(t *testing.T) {
 		fmt.Println("Integrated:", wc.UWPE())
 		//fmt.Println(e)
 	}
+	fmt.Println(e)
+	e.calculateSelfDetermination()
+	e.calculatePopularity()
+	e.calculatePopulation()
+	e.calculatePrestige()
+
+	fmt.Println(e.UEP())
 
 }
 

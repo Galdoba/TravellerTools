@@ -14,12 +14,25 @@ const (
 	TYPE_DEPOT
 )
 
-func NewUnit(origin hexagon.Hexagon, uType int) *Unit {
+func NewUnit(origin hexagon.Hexagon, uType int, tl int) *Unit {
 	unit := Unit{}
 	unit.homeLocation = origin
 	unit.currentLocation = origin
 	unit.force = uType
+	unit.tl = tl
 	return &unit
+}
+
+func (u *Unit) SetName(name string) *Unit {
+	u.name = name
+	return u
+}
+
+func AreSame(u1, u2 *Unit) bool {
+	if u1.name+u1.homeLocation.String() == u2.name+u2.homeLocation.String() {
+		return true
+	}
+	return false
 }
 
 type Unit struct {

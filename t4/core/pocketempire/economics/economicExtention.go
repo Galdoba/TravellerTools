@@ -26,6 +26,7 @@ type EconomicPower interface {
 	Labor() int
 	Infrastructure() int
 	Culture() int
+	GWP() int
 	String() string
 	DescridetoryTax() float64
 	Process(*dice.Dicepool, InterstellarDemand) error
@@ -78,7 +79,7 @@ type economicPower struct {
 	excess            float64
 	deficit           float64
 	baseGWP           float64
-	finalGWP          float64
+	finalGWP          *economicValue
 	actionLog         []string
 	tradePartners     int
 	tradeMultipler    float64
@@ -133,6 +134,10 @@ func minFl64(fl1, fl2 float64) float64 {
 		return fl1
 	}
 	return fl2
+}
+
+func (ep *economicPower) GWP() int {
+	return ep.finalGWP.Value()
 }
 
 func (ep *economicPower) calculateExpenses(dice *dice.Dicepool) error {
@@ -299,7 +304,7 @@ func (ep *economicPower) roundValues() {
 	ep.resourceAvailable = utils.RoundFloat64(ep.resourceAvailable, 1)
 	ep.totalDemand = utils.RoundFloat64(ep.totalDemand, 1)
 	ep.baseGWP = utils.RoundFloat64(ep.baseGWP, 1)
-	ep.finalGWP = utils.RoundFloat64(ep.finalGWP, 1)
+	ep.finalGWP.val = utils.RoundFloat64(ep.finalGWP.val, 1)
 }
 
 func (ep *economicPower) engageInResourceTrade(dice *dice.Dicepool) error {
@@ -357,10 +362,10 @@ func (ep *economicPower) calculateFinalGrossWorldProduct(id InterstellarDemand) 
 	}
 	fgt = fgt * id.Demand()
 	fgt = utils.RoundFloat64(fgt, 3)
-	ep.finalGWP = ep.baseGWP * fgt
+	ep.finalGWP.val = ep.baseGWP * fgt
 	ep.roundValues()
 	//ep.actionLog = append(ep.actionLog, fmt.Sprintf("FGTM for Starport %v with %v worlds is %v", port, ep.tradePartners, fgt))
-	ep.actionLog = append(ep.actionLog, fmt.Sprintf("Final GWP         : %v RU", ep.finalGWP))
+	ep.actionLog = append(ep.actionLog, fmt.Sprintf("Final GWP         : %v RU", ep.finalGWP.val))
 	return nil
 }
 
@@ -369,7 +374,7 @@ func (ep *economicPower) determineinterstellarDemandMultipler(id InterstellarDem
 }
 
 func (ep *economicPower) calculateGovermentalBudget() error {
-	gb := utils.RoundFloat64(ep.finalGWP*ep.TotalTax(), 1)
+	gb := utils.RoundFloat64(ep.finalGWP.val*ep.TotalTax(), 1)
 	ep.govermentalBudget = gb
 	ep.actionLog = append(ep.actionLog, fmt.Sprintf("Govermental Budget: %v RU", gb))
 	return nil
@@ -557,6 +562,7 @@ func (ep *economicPower) setupBase(wrld World, dice *dice.Dicepool) {
 			ep.culture = setEconomicValue(base)
 		}
 	}
+	ep.finalGWP = setEconomicValue(0)
 	ep.tradePartners = 1
 }
 
@@ -823,4 +829,44 @@ func (id *interstellarDemand) Bar() string {
 		}
 	}
 	return s
+}
+
+func GEPcode(ru int) string {
+	val := 0
+	switch {
+	case ru == 0:
+		val = 0
+	case ru == 1:
+		val = 1
+	case utils.InRange(ru, 2, 3):
+		val = 2
+	case utils.InRange(ru, 4, 10):
+		val = 3
+	case utils.InRange(ru, 11, 30):
+		val = 4
+	case utils.InRange(ru, 31, 100):
+		val = 5
+	case utils.InRange(ru, 101, 250):
+		val = 6
+	case utils.InRange(ru, 251, 1000):
+		val = 7
+	case utils.InRange(ru, 1001, 2500):
+		val = 8
+	case utils.InRange(ru, 2501, 10000):
+		val = 9
+	case utils.InRange(ru, 10001, 25000):
+		val = 10
+	case utils.InRange(ru, 25001, 60000):
+		val = 11
+	case utils.InRange(ru, 60001, 180000):
+		val = 12
+	case utils.InRange(ru, 180001, 600000):
+		val = 13
+	case utils.InRange(ru, 600001, 1800000):
+		val = 14
+	case utils.InRange(ru, 1800001, 1800000000):
+		val = 15
+	}
+
+	return ehex.ToCode(val)
 }

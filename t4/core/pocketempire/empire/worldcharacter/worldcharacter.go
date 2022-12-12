@@ -77,13 +77,15 @@ type world struct {
 	gg         int
 	tradecodes []string
 
+	status            string
 	econEx            economics.EconomicPower
 	selfDetermination ehex.Ehex //0-10
 	localPopularity   ehex.Ehex //0-15
 	progression       int
-	factions          []int //распределение по фракциям суммарно 100%
-	hex               hexagon.Hexagon
-	baseRolls         []int //всего 7 Progression/Planning/Advancment/Grown/Militancy/Unity/Tolerance
+	//GWP               float64
+	factions  []int //распределение по фракциям суммарно 100%
+	hex       hexagon.Hexagon
+	baseRolls []int //всего 7 Progression/Planning/Advancment/Grown/Militancy/Unity/Tolerance
 }
 
 func AreSame(w1, w2 World) bool {
@@ -108,6 +110,8 @@ type World interface {
 	Unity() int
 	Tolerance() int
 	EstimatedPopulation() float64
+	Popularity() int
+	GetGWP() int
 }
 
 func (wc *world) Name() string {
@@ -125,6 +129,10 @@ func (wc *world) PBG() string {
 func (wc *world) Location() string {
 	loc := location.New(wc.hex, location.COORDINATE_STANDARD_OTU)
 	return loc.String()
+}
+
+func (wc *world) GetGWP() int {
+	return wc.econEx.GWP()
 }
 
 func WorldCharacter(worldName, uwpStr, pbgStr string, x, y int) (*world, error) {
@@ -569,13 +577,15 @@ func (w *world) EstimatedPopulation() float64 {
 	return float64((10^w.uwp.Pops())*w.popMod) / 1000000.0
 }
 
-func (w *world) calculatePopularity() int {
+func (w *world) Popularity() int {
 	/*
 		popul = base + actionBonus + leadershipBonus
 		actionBonus = w.popularityActionBonus()
 		leadershipBonus = w.leadershipBonus()
 		base = t + c + i - l - g - d + a
 	*/
+	actionBonus := 0
+	leadershipBonus := 0
 	t := w.uwp.TL()
 	c := w.econEx.Culture()
 	i := w.econEx.Infrastructure()
@@ -585,8 +595,8 @@ func (w *world) calculatePopularity() int {
 	//a := 'from events'
 	a := 0
 	base := t + c + i - l - g - d + a
-	base = utils.BoundInt(base, 0, 15)
-	return 0
+	popularity := utils.BoundInt(base+actionBonus+leadershipBonus, 0, 15)
+	return popularity
 }
 
 func abs(a int) int {
@@ -612,9 +622,9 @@ func pluralism(g int) int {
 	case 5:
 		p = 5
 	case 6:
-		p = -1
+		//p = -1
 	case 7:
-		p = -2
+		//p = -2
 	case 8:
 		p = 3
 	case 9:
