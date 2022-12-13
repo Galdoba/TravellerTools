@@ -24,28 +24,119 @@ const (
 	PERIOD_YEAR  = 365
 )
 
+type cal struct {
+	era   string
+	date  *date
+	clock *clock
+}
+
+type Calendar interface {
+	Clock
+	Date
+}
+
+func NewImperial(name string, day, second int) *cal {
+	c := cal{}
+	c.era = name
+	c.date = newDate(day)
+	c.clock = newClock(second)
+	return &c
+}
+
+func (c *cal) Hours() int {
+	return c.clock.Hours()
+}
+
+func (c *cal) Minutes() int {
+	return c.clock.Minutes()
+}
+
+func (c *cal) Seconds() int {
+	return c.clock.Seconds()
+}
+
+func (c *cal) Day() int {
+	return c.date.Day()
+}
+
+func (c *cal) Year() int {
+	return c.date.Year()
+}
+
+func (c *cal) String() string {
+	return fmt.Sprintf("%v %v %v", c.date.String(), c.era, c.clock.String())
+}
+
+type Clock interface {
+	String() string
+	Seconds() int
+	Minutes() int
+	Hours() int
+}
+
+type Date interface {
+	String() string
+	Day() int
+	Year() int
+}
+
+type clock struct {
+	val int
+}
+
+func newClock(val ...int) *clock {
+	d := clock{}
+	for _, v := range val {
+		d.val += v
+	}
+	if d.val < 0 {
+		d.val = d.val * -1
+	}
+	d.val = d.val % 86400
+	return &d
+}
+
+func timeSegment(d *clock) int {
+	return int(d.val % 86400)
+}
+
+func (d *clock) Hours() int {
+	hh := timeSegment(d) / 3600 % 24
+	return hh
+}
+
+func (d *clock) Minutes() int {
+	mm := (timeSegment(d) / 60) % 60
+	return mm
+}
+
+func (d *clock) Seconds() int {
+	ss := timeSegment(d) % 60
+	return ss
+}
+
+func (d *clock) Val() int {
+	return d.val
+}
+
+func (cl *clock) String() string {
+	return fmt.Sprintf("%v:%v:%v", formatUnits(cl.Hours(), 2), formatUnits(cl.Minutes(), 2), formatUnits(cl.Seconds(), 2))
+}
+
 /*
 
 int64  : -9223372036854775808 to 922 3372036 854 77 58 07
 */
 type date struct {
-	val  uint64
-	year int
-	day  int
+	day int
 }
 
-type Date interface {
-	String() string
-	AsInts() (int, int)
-	IsPast(Date) bool
-	Advance(string)
-	Day() int
-	Year() int
-	Global() uint64
-}
-
-func (d *date) Global() uint64 {
-	return d.val
+func newDate(d int) *date {
+	if d < 0 {
+		d = d * -1
+	}
+	dt := date{day: d}
+	return &dt
 }
 
 func (d *date) Day() int {
@@ -53,104 +144,11 @@ func (d *date) Day() int {
 }
 
 func (d *date) Year() int {
-	return d.year
-}
-
-func (d *date) AsInts() (int, int) {
-	return d.day, d.year
-}
-
-func (d *date) IsPast(check Date) bool {
-	valD := (d.year * 365) + d.day
-	valCheck := (check.Year() * 365) + check.Day()
-	if valCheck < valD {
-		return true
-	}
-	return false
-}
-
-func After(d Date, period int) Date {
-	newDate := d
-	for i := 0; i < period; i++ {
-		newDate.Advance(NEXT_DAY)
-	}
-	return newDate
-}
-
-func TimeBetween(d1, d2 *date) (int, int) {
-	valD1 := (d1.year * 365) + d1.day
-	valD2 := (d2.year * 365) + d2.day
-	diff := valD1 - valD2
-	if diff < 0 {
-		diff = diff * -1
-	}
-	dif := New(uint64(diff))
-	return dif.day, dif.year
-}
-
-func IsEqual(d1, d2 *date) bool {
-	return d1.day == d2.day && d1.year == d2.year
-}
-
-func New(code uint64) *date {
-	t := date{
-		val: code,
-	}
-	t.evaluate()
-	return &t
-}
-
-func SetDate(day, year int) *date {
-	d := date{
-		val:  uint64(day + year*365),
-		day:  day,
-		year: year,
-	}
-	d.evaluate()
-	return &d
-}
-
-func reverse(s string) string {
-	runes := []rune(s)
-	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-		runes[i], runes[j] = runes[j], runes[i]
-	}
-	return string(runes)
-}
-
-func (t *date) evaluate() {
-	if t.val == 0 {
-		t.val = 1
-	}
-	t.day = 0
-	t.year = 0
-	val := t.val
-	for val > 3650000 {
-		t.year += 10000
-		val -= 3650000
-	}
-	for val > 365000 {
-		t.year += 1000
-		val -= 365000
-	}
-	for val > 36500 {
-		t.year += 100
-		val -= 36500
-	}
-	for val > 3650 {
-		t.year += 10
-		val -= 3650
-	}
-	for val > 365 {
-		t.year += 1
-		val -= 365
-	}
-	t.day = int(val)
-
+	return d.day / 365
 }
 
 func (t *date) String() string {
-	return fmt.Sprintf("%v-%v", formatUnits(t.day, 3), formatUnits(t.year, 3))
+	return fmt.Sprintf("%v-%v", formatUnits((t.day%365)+1, 3), formatUnits(t.day/365, 3))
 
 }
 
@@ -163,37 +161,37 @@ func formatUnits(i int, unit int) string {
 	return s
 }
 
-func (t *date) Advance(code string) {
-	switch code {
-	case NEXT_DAY:
-		t.val++
-		t.evaluate()
-	case NEXT_WEEK:
-		for {
-			t.val++
-			t.evaluate()
-			if isWeekStart(t.day) {
-				return
-			}
-		}
-	case NEXT_MONTH:
-		for {
-			t.val++
-			t.evaluate()
-			if isMonthStart(t.day) {
-				return
-			}
-		}
-	case NEXT_YEAR:
-		for {
-			t.val++
-			t.evaluate()
-			if t.day == 1 {
-				return
-			}
-		}
-	}
-}
+// func (t *date) Advance(code string) {
+// 	switch code {
+// 	case NEXT_DAY:
+// 		t.val++
+// 		t.evaluate()
+// 	case NEXT_WEEK:
+// 		for {
+// 			t.val++
+// 			t.evaluate()
+// 			if isWeekStart(t.day) {
+// 				return
+// 			}
+// 		}
+// 	case NEXT_MONTH:
+// 		for {
+// 			t.val++
+// 			t.evaluate()
+// 			if isMonthStart(t.day) {
+// 				return
+// 			}
+// 		}
+// 	case NEXT_YEAR:
+// 		for {
+// 			t.val++
+// 			t.evaluate()
+// 			if t.day == 1 {
+// 				return
+// 			}
+// 		}
+// 	}
+// }
 
 func isWeekStart(i int) bool {
 	if i == 1 {

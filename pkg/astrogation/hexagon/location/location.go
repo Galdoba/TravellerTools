@@ -11,6 +11,12 @@ const (
 	COORDINATE_STANDARD_OTU = "OTU"
 )
 
+type Location interface {
+	Strings() string
+	Position() hexagon.Hexagon
+	Neighbors() map[int]Location
+}
+
 type location struct {
 	standard      string
 	sectorX       int
