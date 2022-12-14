@@ -73,6 +73,7 @@ const (
 	Da
 	Ab
 	An
+	Ts
 	TypePlanetary  = "Planetary"
 	TypePopulation = "Population"
 	TypeEconomic   = "Economic"
@@ -98,6 +99,7 @@ func Manual(code, classification, tcType, description, sourceBook string) classi
 func Call(i int) classificationCode {
 	tc := classificationCode{}
 	tc.val = i
+	tc.sourceBook = "T5 Book 2"
 	switch tc.val {
 	default:
 		tc.code = "??"
@@ -230,11 +232,19 @@ func Call(i int) classificationCode {
 		tc.classification = "Low Tech"
 		tc.tcType = TypeEconomic
 		tc.description = "The world is pre-industrial and cannot produce advanced goods."
+		tc.sourceBook = "MGT2 CRB"
 	case Ht:
 		tc.code = "Ht"
 		tc.classification = "High Tech"
 		tc.tcType = TypeEconomic
 		tc.description = "The world is among the most technologicaly advanced in Charted Space."
+		tc.sourceBook = "MGT2 CRB"
+	case Ts:
+		tc.code = "Ts"
+		tc.classification = "Temperature Swing"
+		tc.tcType = TypeClimate
+		tc.description = "The world's temperature swings from roasting during the day to frozen at night."
+		tc.sourceBook = "MGT2 CRB"
 	}
 	return tc
 }
@@ -253,6 +263,23 @@ func (tc *classificationCode) Classification() string {
 
 func (tc *classificationCode) Description() string {
 	return tc.description
+}
+
+func Prints(tc []classificationCode) string {
+	s := ""
+	for _, t := range tc {
+		s += t.String() + " "
+	}
+	s = strings.TrimSuffix(s, " ")
+	return s
+}
+
+func Values(tc []classificationCode) []int {
+	sl := []int{}
+	for _, t := range tc {
+		sl = append(sl, t.val)
+	}
+	return sl
 }
 
 /////////////////////////////

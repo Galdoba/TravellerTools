@@ -9,9 +9,9 @@ import (
 )
 
 func TestStellar(t *testing.T) {
-	for i := 480; i < 500; i++ {
+	for i := 480; i < 1000; i++ {
 		dp := dice.New().SetSeed(i)
-		stellar := generateStellar(dp)
+		stellar := GenerateStellar(dp)
 		stars := Parse(stellar)
 		fmt.Printf("stellar: '%v' [%v]\n", stellar, strings.Join(stars, "|"))
 		if stellar != strings.Join(stars, " ") {

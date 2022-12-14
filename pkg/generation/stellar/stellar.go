@@ -10,15 +10,17 @@ import (
 )
 
 const (
-	realistic   = "Realistic"
-	luminocity1 = "Luminocity1"
-	luminocity2 = "Luminocity2"
-	mult1       = "mult1"
-	mult2       = "mult2"
-	mult3       = "mult3"
+	typeOfObject     = "Type Of Object"
+	typeOfBrownDwarf = "Type Brown Dwarf"
+	realistic        = "Realistic"
+	luminocity1      = "Luminocity1"
+	luminocity2      = "Luminocity2"
+	mult1            = "mult1"
+	mult2            = "mult2"
+	mult3            = "mult3"
 )
 
-func generateStellar(dice *dice.Dicepool) string {
+func GenerateStellar(dice *dice.Dicepool) string {
 	diceRolls := []int{}
 	for i := 0; i < 4; i++ {
 		switch i {
@@ -28,41 +30,70 @@ func generateStellar(dice *dice.Dicepool) string {
 			diceRolls = append(diceRolls, dice.Sroll("1d100"))
 		case 2:
 			diceRolls = append(diceRolls, dice.Sroll("1d100"))
+		case 3:
+			diceRolls = append(diceRolls, dice.Sroll("1d100"))
 		}
 	}
-	stars := []string{generateStar(dice)}
-	mult := 0
+	stars := []string{}
+	switch chart(typeOfObject).Result(diceRolls[3]) {
+	case "Star":
+		stars = append(stars, generateStar(dice))
+	case "BD":
+		stars = append(stars, generateBrownDwarf(dice))
+	case "*rp":
+		return "*RP"
+	case "*rgg":
+		return "*RGG"
+	case "Ns":
+		return "NS"
+	case "Nebula":
+		return "Nebula"
+	case "BH":
+		return "Black Hole"
+
+	}
+	mult := 1
 	switch {
 	case containsAny(stars[0], "A", "B", "O"):
 		mult, _ = strconv.Atoi(chart(mult1).Result(diceRolls[0]))
 	case containsAny(stars[0], "K", "F", "G"):
 		mult, _ = strconv.Atoi(chart(mult2).Result(diceRolls[1]))
-	case containsAny(stars[0], "M", "D"):
+	case containsAny(stars[0], "M", "L", "T", "Y"):
 		mult, _ = strconv.Atoi(chart(mult3).Result(diceRolls[2]))
 	}
 	for len(stars) < mult {
 		star := generateStar(dice)
 		stars = append(stars, star)
 	}
-	//fmt.Println(stars)
 	return agreggateStellar(stars)
 }
 
 func Parse(stellar string) []string {
+	switch stellar {
+	case "Black Hole":
+		return []string{"Black Hole"}
+	case "*RP":
+		return []string{"*RP"}
+	case "*RGG":
+		return []string{"*RGG"}
+	case "Nebula":
+		return []string{"Nebula"}
+	case "NS":
+		return []string{"NS"}
+	}
 	try := 1
 	stars := []string{}
 	for len(stellar) > 0 {
-		if try > 10 {
+		if try > 5 {
+			stars = nil
 			return stars
 		}
 		for _, l := range listAllStars() {
-			//fmt.Printf("stellar: '%v' | stars: '%v' | l: '%v' | try: %v \n", stellar, stars, l, try)
 			if strings.HasPrefix(stellar, l+" ") {
 				stars = append(stars, l)
 				stellar = strings.TrimPrefix(stellar, stars[len(stars)-1])
 				stellar = strings.TrimPrefix(stellar, " ")
 				stellar = strings.TrimSuffix(stellar, " ")
-				//fmt.Printf("Redused stellar: '%v'\n", stellar)
 			}
 			if stellar == l {
 				stars = append(stars, l)
@@ -73,6 +104,15 @@ func Parse(stellar string) []string {
 		try++
 	}
 	return stars
+}
+
+func Valid(stellar string) bool {
+	for _, st := range listAllStars() {
+		stellar = strings.ReplaceAll(stellar, st, "")
+	}
+	stellar = strings.ReplaceAll(stellar, " ", "")
+	fmt.Println("Validation:", stellar)
+	return stellar == ""
 }
 
 func agreggateStellar(stars []string) string {
@@ -87,7 +127,6 @@ func agreggateStellar(stars []string) string {
 		}
 	}
 	stellar = strings.TrimSuffix(stellar, " ")
-	//stellar = strings.TrimPrefix(stellar, " ")
 	if stellar == "" {
 		fmt.Println(stars)
 		panic(1)
@@ -115,9 +154,11 @@ func generateStar(dp *dice.Dicepool) string {
 		sClass = chart(luminocity2).Result(diceRolls[2])
 	}
 	sNum := fmt.Sprintf("%v", diceRolls[3])
-	if sClass == "D" {
-		sType = ""
-		return sClass + sNum
+	switch sClass {
+	case "D":
+		return generateWhiteDwarf(dp)
+	case "L", "T", "Y":
+		return generateBrownDwarf(dp)
 	}
 	switch sType {
 	case "O", "B", "A", "F":
@@ -125,12 +166,18 @@ func generateStar(dp *dice.Dicepool) string {
 			sClass = "V"
 		}
 	}
-	if sType+sNum+" "+sClass == "M2 " {
-		fmt.Println("++++++++", sType+sNum+" "+sClass)
-		fmt.Println(diceRolls)
-		panic(2)
-	}
 	return sType + sNum + " " + sClass
+}
+
+func generateBrownDwarf(dp *dice.Dicepool) string {
+	num := fmt.Sprintf("%v", dp.Sroll("1d10")-1)
+	dwarfClass := chart(typeOfBrownDwarf).Result(dp.Sroll("1d100"))
+	return dwarfClass + num
+}
+
+func generateWhiteDwarf(dp *dice.Dicepool) string {
+	num := fmt.Sprintf("%v", dp.Sroll("1d10")-1)
+	return "D" + num
 }
 
 func containsAny(str string, substr ...string) bool {
@@ -146,6 +193,23 @@ func chart(s string) *table.DiceResultChart {
 	switch s {
 	default:
 		return table.DiceChart()
+	case typeOfObject:
+		return table.DiceChart(
+			table.Row("01-80", "Star"),
+			table.Row("81-88", "BD"),
+			table.Row("89-94", "*rp"),
+			table.Row("95-97", "*rgg"),
+			table.Row("98", "Ns"),
+			table.Row("99", "Nebula"),
+			table.Row("100", "BH"),
+		)
+	case typeOfBrownDwarf:
+		return table.DiceChart(
+			table.Row("01-51", "L"),
+			table.Row("51-75", "T"),
+			table.Row("76-100", "Y"),
+		)
+
 	case realistic:
 		return table.DiceChart(
 			table.Row("01-80", "M"),
@@ -196,6 +260,76 @@ func chart(s string) *table.DiceResultChart {
 
 func listAllStars() []string {
 	list := []string{
+		"O0 III",
+		"O1 III",
+		"O2 III",
+		"O3 III",
+		"O4 III",
+		"O5 III",
+		"O6 III",
+		"O7 III",
+		"O8 III",
+		"O9 III",
+		"B0 III",
+		"B1 III",
+		"B2 III",
+		"B3 III",
+		"B4 III",
+		"B5 III",
+		"B6 III",
+		"B7 III",
+		"B8 III",
+		"B9 III",
+		"A0 III",
+		"A1 III",
+		"A2 III",
+		"A3 III",
+		"A4 III",
+		"A5 III",
+		"A6 III",
+		"A7 III",
+		"A8 III",
+		"A9 III",
+		"F0 III",
+		"F1 III",
+		"F2 III",
+		"F3 III",
+		"F4 III",
+		"F5 III",
+		"F6 III",
+		"F7 III",
+		"F8 III",
+		"F9 III",
+		"G0 III",
+		"G1 III",
+		"G2 III",
+		"G3 III",
+		"G4 III",
+		"G5 III",
+		"G6 III",
+		"G7 III",
+		"G8 III",
+		"G9 III",
+		"K0 III",
+		"K1 III",
+		"K2 III",
+		"K3 III",
+		"K4 III",
+		"K5 III",
+		"K6 III",
+		"K7 III",
+		"K8 III",
+		"K9 III",
+		"M0 III",
+		"M1 III",
+		"M2 III",
+		"M3 III",
+		"M4 III",
+		"M5 III",
+		"M6 III",
+		"M7 III",
+		"M8 III",
+		"M9 III",
 		"O0 V",
 		"O1 V",
 		"O2 V",
@@ -476,76 +610,7 @@ func listAllStars() []string {
 		"M7 II",
 		"M8 II",
 		"M9 II",
-		"O0 III",
-		"O1 III",
-		"O2 III",
-		"O3 III",
-		"O4 III",
-		"O5 III",
-		"O6 III",
-		"O7 III",
-		"O8 III",
-		"O9 III",
-		"B0 III",
-		"B1 III",
-		"B2 III",
-		"B3 III",
-		"B4 III",
-		"B5 III",
-		"B6 III",
-		"B7 III",
-		"B8 III",
-		"B9 III",
-		"A0 III",
-		"A1 III",
-		"A2 III",
-		"A3 III",
-		"A4 III",
-		"A5 III",
-		"A6 III",
-		"A7 III",
-		"A8 III",
-		"A9 III",
-		"F0 III",
-		"F1 III",
-		"F2 III",
-		"F3 III",
-		"F4 III",
-		"F5 III",
-		"F6 III",
-		"F7 III",
-		"F8 III",
-		"F9 III",
-		"G0 III",
-		"G1 III",
-		"G2 III",
-		"G3 III",
-		"G4 III",
-		"G5 III",
-		"G6 III",
-		"G7 III",
-		"G8 III",
-		"G9 III",
-		"K0 III",
-		"K1 III",
-		"K2 III",
-		"K3 III",
-		"K4 III",
-		"K5 III",
-		"K6 III",
-		"K7 III",
-		"K8 III",
-		"K9 III",
-		"M0 III",
-		"M1 III",
-		"M2 III",
-		"M3 III",
-		"M4 III",
-		"M5 III",
-		"M6 III",
-		"M7 III",
-		"M8 III",
-		"M9 III",
+
 		"O0 IV",
 		"O1 IV",
 		"O2 IV",
@@ -686,26 +751,11 @@ func listAllStars() []string {
 		"Y7",
 		"Y8",
 		"Y9",
-		"D0",
-		"D1",
-		"D2",
-		"D3",
-		"D4",
-		"D5",
-		"D6",
-		"D7",
-		"D8",
-		"D9",
-		"L0",
-		"L1",
-		"L2",
-		"L3",
-		"L4",
-		"L5",
-		"L6",
-		"L7",
-		"L8",
-		"L9",
+		"NS",
+		"Black Hole",
+		"*RP",
+		"*RGG",
+		"Nebula",
 	}
 
 	return list
