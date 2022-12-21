@@ -277,7 +277,7 @@ func encodeUWPdata(aspect string, val string) ehex.Ehex {
 		case "4":
 			hex.Encode("Tens of Thousands")
 		case "5":
-			hex.Encode("100,000's")
+			hex.Encode("Hundreds of Thousands")
 		case "6":
 			hex.Encode("Millions")
 		case "7":

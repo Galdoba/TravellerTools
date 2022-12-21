@@ -1,7 +1,6 @@
 package classifications
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
@@ -74,6 +73,7 @@ const (
 	Ab
 	An
 	Ts
+	Bo
 	TypePlanetary  = "Planetary"
 	TypePopulation = "Population"
 	TypeEconomic   = "Economic"
@@ -92,11 +92,14 @@ type classificationCode struct {
 	sourceBook     string
 }
 
-func Manual(code, classification, tcType, description, sourceBook string) classificationCode {
+type Classification interface {
+}
+
+func Manual(code, classification, tcType, description, sourceBook string) Classification {
 	return classificationCode{manual, code, classification, tcType, description, sourceBook}
 }
 
-func Call(i int) classificationCode {
+func Call(i int) *classificationCode {
 	tc := classificationCode{}
 	tc.val = i
 	tc.sourceBook = "T5 Book 2"
@@ -106,7 +109,7 @@ func Call(i int) classificationCode {
 		tc.classification = "[Unknown]"
 		tc.tcType = TypeSpecial
 		tc.description = "[No Description]"
-		return tc
+		return &tc
 	case As:
 		tc.code = "As"
 		tc.classification = "Asteroid Belt"
@@ -134,9 +137,9 @@ func Call(i int) classificationCode {
 		tc.description = "The world is inhospitable to most sophonts. Its size, atmosphere, and hydrographic make it an extremely unattractive world."
 	case Ic:
 		tc.code = "Ic"
-		tc.classification = "Ice-Capped"
+		tc.classification = "Ice capped"
 		tc.tcType = TypePlanetary
-		tc.description = "The world's water is locked in ice-caps."
+		tc.description = "The world's water is locked in ice caps."
 	case Oc:
 		tc.code = "Oc"
 		tc.classification = "Ocean World"
@@ -245,8 +248,39 @@ func Call(i int) classificationCode {
 		tc.tcType = TypeClimate
 		tc.description = "The world's temperature swings from roasting during the day to frozen at night."
 		tc.sourceBook = "MGT2 CRB"
+	case Fr:
+		tc.code = "Fr"
+		tc.classification = "Frozen"
+		tc.tcType = TypeClimate
+		tc.description = "The world's environmental temperatures are well below the freezing point of many gases."
+	case Co:
+		tc.code = "Co"
+		tc.classification = "Cold"
+		tc.tcType = TypeClimate
+		tc.description = "The world is at the lower temperature range of human endurance. Little liquid water, extencive ice caps, few clouds."
+	case Tu:
+		tc.code = "Tu"
+		tc.classification = "Tundra"
+		tc.tcType = TypeClimate
+		tc.description = "The world is relatively colder than normal (although it is considered habitable). The world has a Cold climate (at the lower limits of human temperature endurance)."
+	case Ho:
+		tc.code = "Ho"
+		tc.classification = "Hot"
+		tc.tcType = TypeClimate
+		tc.description = "The world is at the upper temperature range of human endurance. Small or no ice caps, little liquid water. Most water in the form of clouds."
+	case Tr:
+		tc.code = "Tr"
+		tc.classification = "Tropic"
+		tc.tcType = TypeClimate
+		tc.description = "The world is relatively warmer than normal (although it is considered habitable)."
+	case Bo:
+		tc.code = "Bo"
+		tc.classification = "Boiling"
+		tc.tcType = TypeClimate
+		tc.description = "Boiling world. No ice caps, little liquid water."
+		tc.sourceBook = "MGT2 Core"
 	}
-	return tc
+	return &tc
 }
 
 func (tc *classificationCode) String() string {
@@ -284,12 +318,12 @@ func Values(tc []classificationCode) []int {
 
 /////////////////////////////
 
-func FromUWP(prof uwp.UWP) ([]classificationCode, error) {
+func FromUWP(prof uwp.UWP) ([]*classificationCode, error) {
 	return parceCodes(prof)
 }
 
-func parceCodes(data uwp.UWP) ([]classificationCode, error) {
-	parsedTradeCodes := []classificationCode{}
+func parceCodes(data uwp.UWP) ([]*classificationCode, error) {
+	parsedTradeCodes := []*classificationCode{}
 	//S S      A     H   P  G  L  - T
 	codes := tradeCodeDemandsPPE()
 	for codeNum, tg := range codes {
@@ -337,63 +371,11 @@ func parceCodes(data uwp.UWP) ([]classificationCode, error) {
 		}
 		if tcMatch {
 			//fmt.Println("add code", codeNum)
-			switch codeNum {
-			default:
-				return nil, fmt.Errorf("unknown trade code position from tradeCodeDemands()")
-			case 0:
-				parsedTradeCodes = append(parsedTradeCodes, Call(As))
-			case 1:
-				parsedTradeCodes = append(parsedTradeCodes, Call(De))
-			case 2:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Fl))
-			case 3:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Ga))
-			case 4:
-				parsedTradeCodes = append(parsedTradeCodes, Call(He))
-			case 5:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Ic))
-			case 6:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Oc))
-			case 7:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Va))
-			case 8:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Wa))
-			case 9:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Di))
-			case 10:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Ba))
-			case 11:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Lo))
-			case 12:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Ni))
-			case 13:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Ph))
-			case 14:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Hi))
-			case 15:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Pa))
-			case 16:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Ag))
-			case 17:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Na))
-			case 18:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Px))
-			case 19:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Pi))
-			case 20:
-				parsedTradeCodes = append(parsedTradeCodes, Call(In))
-			case 21:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Po))
-			case 22:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Pr))
-			case 23:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Ri))
-			case 24:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Lt))
-			case 25:
-				parsedTradeCodes = append(parsedTradeCodes, Call(Ht))
-
+			clss := Call(codeNum)
+			if clss.code != "??" {
+				parsedTradeCodes = append(parsedTradeCodes, clss)
 			}
+
 		}
 		//fmt.Println(codeNum, "-------------------")
 
@@ -430,6 +412,10 @@ func tradeCodeDemandsPPE() []string {
 		"-- -- 68 -- 678 -- -- - --",                    //Ri
 		"-- -- -- -- -- -- -- - 12345",                  //Lt
 		"-- -- -- -- -- -- -- - CDEFGHJKLMNPQRSTUVWXYZ", //Ht
+
+		//"-- 23456789ABCDEF -- 123456789A -- -- -- - --", //Fr
+		//"-- 6789 456789 34567 -- -- -- - --",            //Tr
+		//"-- 6789 456789 34567 -- -- -- - --",            //Tu
 	}
 }
 
@@ -896,10 +882,6 @@ An
 Ancient Site
 The world (or the star system) includes one or more locations identified as the ruins of the long-dead race called the Ancients. Ancient Sites are exploited for the Artifact remains of this long dead technological civilization.
 
-Co
-Cold World
-The world is at the lower temperature range of human endurance.
-
 Cp
 Subsector Capital
 The world is the political center of a group of tens or dozens of star systems (typically a subsector).
@@ -932,15 +914,6 @@ Fo
 Forbidden
 Some conditions, customs, laws, life forms, climate, economics, or other circumstance presents an active threat to the health and well-being of individuals. The world is a TAS Red Zone.
 
-Fr
-Frozen
-The world lies substantially beyond the Habitable Zone of the system (HZ+2 or greater) and environmental temperatures are well below the freezing point of many gases.
-
-
-
-Ho
-Hot World
-The world is at the upper temperature range of human endurance; typically in HZ -1.
 
 Lk
 Locked
@@ -987,9 +960,7 @@ Tropic
 The world is relatively warmer than normal (although it is considered habitable). Its orbit is at the inner (warmer) edge of the Habitable Zone.
 
 
-Tu
-Tundra
-The world is relatively colder than normal (although it is considered habitable). Its orbit is at the outer (colder) edge of the Habitable Zone. The world has a Cold climate (at the lower limits of human temperature endurance).
+
 
 Tz
 Twilight Zone

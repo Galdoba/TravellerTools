@@ -32,13 +32,18 @@ type mainworldData struct {
 	laws    int
 	stpt    int
 	tech    int
-	trco    []int
+	trvl    string
+	trco    []classifications.Classification
 }
 
-type MainWorld interface {
-	UWP() uwp.UWP
-	Stellar() string
-	Classifications() []int
+type MainWorld struct {
+	UWP   uwp.UWP
+	PBG   string
+	Class []classifications.Classification
+}
+
+func Export(mw *mainworldData) MainWorld {
+	return MainWorld{}
 }
 
 func New(dice *dice.Dicepool) *mainworldData {
@@ -399,7 +404,41 @@ func (mw *mainworldData) DetermineAdditionalCharacteristics(options ...string) e
 	mw.enviromentalLimits()
 	u := mw.UWP()
 	tc, _ := classifications.FromUWP(u)
-	mw.trco = classifications.Values(tc)
+	for _, v := range tc {
+		mw.trco = append(mw.trco, v)
+	}
+	if mw.atmo == 0 || mw.atmo == 1 {
+		mw.trco = append(mw.trco, classifications.Call(classifications.Ts))
+	}
+	switch mw.temp {
+	case -2:
+		if utils.InRange(mw.size, 2, 17) && mw.hydr > 0 {
+			mw.trco = append(mw.trco, classifications.Call(classifications.Fr))
+		}
+	case -1:
+		switch {
+		case utils.InRange(mw.size, 6, 9) && utils.InRange(mw.atmo, 4, 9) && utils.InRange(mw.hydr, 3, 7):
+			mw.trco = append(mw.trco, classifications.Call(classifications.Tu))
+		default:
+			mw.trco = append(mw.trco, classifications.Call(classifications.Co))
+		}
+	case 1:
+		switch {
+		case utils.InRange(mw.size, 6, 9) && utils.InRange(mw.atmo, 4, 9) && utils.InRange(mw.hydr, 3, 7):
+			mw.trco = append(mw.trco, classifications.Call(classifications.Tr))
+		default:
+			mw.trco = append(mw.trco, classifications.Call(classifications.Ho))
+		}
+	case 2:
+		mw.trco = append(mw.trco, classifications.Call(classifications.Bo))
+	}
+	warn := 0
+	switch {
+	case mw.atmo > 9:
+		warn++
+	case (mw.govr == 0 || mw.govr == 7 || mw.govr > 9) && mw.laws > 9:
+		warn++
+	}
 	return nil
 }
 
