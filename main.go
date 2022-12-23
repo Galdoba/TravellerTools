@@ -1,14 +1,9 @@
 package main
 
-import (
-	"fmt"
-
-)
+import "github.com/Galdoba/devtools/cli/features"
 
 func main() {
-	
-		fmt.Println("  ")
-		fmt.Println("  TEST")
-		fmt.Println(" frr ")
+
+	features.TypingSlowly("kdsjhcfbaksjdhfkasdhfkashdfaksjdfhlkashdkfhaskdhfklajshdf", 100000000)
 
 }
