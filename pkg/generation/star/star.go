@@ -8,9 +8,11 @@ import (
 )
 
 func New(code string) *star {
-	table := getTableValues(code)
+	//table := getTableValues(code)
 	s := star{}
-	s.
+	s.class, s.num, s.size = decode(code)
+	s.LoadValues()
+	return &s
 }
 
 type star struct {
@@ -565,13 +567,29 @@ func (s *star) LoadValues() error {
 }
 
 func decode(code string) (string, int, string) {
-class := []string{"O","B","A","F","G","K","M","D","L","T","Y"}
-num := []string{"0","1","2","3","4","5","6","7","8","9"}
-size :=[]string{"Ia","Ib","III","II","IV","V"}
-cl := ""
-for i, c := range class {
-	
-}
-
-
+	class := []string{"O", "B", "A", "F", "G", "K", "M", "D", "L", "T", "Y"}
+	num := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+	size := []string{"Ia", "Ib", "III", "II", "IV", "V"}
+	cl := ""
+	for _, c := range class {
+		if strings.Contains(code, c) {
+			cl = c
+			break
+		}
+	}
+	n := -1
+	for i, c := range num {
+		if strings.Contains(code, c) {
+			n = i
+			break
+		}
+	}
+	s := ""
+	for _, c := range size {
+		if strings.Contains(code, c) {
+			s = c
+			break
+		}
+	}
+	return cl, n, s
 }
