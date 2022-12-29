@@ -1,6 +1,9 @@
 package belts
 
-import "github.com/Galdoba/TravellerTools/pkg/dice"
+import (
+	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/generation/orbit"
+)
 
 type beltData struct {
 	beltZone             string //N M C R
@@ -8,10 +11,7 @@ type beltData struct {
 	maximumPlanetoidSize int    //в километрах
 	width                float64
 	asteroidPersentage   []int
-	parentStar           string
-	star                 int
-	orbit                int
-	satelite             int
+	orbitData            orbit.Orbiter
 }
 
 func Generate(dice *dice.Dicepool) []*beltData {
@@ -22,9 +22,6 @@ func Generate(dice *dice.Dicepool) []*beltData {
 	bData := []*beltData{}
 	b := beltData{}
 	for i := 0; i < beltNum; i++ {
-		b.star = -1
-		b.orbit = -1
-		b.satelite = -1
 		b.predominantDiameter = bodyDiam(dice.Sroll("2d6-2"))
 		b.maximumPlanetoidSize = maxBodyDiam(dice.Sroll("1d6"))
 		if b.maximumPlanetoidSize*1000 < b.predominantDiameter {
@@ -41,18 +38,4 @@ func bodyDiam(i int) int {
 
 func maxBodyDiam(i int) int {
 	return []int{0, 0, 1, 10, 100, 1000}[i]
-}
-
-func (b *beltData) SetStar(i int) {
-	b.star = i
-}
-
-func (b *beltData) SetOrbit(i int) {
-	b.orbit = i
-}
-
-//ORBITER interface
-
-func (b *beltData) SystemPosition() (int, int, int) {
-	return b.star, b.orbit, b.satelite
 }

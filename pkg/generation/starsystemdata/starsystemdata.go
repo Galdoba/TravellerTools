@@ -80,12 +80,7 @@ func NewStarSystemData(sector string, hex string) *form7 {
 	//totalBodies := totalWorlds + len(ggData) + len(bltData)
 	strNum := len(stars)
 	diceCode := "1d" + fmt.Sprintf("%v", strNum)
-	for _, gg := range ggData {
-		gg.SetStar(dice.Sroll(diceCode))
-	}
-	for _, blt := range bltData {
-		blt.SetStar(dice.Sroll(diceCode))
-	}
+
 	//TODO:сгенерировать шаблон планет
 
 	// for _, star := range stars {

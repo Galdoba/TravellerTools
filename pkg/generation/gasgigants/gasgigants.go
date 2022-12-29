@@ -3,6 +3,7 @@ package gasgigants
 import (
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/generation/orbit"
 )
 
 type gasGigant struct {
@@ -11,9 +12,7 @@ type gasGigant struct {
 	gType          string
 	sateliteOrbits int
 	ringOrbits     int
-	parentStar     string
-	star           int
-	orbit          int
+	orbitData      orbit.Orbiter
 }
 
 func Generate(dice *dice.Dicepool) []*gasGigant {
@@ -53,16 +52,4 @@ func Generate(dice *dice.Dicepool) []*gasGigant {
 		ggData = append(ggData, &gg)
 	}
 	return ggData
-}
-
-func (gg *gasGigant) SystemPosition() (int, int, int) {
-	return gg.star, gg.orbit, -1
-}
-
-func (gg *gasGigant) SetStar(i int) {
-	gg.star = i
-}
-
-func (gg *gasGigant) SetOrbit(i int) {
-	gg.orbit = i
 }
