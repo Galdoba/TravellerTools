@@ -760,3 +760,71 @@ func listAllStars() []string {
 
 	return list
 }
+
+func Decode(code string) (string, int, string) {
+	class := []string{"O", "B", "A", "F", "G", "K", "M", "D", "L", "T", "Y"}
+	num := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+	size := []string{"Ia", "Ib", "III", "II", "IV", "V"}
+	cl := ""
+	for _, c := range class {
+		if strings.Contains(code, c) {
+			cl = c
+			break
+		}
+	}
+	n := -1
+	for i, c := range num {
+		if strings.Contains(code, c) {
+			n = i
+			break
+		}
+	}
+	s := ""
+	for _, c := range size {
+		if strings.Contains(code, c) {
+			s = c
+			break
+		}
+	}
+	return cl, n, s
+}
+
+func HabitableOrbitByCode(code string) int {
+	switch code {
+	case "NS", "Black Hole", "*RGG", "*RP", "Nebula", "":
+		return -1
+
+	}
+	i := -1
+	hoArray := []int{}
+	class, _, size := Decode(code)
+	for j, val := range []string{"Ia", "Ib", "II", "III", "IV", "V", "VI", ""} {
+		if val == size {
+			i = j
+		}
+	}
+	switch class {
+	case "O":
+		hoArray = []int{15, 15, 14, 13, 12, 11, -1}
+	case "B":
+		hoArray = []int{13, 13, 12, 11, 10, 9, -1}
+	case "A":
+		hoArray = []int{12, 11, 9, 7, 7, 7, -1}
+	case "F":
+		hoArray = []int{11, 10, 9, 6, 6, 4, 3}
+	case "G":
+		hoArray = []int{12, 10, 9, 7, 5, 3, 2}
+	case "K":
+		hoArray = []int{12, 10, 9, 8, 5, 2, 1}
+	case "M":
+		hoArray = []int{12, 11, 10, 9, -1, 0, 0}
+	case "D":
+		return 1
+	case "L", "T", "Y":
+		return 0
+	default:
+		fmt.Printf("%v : %v - %v\n", code, class, size)
+		panic("check class!!!")
+	}
+	return hoArray[i]
+}

@@ -2,6 +2,7 @@ package orbit
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
@@ -9,19 +10,36 @@ import (
 	"github.com/Galdoba/utils"
 )
 
+const (
+	Position_INNER        = "Inner"
+	Position_OUTER        = "Outer"
+	Position_REMOTE       = "Remote"
+	Temperature_INFERNO   = "Inferno"
+	Temperature_HOT       = "Hot"
+	Temperature_HABITABLE = "Habitable"
+	Temperature_COLD      = "Cold"
+	Temperature_FROZEN    = "Frozen"
+)
+
 type orbit struct {
-	parentStar     string
-	starNum        int
-	bodyNum        int
-	satNumb        int
-	systemPosition string
-	comment        string
-	au             float64
-	bodyname       string
+	parentStar      string
+	starNum         int
+	bodyNum         int
+	satNumb         int
+	systemPosition  string
+	temperatureZone string
+	comment         string
+	au              float64
+	bodyname        string
 }
 
-func New(star, body, satelite int) *orbit {
+func (orb *orbit) TemperatureZone() string {
+	return orb.temperatureZone
+}
+
+func New(parentstar string, star, body, satelite int) *orbit {
 	orb := orbit{}
+	orb.parentStar = parentstar
 	orb.starNum = star
 	orb.bodyNum = body
 	orb.satNumb = satelite
@@ -34,22 +52,71 @@ func New(star, body, satelite int) *orbit {
 	case 13, 14, 15, 16, 17:
 		orb.systemPosition = "Remote"
 	}
+	orb.calculateTemperatureZone()
 	return &orb
+}
+
+func (orb *orbit) calculateTemperatureZone() {
+	zone := stellar.HabitableOrbitByCode(orb.parentStar) - orb.bodyNum
+	switch {
+	default:
+		orb.temperatureZone = "UNDEFINED"
+		fmt.Println("star", orb.parentStar)
+		fmt.Println("")
+	case strings.Contains(orb.parentStar, "O"):
+		orb.temperatureZone = defineZone(zone, 5, 3)
+	case strings.Contains(orb.parentStar, "B"):
+		orb.temperatureZone = defineZone(zone, 4, 3)
+	case strings.Contains(orb.parentStar, "A"):
+		orb.temperatureZone = defineZone(zone, 3, 3)
+	case strings.Contains(orb.parentStar, "F"):
+		orb.temperatureZone = defineZone(zone, 2, 3)
+	case strings.Contains(orb.parentStar, "G"):
+		orb.temperatureZone = defineZone(zone, 1, 4)
+	case strings.Contains(orb.parentStar, "K"):
+		orb.temperatureZone = defineZone(zone, 1, 3)
+	case strings.Contains(orb.parentStar, "M"):
+		orb.temperatureZone = defineZone(zone, 1, 2)
+	case strings.Contains(orb.parentStar, "D"):
+		orb.temperatureZone = defineZone(zone, 5, 1)
+	case strings.Contains(orb.parentStar, "T"):
+		orb.temperatureZone = defineZone(zone, 5, 1)
+	case strings.Contains(orb.parentStar, "Y"):
+		orb.temperatureZone = defineZone(zone, 5, 1)
+	case strings.Contains(orb.parentStar, "L"):
+		orb.temperatureZone = defineZone(zone, 5, 1)
+	}
+}
+
+func defineZone(z int, hot, cold int) string {
+	if z < 0 {
+		if math.Abs(float64(z)) > math.Abs(float64(hot)) {
+			return Temperature_INFERNO
+		}
+		return Temperature_HOT
+	}
+	if z > 0 {
+		if math.Abs(float64(z)) > math.Abs(float64(cold)) {
+			return Temperature_FROZEN
+		}
+		return Temperature_COLD
+	}
+	return Temperature_HABITABLE
 }
 
 func Generate(dice *dice.Dicepool, stellarCode string) map[string]*orbit {
 	orbMap := make(map[string]*orbit)
-	for star := 0; star < 5; star++ {
+	starTypes := stellar.Parse(stellarCode)
+	for star := 0; star < len(starTypes); star++ {
 		for body := -1; body < 18; body++ {
-			orb := New(star, body, -1)
+			orb := New(starTypes[star], star, body, -1)
 			orb.CalculateDecimalOrbit(dice)
 			orbMap[orb.bodyname] = orb
 
 		}
 	}
 
-	stars := stellar.Parse(stellarCode)
-	switch len(stars) {
+	switch len(starTypes) {
 	case 0:
 		for k, o := range orbMap {
 			if o.starNum != -1 && o.bodyNum != -1 && o.satNumb != -1 {
@@ -58,11 +125,11 @@ func Generate(dice *dice.Dicepool, stellarCode string) map[string]*orbit {
 		}
 	default:
 		for k, o := range orbMap {
-			if o.starNum+1 > len(stars) || o.starNum == -1 {
+			if o.starNum+1 > len(starTypes) || o.starNum == -1 {
 				delete(orbMap, k)
 				continue
 			}
-			orbMap[k].parentStar = stars[o.starNum]
+			orbMap[k].parentStar = starTypes[o.starNum]
 			for sat := 0; sat < 26; sat++ {
 				sOrb := AddSatellite(orbMap[k], sat)
 				orbMap[sOrb.bodyname] = sOrb
@@ -74,15 +141,7 @@ func Generate(dice *dice.Dicepool, stellarCode string) map[string]*orbit {
 }
 
 func AddSatellite(orb *orbit, satellite int) *orbit {
-	sOrb := orbit{}
-	sOrb.starNum = orb.starNum
-	sOrb.bodyNum = orb.bodyNum
-	sOrb.satNumb = satellite
-	sOrb.bodyname = bodyname(sOrb.starNum, sOrb.bodyNum, sOrb.satNumb)
-	sOrb.parentStar = orb.parentStar
-	sOrb.systemPosition = orb.systemPosition
-	sOrb.au = orb.au
-	return &sOrb
+	return New(orb.parentStar, orb.starNum, orb.bodyNum, satellite)
 }
 
 func bodyname(star, body, satellite int) string {
@@ -240,6 +299,7 @@ type Orbiter interface {
 	BodyName() string
 	AU() float64
 	ParentStar() string
+	TemperatureZone() string
 }
 
 func (o *orbit) SystemPosition() (int, int, int) {

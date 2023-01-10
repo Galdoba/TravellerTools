@@ -20,3 +20,10 @@ func TestStellar(t *testing.T) {
 	}
 
 }
+
+func TestHabitableOrbits(t *testing.T) {
+	for i, code := range listAllStars() {
+		hz := HabitableOrbitByCode(code)
+		fmt.Printf("%v	%v: %v\n", i, code, hz)
+	}
+}

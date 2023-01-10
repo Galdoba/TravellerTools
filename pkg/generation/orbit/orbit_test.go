@@ -9,8 +9,12 @@ import (
 
 func TestGeneration(t *testing.T) {
 	dice := dice.New()
+	// orb := New("G2 V", 0, 4, 1)
 
-	orbMap := Generate(dice, "G2 V")
+	// fmt.Println(orb)
+
+	// return
+	orbMap := Generate(dice, "G2 V M6 V")
 	for k, v := range orbMap {
 		fmt.Println(k, v)
 	}
