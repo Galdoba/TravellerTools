@@ -104,7 +104,7 @@ func (e *Error) Add(p Position, msg string) *Error {
 func (e *Error) ToString() string {
 	str := "Errors:\n"
 	l := len(e.errors) - 1
-	for i, _ := range e.errors {
+	for i := range e.errors {
 		str += fmt.Sprintf("  %v: %v\n", e.errors[l-i].pos.ToString(), e.errors[l-i].message)
 	}
 	return str
@@ -230,6 +230,7 @@ func Choose(args ...interface{}) ParserFunc {
 	} //func
 }
 
+//Optional 0 или 1 arg
 func Optional(arg interface{}) ParserFunc {
 	return func(rd *Reader) (*Result, *Error) {
 		fn := Choose(arg, "")
@@ -237,6 +238,16 @@ func Optional(arg interface{}) ParserFunc {
 		return res, nil
 	}
 }
+
+//abcd
+/*
+a != c
+keep a
+b != c
+keep b
+c == c
+return ab
+*/
 
 func ZeroOrMany(arg interface{}) ParserFunc {
 	return func(rd *Reader) (*Result, *Error) {
@@ -254,6 +265,65 @@ func ZeroOrMany(arg interface{}) ParserFunc {
 	}
 }
 
+//TODO: разобраться с тестами и понять работает ли оно
+//пока фиксированное колличество символов
+func Not(args ...interface{}) ParserFunc {
+	return func(rd *Reader) (*Result, *Error) {
+		res := (*Result)(nil)
+		for _, arg := range args {
+			pos := rd.Save()
+			//fmt.Printf("-%T*\n", arg)
+			switch val := arg.(type) {
+			default:
+				panic(fmt.Sprintf("unallowed state %T", val))
+			case int32:
+				chr := rd.Read()
+				v := byte(val)
+				same := true
+				if chr != v {
+					same = false
+				}
+				if !same {
+					continue
+				}
+				return nil, NewError().Add(pos, fmt.Sprintf("expected difference: %q, got %q", v, chr))
+			case string:
+				if val == "" {
+					continue
+				}
+				same := true
+				for _, s := range []byte(val) {
+					chr := rd.Read()
+					if chr != s {
+						same = false
+					}
+				}
+				if !same {
+					continue
+				}
+				return nil, NewError().Add(pos, fmt.Sprintf("read string: %v: expected difference", val))
+			case ParserFunc:
+				//fmt.Println("case ParserFunc:")
+				rs, err := val(rd)
+				//fmt.Println("rs, err:", rs, err)
+				if err == nil {
+					//panic(4)
+					fn2 := Choose("", arg)
+					res, _ := fn2(rd)
+					//fmt.Println(res)
+					return res, nil
+					return Choose("", arg)(rd)
+					return nil, NewError().Add(pos, fmt.Sprintf("read string: %v: expected difference func", arg))
+				} else {
+					return nil, NewError().Add(pos, fmt.Sprintf("read string: %v: expected difference func", arg))
+				}
+				res = AppendResult(res, rs)
+			} //switch
+		} //for
+		return res, nil
+	} //func
+}
+
 //////////////////////////////////////////////////////////////////////////
 //-Keep сохраняет найденное
 func Keep(name string, arg interface{}) ParserFunc {
@@ -263,7 +333,7 @@ func Keep(name string, arg interface{}) ParserFunc {
 		fn := Seq(arg)
 		res, err := fn(rd)
 		if err != nil {
-			return nil, err.Add(pos, fmt.Sprintf("%q ненашел то что искал ", name))
+			return nil, err.Add(pos, fmt.Sprintf("Keep %q ненашел то что искал ", name))
 		}
 		res = AppendResult(res, NewResult(name, rd.Data(pos)))
 		return res, nil
@@ -322,9 +392,18 @@ func HashAlpha(chr byte) bool {
 }
 
 //примерсоздания своих алфавитов
-func HashAlpha2(chr byte) bool {
+func EHex(chr byte) bool {
 	const alph = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 	return strings.Contains(alph, string(chr))
+}
+
+func Space(chr byte) bool {
+	const alph = " 	\r\n\t"
+	return strings.Contains(alph, string(chr))
+}
+
+func UniversalProfile() ParserFunc {
+	return Seq(Func(EHex), Func(EHex), Func(EHex), Func(EHex), Func(EHex), Func(EHex), Func(EHex), '-', Func(EHex))
 }
 
 /////////////////////////////////////////////////////
