@@ -151,40 +151,48 @@ type keyval struct {
 }
 
 ////////////////////////////////////////////////////////////////////////
+func BaseLogic(rd *Reader, arg interface{}) (*Result, *Error) {
+	pos := rd.Save()
+
+	switch val := arg.(type) {
+	default:
+		panic(fmt.Sprintf("unallowed state %T", val))
+	case int32:
+		chr := rd.Read()
+		v := byte(val)
+		if chr != v {
+			return nil, NewError().Add(pos, fmt.Sprintf("expected %q, got %q", v, chr))
+		}
+	case string:
+		if val == "" {
+			return nil, nil
+		}
+		for _, s := range []byte(val) {
+			chr := rd.Read()
+			if chr != s {
+				return nil, NewError().Add(pos, fmt.Sprintf("read string: %v: expected %q, got %q", val, s, chr))
+			}
+		}
+	case ParserFunc:
+		rs, err := val(rd)
+		if err != nil {
+			return nil, err
+		}
+		return rs, nil
+	} //switch
+	return nil, nil
+}
 
 func Seq(args ...interface{}) ParserFunc {
 	return func(rd *Reader) (*Result, *Error) {
 		res := (*Result)(nil)
 		for _, arg := range args {
-			pos := rd.Save()
-			//fmt.Printf("-%T*\n", arg)
-			switch val := arg.(type) {
-			default:
-				panic(fmt.Sprintf("unallowed state %T", val))
-			case int32:
-				chr := rd.Read()
-				v := byte(val)
-				if chr != v {
-					return nil, NewError().Add(pos, fmt.Sprintf("expected %q, got %q", v, chr))
-				}
-			case string:
-				if val == "" {
-					continue
-				}
-				for _, s := range []byte(val) {
-					chr := rd.Read()
-					if chr != s {
-						return nil, NewError().Add(pos, fmt.Sprintf("read string: %v: expected %q, got %q", val, s, chr))
-					}
-				}
-			case ParserFunc:
-				rs, err := val(rd)
-				if err != nil {
-					return nil, err
-				}
-				res = AppendResult(res, rs)
-			} //switch
-		} //for
+			rs, err := BaseLogic(rd, arg)
+			if err != nil {
+				return nil, err
+			}
+			res = AppendResult(res, rs)
+		}
 		return res, nil
 	} //func
 }
@@ -192,39 +200,13 @@ func Seq(args ...interface{}) ParserFunc {
 //подумать над именем //choice?
 func Choose(args ...interface{}) ParserFunc {
 	return func(rd *Reader) (*Result, *Error) {
-		res := (*Result)(nil)
 		pos := rd.Save()
-	argLoop:
 		for _, arg := range args {
-			//fmt.Printf("-%T*\n", arg)
+			res, err := BaseLogic(rd, arg)
+			if err == nil {
+				return res, err
+			}
 			rd.Restore(pos)
-			switch val := arg.(type) {
-			default:
-				panic(fmt.Sprintf("unallowed state %T", val))
-			case int32:
-				chr := rd.Read()
-				v := byte(val)
-				if chr == v {
-					return res, nil
-				}
-			case string:
-				if val == "" {
-					return res, nil
-				}
-				for _, s := range []byte(val) {
-					chr := rd.Read()
-					if chr != s {
-						continue argLoop
-					}
-				}
-				return res, nil
-			case ParserFunc:
-				rs, err := val(rd)
-				if err == nil {
-					res = AppendResult(res, rs)
-					return res, nil
-				}
-			} //switch
 		} //for
 		return nil, NewError().Add(pos, "choice invalid")
 	} //func
@@ -233,95 +215,44 @@ func Choose(args ...interface{}) ParserFunc {
 //Optional 0 или 1 arg
 func Optional(arg interface{}) ParserFunc {
 	return func(rd *Reader) (*Result, *Error) {
-		fn := Choose(arg, "")
-		res, _ := fn(rd)
+		pos := rd.Save()
+		res, err := BaseLogic(rd, arg)
+		if err != nil {
+			rd.Restore(pos)
+		}
 		return res, nil
 	}
 }
 
-//abcd
-/*
-a != c
-keep a
-b != c
-keep b
-c == c
-return ab
-*/
-
 func ZeroOrMany(arg interface{}) ParserFunc {
 	return func(rd *Reader) (*Result, *Error) {
-		fn := Seq(arg)
 		res := (*Result)(nil)
 		for {
 			pos := rd.Save()
-			resNew, err := fn(rd)
-			res = AppendResult(res, resNew)
+			rs, err := BaseLogic(rd, arg)
 			if err != nil {
 				rd.Restore(pos)
 				return res, nil
 			}
+			res = AppendResult(res, rs)
 		}
 	}
 }
 
-//TODO: разобраться с тестами и понять работает ли оно
-//пока фиксированное колличество символов
-func Not(args ...interface{}) ParserFunc {
+func Not(arg interface{}) ParserFunc {
 	return func(rd *Reader) (*Result, *Error) {
-		res := (*Result)(nil)
-		for _, arg := range args {
-			pos := rd.Save()
-			//fmt.Printf("-%T*\n", arg)
-			switch val := arg.(type) {
-			default:
-				panic(fmt.Sprintf("unallowed state %T", val))
-			case int32:
-				chr := rd.Read()
-				v := byte(val)
-				same := true
-				if chr != v {
-					same = false
-				}
-				if !same {
-					continue
-				}
-				return nil, NewError().Add(pos, fmt.Sprintf("expected difference: %q, got %q", v, chr))
-			case string:
-				if val == "" {
-					continue
-				}
-				same := true
-				for _, s := range []byte(val) {
-					chr := rd.Read()
-					if chr != s {
-						same = false
-					}
-				}
-				if !same {
-					continue
-				}
-				return nil, NewError().Add(pos, fmt.Sprintf("read string: %v: expected difference", val))
-			case ParserFunc:
-				//fmt.Println("case ParserFunc:")
-				rs, err := val(rd)
-				//fmt.Println("rs, err:", rs, err)
-				if err == nil {
-					//panic(4)
-					fn2 := Choose("", arg)
-					res, _ := fn2(rd)
-					//fmt.Println(res)
-					return res, nil
-					return Choose("", arg)(rd)
-					return nil, NewError().Add(pos, fmt.Sprintf("read string: %v: expected difference func", arg))
-				} else {
-					return nil, NewError().Add(pos, fmt.Sprintf("read string: %v: expected difference func", arg))
-				}
-				res = AppendResult(res, rs)
-			} //switch
-		} //for
-		return res, nil
-	} //func
+		pos := rd.Save()
+		_, err := BaseLogic(rd, arg)
+		rd.Restore(pos)
+		switch err {
+		default:
+			err = nil
+		case nil:
+			err = NewError().Add(pos, "NOT3 is not true")
+		}
+
+		return nil, err
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -341,6 +272,28 @@ func Keep(name string, arg interface{}) ParserFunc {
 
 }
 
+func Keep2(name string, arg interface{}) ParserFunc {
+	//res, err := Choose(arg, "")
+	return func(rd *Reader) (*Result, *Error) {
+		pos := rd.Save()
+		fn := Seq(arg)
+		res, err := fn(rd)
+		if err != nil {
+			return nil, err.Add(pos, fmt.Sprintf("Keep %q ненашел то что искал ", name))
+		}
+		res = AppendResult(res, NewResult(name, rd.Data(pos)))
+		return res, nil
+	}
+
+}
+
+/*
+Till - с заглатыванием символа
+Untill - без заглатывания символа
+While - читаем
+Skip ??
+*/
+
 //////////////////////////////////////////////////////////////////////////
 
 func Func(fn func(chr byte) bool) ParserFunc {
@@ -354,7 +307,18 @@ func Func(fn func(chr byte) bool) ParserFunc {
 	}
 }
 
+const (
+	Bbb_bba = "asdf"
+	aBB_asd = "asd"
+)
+
 func Ident() ParserFunc {
+	//return Seq(Func(Alpha), WHILE(OR(LIT(Alpha), LIT(Digit))))
+	return Seq(Func(Alpha), ZeroOrMany(Choose(Func(Alpha), Func(Digit))))
+}
+
+func IDENT_D() ParserFunc {
+	//return Seq(Func(Alpha), WHILE(OR(LIT(Alpha), LIT(Digit))))
 	return Seq(Func(Alpha), ZeroOrMany(Choose(Func(Alpha), Func(Digit))))
 }
 

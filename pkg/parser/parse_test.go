@@ -15,13 +15,16 @@ var inputCorrect = []struct {
 	fn ParserFunc
 }{
 	{in: "abcdef", fn: Seq("abcdef")},
-	{in: "abdd", fn: Not("abcd")},
-	{in: "a", fn: Not('b')},
-	{in: "ab", fn: Not(Seq("a", "b"))},
-	{in: "abc", fn: Not(Seq("a", "bc"))},
+	//{in: "abdd", fn: Not("abcd")},
+	//{in: "a", fn: Not('b')},
+	//{in: "hb", fn: Seq(Not("a"), "b")},
+	{in: "b", fn: Not("a")},
+
+	{in: "", fn: Not("a")},
+	//{in: "abc", fn: Not(Seq("a", "bc"))},    {sdkfbgs}   Seq('{', ZeroOrMany(Not('}')) ..., '}')
 	//{in: "abc", fn: Not(Seq("abc"))},
 	{in: "abcdef", fn: Seq("abc", 'd', "ef")},
-	{in: "abcdef2", fn: Seq("abc", Not("vs"), "f2")},
+	{in: "abcf2", fn: Seq("abc", Not(Seq("vs")), "f2")},
 	{in: "abcdef", fn: Seq("abc", Seq("de"), "f")},
 	{in: "ab", fn: Choose("ab", 'b', Seq("c"))},
 	{in: "b", fn: Choose("ab", 'b', Seq("c"))},
@@ -71,13 +74,14 @@ var inputIncorrect = []struct {
 	in string
 	fn ParserFunc
 }{
-	//{in: "", fn: Seq("abcdef")},
-	{in: "abc", fn: Not(Seq("ab", "cc"))},
+	{in: "", fn: Seq("abcdef")},
+	//{in: "abc", fn: Not(Seq("ab", "cc"))},
 	{in: "abcdef", fn: Seq("abc", 't', "ef")},
-	//{in: "abcdef", fn: Seq("abc", Seq("ge"), "f")},
-	//{in: "", fn: Choose("ab", 'b', Seq("c"))},
-	//{in: "d", fn: Choose("ab", 'b', Seq("c"))},
-	//{in: "d", fn: Choose("ab", 'b', Seq("c"))},
+	{in: "abcdef", fn: Seq("abc", Seq("ge"), "f")},
+	{in: "", fn: Choose("ab", 'b', Seq("c"))},
+	{in: "d", fn: Choose("ab", 'b', Seq("c"))},
+	{in: "d", fn: Choose("ab", 'b', Seq("c"))},
+	{in: "a", fn: Not("a")},
 }
 
 func TestCorrectParser(t *testing.T) {
@@ -100,7 +104,6 @@ func TestCorrectParser(t *testing.T) {
 }
 
 func TestCorrectKeepParser(t *testing.T) {
-	return
 	t.Logf("START TestCorrectKeep")
 	for i, input := range inputCorrectKeep {
 		t.Logf("----------------------TestCorrectKeep-------------")
@@ -178,6 +181,7 @@ func checkResult(t *testing.T, got *Result, expected []*detected) bool {
 }
 
 func TestInCorrectParser(t *testing.T) {
+
 	t.Logf("START TestInCorrect")
 	for i, input := range inputIncorrect {
 		t.Logf("----------------------")
