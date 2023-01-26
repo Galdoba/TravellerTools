@@ -92,5 +92,14 @@ func NewStarSystemData(sector string, hex string) *form7 {
 }
 
 /*
+Coordinates := Naming Rules
+Stellar := RANDOM
 
- */
+StarSystemObject := Stellar, Coordinates
+Orbits := StarSystemObject
+
+
+
+
+
+*/

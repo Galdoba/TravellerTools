@@ -20,6 +20,11 @@ const (
 	mult3            = "mult3"
 )
 
+func GenerateStellarOneStar(dice *dice.Dicepool) string {
+	stellar := GenerateStellar(dice)
+	return Parse(stellar)[0]
+}
+
 func GenerateStellar(dice *dice.Dicepool) string {
 	diceRolls := []int{}
 	for i := 0; i < 4; i++ {
@@ -761,6 +766,7 @@ func listAllStars() []string {
 	return list
 }
 
+//Decode - возвращает Class, Decimal, Size
 func Decode(code string) (string, int, string) {
 	class := []string{"O", "B", "A", "F", "G", "K", "M", "D", "L", "T", "Y"}
 	num := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}

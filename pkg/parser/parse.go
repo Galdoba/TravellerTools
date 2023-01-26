@@ -272,21 +272,6 @@ func Keep(name string, arg interface{}) ParserFunc {
 
 }
 
-func Keep2(name string, arg interface{}) ParserFunc {
-	//res, err := Choose(arg, "")
-	return func(rd *Reader) (*Result, *Error) {
-		pos := rd.Save()
-		fn := Seq(arg)
-		res, err := fn(rd)
-		if err != nil {
-			return nil, err.Add(pos, fmt.Sprintf("Keep %q ненашел то что искал ", name))
-		}
-		res = AppendResult(res, NewResult(name, rd.Data(pos)))
-		return res, nil
-	}
-
-}
-
 /*
 Till - с заглатыванием символа
 Untill - без заглатывания символа
@@ -307,13 +292,8 @@ func Func(fn func(chr byte) bool) ParserFunc {
 	}
 }
 
-const (
-	Bbb_bba = "asdf"
-	aBB_asd = "asd"
-)
-
 func Ident() ParserFunc {
-	//return Seq(Func(Alpha), WHILE(OR(LIT(Alpha), LIT(Digit))))
+	//return AND(LIT(Alpha), WHILE(OR(LIT(Alpha), LIT(Digit))))
 	return Seq(Func(Alpha), ZeroOrMany(Choose(Func(Alpha), Func(Digit))))
 }
 
