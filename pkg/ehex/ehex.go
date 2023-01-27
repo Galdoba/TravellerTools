@@ -93,6 +93,7 @@ func (e *ehex) String() string {
 
 func hashValue(value int) string {
 	codeMap := make(map[int]string)
+	codeMap[-2] = "?"
 	codeMap[0] = "0"
 	codeMap[1] = "1"
 	codeMap[2] = "2"
