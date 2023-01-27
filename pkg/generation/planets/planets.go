@@ -5,6 +5,7 @@ import (
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/generation/life"
 	"github.com/Galdoba/TravellerTools/pkg/generation/stellar"
 	"github.com/Galdoba/utils"
 )
@@ -24,6 +25,7 @@ type planet struct {
 	parentStar   string
 	physicalData []ehex.Ehex
 	hz           int
+	dominantLife ehex.Ehex
 }
 
 func New(dice *dice.Dicepool) *planet {
@@ -40,6 +42,10 @@ func (p *planet) SetParentStar(star string) error {
 	return nil
 }
 
+func (p *planet) String() string {
+	return fmt.Sprintf("%v %v %v%v%v %v %v", p.parentStar, p.planetType, p.physicalData[0], p.physicalData[1], p.physicalData[2], p.dominantLife, p.hz)
+}
+
 func (p *planet) GenerateBasic() error {
 	if p.parentStar == "" {
 		p.setRandomParentStar()
@@ -54,6 +60,7 @@ func (p *planet) GenerateBasic() error {
 			return err
 		}
 	}
+	p.dominantLife = life.DetermineDominantLife(p.dice, p.physicalData[1], p.physicalData[2], p.hz, p.parentStar)
 	return nil
 }
 

@@ -21,8 +21,18 @@ const (
 )
 
 func GenerateStellarOneStar(dice *dice.Dicepool) string {
-	stellar := GenerateStellar(dice)
-	return Parse(stellar)[0]
+	star := ""
+loop:
+	for {
+		switch star {
+		default:
+			break loop
+		case "", "NS", "Black Hole", "*RP", "*RGG", "Nebula":
+			stellar := GenerateStellar(dice)
+			star = Parse(stellar)[0]
+		}
+	}
+	return star
 }
 
 func GenerateStellar(dice *dice.Dicepool) string {
