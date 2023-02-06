@@ -2,12 +2,24 @@ package stellar
 
 import (
 	"fmt"
+
+	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
 type star struct {
 	starType        string // буква определяющая спектр OBAFGKM
 	spectralDecimal int    //число определяющее близость к типу 0123456789
 	sizeClass       string //римское число определяющее размер Ia Ib II III IV V VI D (D - определяет белого карлика) BD (определяет коричнегого карлика)
+	star            string
+	temperature     int
+	mass            float64
+	luminocity      float64
+	innerLimit      float64
+	habitableLow    float64
+	habitableHigh   float64
+	snowLine        float64
+	outerLimit      float64
+	hzOrbit         int
 }
 
 func NewStar(sType string, decimal int, size string) (*star, error) {
@@ -22,13 +34,16 @@ func NewStar(sType string, decimal int, size string) (*star, error) {
 		//err = fmt.Errorf("'BD' is a special case of star Type for a White Dwarf")
 		s.starType = "LTY"
 		err = fmt.Errorf("'BD' is a special case of star Type for a White Dwarf (need specifics to draw data)")
+		return &s, err
 	case "T", "L", "Y":
 		//err = fmt.Errorf("Special case of star Type for a Brown Dwarf")
 		s.starType = sType
 	}
 	switch size {
 	default:
-		err = fmt.Errorf("Size not implemented '%v'", size)
+		if s.starType != "L" && s.starType != "T" && s.starType != "Y" {
+			err = fmt.Errorf("Size not implemented '%v'", size)
+		}
 	case "Ia", "Ib", "II", "III", "IV", "V", "VI", "D":
 		s.sizeClass = size
 	}
@@ -36,8 +51,70 @@ func NewStar(sType string, decimal int, size string) (*star, error) {
 	case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9:
 		s.spectralDecimal = decimal
 	}
+	if (s.starType == "A" || s.starType == "F") && s.sizeClass == "VI" {
+		s.sizeClass = "V"
+	}
+	s.star = s.starType + fmt.Sprintf("%v", s.spectralDecimal)
+	if s.sizeClass != "" {
+		s.star += " " + s.sizeClass
+	}
+	if s.sizeClass == "D" {
+		s.star = s.sizeClass + fmt.Sprintf("%v", s.spectralDecimal)
+	}
 
+	tv := getTableValues(s.star)
+	s.temperature = tv.temperature
+	s.mass = tv.mass
+	s.luminocity = tv.luminocity
+	s.innerLimit = tv.innerLimit
+	s.habitableLow = tv.habitableLow
+	s.habitableHigh = tv.habitableHigh
+	s.snowLine = tv.snowLine
+	s.outerLimit = tv.outerLimit
 	return &s, err
+}
+
+func fixedStarCode(spec string, dec int, siz string) string {
+	code := ""
+	switch spec {
+	case "O", "B", "A":
+		if siz == "VI" {
+			siz = "V"
+		}
+	case "F", "G", "K", "M":
+		if siz == "Ia" || siz == "Ib" {
+			siz = "II"
+		}
+	case "L", "T", "Y":
+		return spec + fmt.Sprintf("%v", dec)
+	}
+	if spec == "F" && siz == "VI" {
+		siz = "V"
+	}
+	if spec == "BD" {
+		return "BD"
+	}
+	code = spec + fmt.Sprintf("%v", dec)
+
+	if siz != "" {
+		code += " " + siz
+	}
+	if siz == "D" {
+		code = siz + fmt.Sprintf("%v", dec)
+	}
+	return code
+}
+
+func brownDwarfSpectral(dice *dice.Dicepool) string {
+	switch dice.Sroll("1d4") {
+	case 1, 2:
+		return "L"
+	case 3:
+		return "T"
+	case 4:
+		return "Y"
+	}
+	return "?"
 }
 
 type tabledata struct {

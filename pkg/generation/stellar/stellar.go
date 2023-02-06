@@ -212,11 +212,12 @@ func chart(s string) *table.DiceResultChart {
 		return table.DiceChart(
 			table.Row("01-80", "Star"),
 			table.Row("81-88", "BD"),
-			table.Row("89-94", "*rp"),
-			table.Row("95-97", "*rgg"),
-			table.Row("98", "Ns"),
-			table.Row("99", "Nebula"),
-			table.Row("100", "BH"),
+			table.Row("89-100", "BD"),
+			// table.Row("89-94", "*rp"),
+			// table.Row("95-97", "*rgg"),
+			// table.Row("98", "Ns"),
+			// table.Row("99", "Nebula"),
+			// table.Row("100", "BH"),
 		)
 	case typeOfBrownDwarf:
 		return table.DiceChart(
@@ -766,11 +767,11 @@ func listAllStars() []string {
 		"Y7",
 		"Y8",
 		"Y9",
-		"NS",
-		"Black Hole",
-		"*RP",
-		"*RGG",
-		"Nebula",
+		// "NS",
+		// "Black Hole",
+		// "*RP",
+		// "*RGG",
+		// "Nebula",
 	}
 
 	return list
