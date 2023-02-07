@@ -19,7 +19,9 @@ type star struct {
 	habitableHigh   float64
 	snowLine        float64
 	outerLimit      float64
-	hzOrbit         int
+	orbitingOn      int
+	maxHighOrbit    int
+	habitableOrbit  int
 }
 
 func NewStar(sType string, decimal int, size string) (*star, error) {

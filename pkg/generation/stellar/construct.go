@@ -92,6 +92,8 @@ func ConstructNew(paradigm string, knownData ...dataFeed) (*stellar, error) {
 			spec = brownDwarfSpectral(c.dice)
 		}
 		str, err := NewStar(spec, dec, size)
+		str.orbitingOn, str.maxHighOrbit = t5.StarOrbit(c.dice, pos)
+
 		if err != nil {
 			return &stlr, fmt.Errorf("newStar: %v (%v-%v-%v) [%v]", err.Error(), spec, dec, size, pos)
 		}

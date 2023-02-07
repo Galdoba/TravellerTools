@@ -92,3 +92,27 @@ func starSize(i int, spec string) string {
 	}
 	return sizeArr[i+6]
 }
+
+func StarOrbit(dice *dice.Dicepool, pos int) (int, int) {
+	roll := dice.Sroll("1d6")
+	so := -999 //StarOrbit
+	mho := 0   //MaxHighOrbit
+	switch pos {
+	case posPrimaryComp, posCloseComp, posNearComp, posFarComp:
+		return 0, 0
+	case posPrimary:
+		so, mho = -1, 18
+		return so, mho
+	case posClose:
+		so = roll - 1
+	case posNear:
+		so = roll + 5
+	case posFar:
+		so = roll + 11
+	}
+	mho = so - 3
+	if mho < 0 {
+		mho = 0
+	}
+	return so, mho
+}

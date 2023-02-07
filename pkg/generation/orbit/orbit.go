@@ -314,3 +314,14 @@ func (o *orbit) AU() float64 {
 func (o *orbit) ParentStar() string {
 	return o.bodyname
 }
+
+////////////
+//TODO: создать карту орбит для звезды
+func AddStar(star string, pos int) *orbit {
+	//return New(orb.parentStar, orb.starNum, orb.bodyNum, satellite)
+	return nil
+}
+
+func SetupMap() map[string]*orbit {
+	return make(map[string]*orbit)
+}

@@ -84,18 +84,18 @@ func GenerateStellar(dice *dice.Dicepool) string {
 }
 
 func Parse(stellar string) []string {
-	switch stellar {
-	case "Black Hole":
-		return []string{"Black Hole"}
-	case "*RP":
-		return []string{"*RP"}
-	case "*RGG":
-		return []string{"*RGG"}
-	case "Nebula":
-		return []string{"Nebula"}
-	case "NS":
-		return []string{"NS"}
-	}
+	// switch stellar {
+	// case "Black Hole":
+	// 	return []string{"Black Hole"}
+	// case "*RP":
+	// 	return []string{"*RP"}
+	// case "*RGG":
+	// 	return []string{"*RGG"}
+	// case "Nebula":
+	// 	return []string{"Nebula"}
+	// case "NS":
+	// 	return []string{"NS"}
+	// }
 	try := 1
 	stars := []string{}
 	for len(stellar) > 0 {
