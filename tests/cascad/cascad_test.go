@@ -11,7 +11,7 @@ import (
 
 func TestCascad(t *testing.T) {
 	pawn := NewPawn(25, 25, 0)
-	cal := calendar.NewSyncCalendar(2000, 0, 0, 24)
+	cal := calendar.NewSyncCalendar(2020, 0, 0, 360)
 
 	//	fmt.Println(nowSeed())
 	//seedTime := 60*tm.Minute() + tm.Second()
