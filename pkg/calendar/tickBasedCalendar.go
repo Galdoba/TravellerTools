@@ -1,6 +1,8 @@
 package calendar
 
 import (
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -58,3 +60,65 @@ func ImperialTimeStamp(tick int64) string {
 // }
 
 // type clock struct
+var Tick = int64(1)
+var Minute = int64(10 * Tick)
+var Hour = int64(60 * Minute)
+var Day = int64(24 * Hour)
+var Week = int64(7 * Day)
+var Month = int64(30 * Day)
+var Year = int64(365 * Day)
+var Decade = int64(10 * Year)
+var Century = int64(100 * Year)
+var Millenium = int64(1000 * Year)
+
+func TicksToText(ticks int64) string {
+	text := ""
+	if ticks < 0 {
+		return ""
+	}
+	if ticks == 0 {
+		return "Instant"
+	}
+	if ticks >= Year {
+		x := ticks / Year
+		text += fmt.Sprintf(" %v Year", x)
+		if (x-1)%10 != 0 {
+			text += "s"
+		}
+		ticks = ticks - (x * Year)
+	}
+	if ticks >= Day {
+		x := ticks / Day
+		text += fmt.Sprintf(" %v Day", x)
+		if (x-1)%10 != 0 {
+			text += "s"
+		}
+		ticks = ticks - (x * Day)
+	}
+	if ticks >= Hour {
+		x := ticks / Hour
+		text += fmt.Sprintf(" %v Hour", x)
+		if (x-1)%10 != 0 {
+			text += "s"
+		}
+		ticks = ticks - (x * Hour)
+	}
+	if ticks >= Minute {
+		x := ticks / Minute
+		text += fmt.Sprintf(" %v Minute", x)
+		if (x-1)%10 != 0 {
+			text += "s"
+		}
+		ticks = ticks - (x * Minute)
+	}
+	if ticks >= Tick {
+		x := ticks / Tick
+		text += fmt.Sprintf(" %v Second", x*6)
+		if ((x*6)-1)%10 != 0 {
+			text += "s"
+		}
+		ticks = ticks - (x * Tick)
+	}
+
+	return strings.TrimSpace(text)
+}
