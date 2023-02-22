@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//Dicepool -
+// Dicepool -
 type Dicepool struct {
 	dice        int
 	edges       int
@@ -26,14 +26,14 @@ type Dicepool struct {
 	err         error
 }
 
-//New - Creates Dicepool object with seed from current time
+// New - Creates Dicepool object with seed from current time
 func New() *Dicepool {
 	dp := Dicepool{}
 	dp.Reset()
 	return &dp
 }
 
-//SetSeed - фиксирует результат броска
+// SetSeed - фиксирует результат броска
 func (dp *Dicepool) SetSeed(key interface{}) *Dicepool {
 	var s int64
 	switch key.(type) {
@@ -74,7 +74,7 @@ func reset(dp *Dicepool) *Dicepool {
 	return dp
 }
 
-//seedFromString - задает Seed по ключу key
+// seedFromString - задает Seed по ключу key
 func seedFromString(key string) int64 {
 	bytes := []byte(key)
 	var seed int64
@@ -89,7 +89,7 @@ func seedFromString(key string) int64 {
 	return seed
 }
 
-//Roll - Делает бросок
+// Roll - Делает бросок
 func (dp *Dicepool) Roll(code string) *Dicepool {
 	dp.result = nil
 	dp.modPerDie = 0
@@ -112,6 +112,10 @@ func (dp *Dicepool) Sroll(code string) int {
 	return dp.Roll(code).Sum()
 }
 
+func (dp *Dicepool) Result() []int {
+	return dp.result
+}
+
 func (dp *Dicepool) Vocal() {
 	if dp.vocal == true {
 		dp.vocal = false
@@ -123,30 +127,30 @@ func (dp *Dicepool) Vocal() {
 	}
 }
 
-//DrawData - возвращает количество дайсов и их грани
+// DrawData - возвращает количество дайсов и их грани
 func (dp *Dicepool) DrawData() (int, int) {
 	return dp.dice, dp.edges
 }
 
-//ModTotal - возвращает общий модификатор
+// ModTotal - возвращает общий модификатор
 func (dp *Dicepool) ModTotal() int {
 	return dp.modTotal
 }
 
-//DM - добавляет число к общей сумме результата
+// DM - добавляет число к общей сумме результата
 func (dp *Dicepool) DM(dm int) *Dicepool {
 	dp.modTotal = dp.modTotal + dm
 	return dp
 }
 
-//Flux - Дает Flux
+// Flux - Дает Flux
 func (dp *Dicepool) Flux() int {
 	d1 := dp.Roll("1d6").Sum()
 	d2 := dp.Roll("1d6").Sum()
 	return d1 - d2
 }
 
-//Sum - возвращает сумму очков броска
+// Sum - возвращает сумму очков броска
 func (dp *Dicepool) Sum() int {
 	sum := 0
 	for i := 0; i < len(dp.result); i++ {
@@ -159,7 +163,7 @@ func (dp *Dicepool) Sum() int {
 	return sum
 }
 
-//SumStr - возвращает сумму очков броска в виде стринга
+// SumStr - возвращает сумму очков броска в виде стринга
 func (dp *Dicepool) SumStr() string {
 	return strconv.Itoa(dp.Sum())
 }
@@ -247,8 +251,8 @@ func (d *Dicepool) TreatAasB(a, b int) {
 	}
 }
 
-////////////////////
-//Pick - возвращает случайный элемент из слайса и его номер
+// //////////////////
+// Pick - возвращает случайный элемент из слайса и его номер
 func (d *Dicepool) Pick(slice []interface{}) (int, interface{}) {
 	l := fmt.Sprintf("%v", len(slice))
 	r := d.Roll("1d" + l).DM(-1).Sum()

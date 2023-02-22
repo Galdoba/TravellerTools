@@ -18,6 +18,7 @@ type t5task struct {
 	dieRoll         int
 	dieUncertain    int
 	prob            float64
+	rr              rollResult
 	////////
 	phrase string
 }
@@ -25,7 +26,7 @@ type t5task struct {
 type Asset interface {
 	Name() string
 	Actual() int
-	SetValue(v int)
+	SetValue(v int) //for testing
 }
 
 //task.State()
@@ -137,10 +138,18 @@ func (tsk *t5task) toString() string {
 	return s
 }
 
-func (tsk *t5task) fill(dataMap map[string]int) {
-
+func TargetNumber(as ...Asset) int {
+	tn := 0
+	for _, v := range as {
+		tn += v.Actual()
+	}
+	return tn
 }
 
-func (tsk *t5task) Resolve(dice *dice.Dicepool) error {
+func (tsk *t5task) Resolve(dice *dice.Dicepool, tn int) error {
+	code := fmt.Sprintf("%vd6", tsk.dieRoll)
+	res := dice.Roll(code).Result()
+
+	tsk.rr = newResult(res, tn)
 	return nil
 }
