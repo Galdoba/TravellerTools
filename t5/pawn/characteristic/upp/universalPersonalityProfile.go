@@ -141,3 +141,18 @@ func NewUniversalPersonalityProfile(dice *dice.Dicepool, gd genedata) *upp {
 
 	return &up
 }
+
+func (up *upp) ValueOf(code string) int {
+	for _, c := range positionCodes {
+		if c == code {
+			return up.chars[code].Actual()
+		}
+	}
+	for _, chr := range up.chars {
+		try := chr.ValueAs(code)
+		if try > -99 {
+			return try
+		}
+	}
+	return 0
+}

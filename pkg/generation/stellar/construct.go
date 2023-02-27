@@ -13,6 +13,16 @@ type stellar struct {
 	lo          []int
 }
 
+func (st *stellar) String() string {
+	str := ""
+	for i := 1; i <= 8; i++ {
+		if v, ok := st.systemstars[i]; ok == true {
+			str += v.star + " "
+		}
+	}
+	return str
+}
+
 type dataFeed struct {
 	key string
 	val string

@@ -15,8 +15,9 @@ func TestGeneration(t *testing.T) {
 
 	// return
 	orbMap := Generate(dice, "G2 V M6 V")
-	for k, v := range orbMap {
+	for k, v := range orbMap.orb {
 		fmt.Println(k, v)
+
 	}
-	fmt.Println(len(orbMap))
+	fmt.Println(len(orbMap.orb))
 }

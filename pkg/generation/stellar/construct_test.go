@@ -10,7 +10,7 @@ import (
 func TestStarConstruction(t *testing.T) {
 	smap, list := mapStars()
 	l := len(smap)
-	for i := 20; i < 46; i++ {
+	for i := 116; i < 125; i++ {
 		df1 := Instruction("Hex", fmt.Sprintf("%v", i))
 		df2 := Instruction(KEY_MW, "Reginaasd")
 		stel, err := ConstructNew(CONSTRUCTOR_PARADIGM_T5, df1, df2)
@@ -42,13 +42,15 @@ func TestStarConstruction(t *testing.T) {
 			fmt.Println("TEST PASS")
 			break
 		}
-		fmt.Println(stel)
+
 		for pos := -1; pos < 11; pos++ {
 			if str, ok := stel.systemstars[pos]; ok == true {
 				fmt.Println(str)
 			}
 		}
 		fmt.Println("=========")
+		fmt.Println(stel)
+		fmt.Println("---------")
 		//t.Logf("==============")
 		//t.Logf("%v", stel)
 	}

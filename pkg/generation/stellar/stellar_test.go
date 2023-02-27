@@ -10,7 +10,7 @@ import (
 
 func TestStellar(t *testing.T) {
 	return
-	for i := 480; i < 1000; i++ {
+	for i := 480; i < 500; i++ {
 		dp := dice.New().SetSeed(i)
 		stellar := GenerateStellar(dp)
 		stars := Parse(stellar)

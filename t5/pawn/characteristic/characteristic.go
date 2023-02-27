@@ -382,6 +382,73 @@ func ByGeneticProfile(code, geneticProfile, genMap string) (*Frame, error) {
 	return nil, fmt.Errorf("unexpected combination ('%v' , '%v')", code, geneticProfile)
 }
 
-func (chr *Frame) CheckAverage(dice *dice.Dicepool) {
+func (chr *Frame) ValueAs(name string) int {
+	code := nameToCode(name)
+	if code != chr.positionCode {
+		return -999
+	}
+	if name == chr.name {
+		return chr.value
+	}
+	if chr.charType == TYPE_PHYSICAL {
+		return (chr.value + 1) / 2
+	}
+	switch chr.name {
+	case Education:
+		switch name {
+		case Training:
+			return (chr.value + 1) / 2
+		case Instinct:
+			return 4
+		}
+	case Training:
+		switch name {
+		case Education:
+			return (chr.value + 1) / 2
+		case Instinct:
+			return 4
+		}
+	case Instinct:
+		return 4
+	case SocialStanding:
+		switch name {
+		case Charisma:
+			return chr.value
+		case Caste:
+			return 4
+		}
+	case Charisma:
+		switch name {
+		case SocialStanding:
+			return (chr.value + 1) / 2
+		case Caste:
+			return 4
+		}
+	case Caste:
+		return 4
+	}
+	return -9999
+}
 
+func nameToCode(name string) string {
+	switch name {
+	default:
+		return ""
+	case Strength:
+		return "C1"
+	case Dexterity, Agility, Grace:
+		return "C2"
+	case Endurance, Stamina, Vigor:
+		return "C3"
+	case Intelligence:
+		return "C4"
+	case Education, Training, Instinct:
+		return "C5"
+	case SocialStanding, Charisma, Caste:
+		return "C6"
+	case Sanity:
+		return "CS"
+	case Psionics:
+		return "CP"
+	}
 }

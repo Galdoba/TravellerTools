@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/t5/pawn/characteristic"
 )
 
 func TestUPP(t *testing.T) {
@@ -40,5 +41,6 @@ func TestHumanUPP(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		human := NewUniversalPersonalityProfile(dice, GeneDataHuman())
 		fmt.Println(human)
+		fmt.Println(human.ValueOf(characteristic.Agility))
 	}
 }
