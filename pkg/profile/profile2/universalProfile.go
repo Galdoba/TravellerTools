@@ -2,8 +2,8 @@ package profile2
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 )
 
@@ -14,74 +14,95 @@ const (
 )
 
 const (
-	Starport = iota
-	Size
-	Atmo
-	HZ
-	Hydr
-	Life
-	Resources
-	Pops
-	Govr
-	Laws
-	Tech
+	Starport = "Starport"
+	Size     = "Size"
+	Atmo     = "Atmo"
+	Hydr     = "Hydr"
+	Pops     = "Pops"
+	Govr     = "Govr"
+	Laws     = "Laws"
+	sep      = "separator"
+	Tech     = "Tech"
 )
 
 type universalProfile struct {
-	dice       *dice.Dicepool
-	data       map[int]ehex.Ehex
-	hiddenData map[int]bool
-	entityType string
+	data       map[string]string
+	keys       []string
+	hiddenData map[string]bool
 }
 
 func New(entity string) (*universalProfile, error) {
 	up := universalProfile{}
-	up.data = make(map[int]ehex.Ehex)
-	up.hiddenData = make(map[int]bool)
+	up.data = make(map[string]string)
+	up.hiddenData = make(map[string]bool)
 	switch entity {
 	default:
 		return nil, fmt.Errorf("unknown entity type '%v'", entity)
 	case PROFILE_WORLD:
 		for _, val := range expectedData(entity) {
-			up.data[val] = ehex.New().Set("?")
+			up.data[val] = "?"
+			up.keys = append(up.keys, val)
 		}
 		for _, val := range hiddenData(entity) {
 			up.hiddenData[val] = true
 		}
 	}
-	return &universalProfile{}, nil
+	return &up, nil
 }
 
-func expectedData(e string) []int {
+func (up *universalProfile) Inject(values string) error {
+	val := strings.Split(values, "")
+	if len(val) != len(up.keys) {
+		fmt.Println(val)
+		fmt.Println(up.keys)
+		return fmt.Errorf("values does not match keys")
+	}
+	v := strings.Split(values, "")
+	for n, key := range up.keys {
+		up.data[key] = v[n]
+	}
+	return nil
+}
+
+func (up *universalProfile) String() string {
+	s := ""
+	for _, key := range up.keys {
+		if up.hiddenData[key] == true {
+			continue
+		}
+		if key == sep {
+			s += "-"
+			continue
+		}
+		s += ehex.New().Set(up.data[key]).Code()
+	}
+	return s
+}
+
+func expectedData(e string) []string {
 	switch e {
 	default:
-		return []int{}
+		return []string{}
 	case PROFILE_WORLD:
-		return []int{
+		return []string{
 			Starport,
 			Size,
 			Atmo,
-			HZ,
 			Hydr,
-			Life,
-			Resources,
 			Pops,
 			Govr,
 			Laws,
+			sep,
 			Tech,
 		}
 	}
 }
 
-func hiddenData(e string) []int {
+func hiddenData(e string) []string {
 	switch e {
 	default:
-		return []int{}
+		return []string{}
 	case PROFILE_WORLD:
-		return []int{
-			HZ,
-			Life,
-			Resources,
-		}
+		return []string{}
 	}
 }

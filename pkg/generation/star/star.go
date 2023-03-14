@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Galdoba/TravellerTools/pkg/generation/orbit"
-	"github.com/Galdoba/TravellerTools/pkg/generation/stellar"
+	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
-func New(code string) *star {
+func New(code string) star {
 	//table := getTableValues(code)
 	s := star{}
-	s.class, s.num, s.size = stellar.Decode(code)
+	s.class, s.num, s.size = decode(code)
 	s.LoadValues()
-	return &s
+	return s
 }
 
 type star struct {
@@ -33,8 +32,28 @@ type star struct {
 	snowLine              float64
 	outerLimit            float64
 	habitableOrbit        int
-	orbitData             map[int]orbit.Orbiter
-	orbitDistances        []float64
+	//orbitData             map[int]orbit.Orbiter
+	//orbitDistances []float64
+}
+
+func (s *star) InnerLimit() float64 {
+	return s.innerLimit
+}
+
+func (s *star) LowHabitable() float64 {
+	return s.habitableLow
+}
+
+func (s *star) HiHabitable() float64 {
+	return s.habitableHigh
+}
+
+func (s *star) SnowLine() float64 {
+	return s.snowLine
+}
+
+func (s *star) OuterLimit() float64 {
+	return s.outerLimit
 }
 
 func (s *star) Describe() string {
@@ -42,6 +61,9 @@ func (s *star) Describe() string {
 }
 
 func (s *star) Code() string {
+	if s.class == "" && s.size == "" {
+		return ""
+	}
 	code := fmt.Sprintf("%v%v %v", s.class, s.num, s.size)
 	code = strings.TrimSpace(code)
 	return code
@@ -568,4 +590,51 @@ func (s *star) LoadValues() error {
 	s.outerLimit = td.outerLimit
 	s.habitableOrbit = td.habitableOrbit
 	return nil
+}
+
+func decode(code string) (string, int, string) {
+	class := []string{"O", "B", "A", "F", "G", "K", "M", "D", "L", "T", "Y"}
+	num := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+	size := []string{"Ia", "Ib", "III", "II", "IV", "V"}
+	cl := ""
+	for _, c := range class {
+		if strings.Contains(code, c) {
+			cl = c
+			break
+		}
+	}
+	n := -1
+	for i, c := range num {
+		if strings.Contains(code, c) {
+			n = i
+			break
+		}
+	}
+	s := ""
+	for _, c := range size {
+		if strings.Contains(code, c) {
+			s = c
+			break
+		}
+	}
+	return cl, n, s
+}
+
+const (
+	StarPrimary = iota
+	StarClose
+	StarNear
+	StarFar
+)
+
+func RollStarOrbit(dice *dice.Dicepool, sType int) int {
+	switch sType {
+	case StarClose:
+		return dice.Sroll("1d6-1")
+	case StarNear:
+		return dice.Sroll("1d6+5")
+	case StarFar:
+		return dice.Sroll("1d6+11")
+	}
+	return 0
 }

@@ -5,19 +5,17 @@ import (
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/generation/star"
 )
 
 func TestGeneration(t *testing.T) {
-	dice := dice.New()
-	// orb := New("G2 V", 0, 4, 1)
-
-	// fmt.Println(orb)
-
-	// return
-	orbMap := Generate(dice, "G2 V M6 V")
-	for k, v := range orbMap.orb {
-		fmt.Println(k, v)
-
+	dice := dice.New().SetSeed("Troj 2223 aldo")
+	pair := star.NewPair("G2 V", "M9 VI")
+	spoMap := StarPlanetOrbits(dice, pair)
+	fmt.Println(pair.Class())
+	for i := 0; i < 1000000; i++ {
+		if val, ok := spoMap[i]; ok {
+			fmt.Println(i, val)
+		}
 	}
-	fmt.Println(len(orbMap.orb))
 }

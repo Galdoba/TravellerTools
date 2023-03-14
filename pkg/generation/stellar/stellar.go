@@ -84,18 +84,6 @@ func GenerateStellar(dice *dice.Dicepool) string {
 }
 
 func Parse(stellar string) []string {
-	// switch stellar {
-	// case "Black Hole":
-	// 	return []string{"Black Hole"}
-	// case "*RP":
-	// 	return []string{"*RP"}
-	// case "*RGG":
-	// 	return []string{"*RGG"}
-	// case "Nebula":
-	// 	return []string{"Nebula"}
-	// case "NS":
-	// 	return []string{"NS"}
-	// }
 	try := 1
 	stars := []string{}
 	for len(stellar) > 0 {
@@ -777,7 +765,7 @@ func listAllStars() []string {
 	return list
 }
 
-//Decode - возвращает Class, Decimal, Size
+// Decode - возвращает Class, Decimal, Size
 func Decode(code string) (string, int, string) {
 	class := []string{"O", "B", "A", "F", "G", "K", "M", "D", "L", "T", "Y"}
 	num := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
@@ -844,4 +832,57 @@ func HabitableOrbitByCode(code string) int {
 		panic("check class!!!")
 	}
 	return hoArray[i]
+}
+
+func Positions(stellar string) []int {
+	dice := dice.New().SetSeed(stellar)
+	stars := Parse(stellar)
+	arr := []int{1}
+	for len(arr) != len(stars) {
+		arr = generatePositionArr(dice)
+
+	}
+	return arr
+}
+
+func generatePositionArr(dice *dice.Dicepool) []int {
+	arr := []int{1}
+	if dice.Flux() >= 3 {
+		arr = append(arr, 2)
+	}
+	if dice.Flux() >= 3 {
+		arr = append(arr, 3)
+		if dice.Flux() >= 3 {
+			arr = append(arr, 4)
+		}
+	}
+	if dice.Flux() >= 3 {
+		arr = append(arr, 5)
+		if dice.Flux() >= 3 {
+			arr = append(arr, 6)
+		}
+	}
+	if dice.Flux() >= 3 {
+		arr = append(arr, 7)
+		if dice.Flux() >= 3 {
+			arr = append(arr, 8)
+		}
+	}
+	return arr
+}
+
+func SetStarOrbit(dice *dice.Dicepool, starPos int) int {
+	switch starPos {
+	case posPrimary:
+		return -1
+	case posPrimaryComp, posCloseComp, posNearComp, posFarComp:
+		return 0
+	case posClose:
+		return dice.Sroll("1d6-1")
+	case posNear:
+		return dice.Sroll("1d6+5")
+	case posFar:
+		return dice.Sroll("1d6+11")
+	}
+	return -999
 }

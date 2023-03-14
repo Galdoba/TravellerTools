@@ -13,6 +13,32 @@ type stellar struct {
 	lo          []int
 }
 
+type Stellar interface {
+	String() string
+	Layout() []int
+	Stars() []string
+	//StarMap() map[int]string
+}
+
+func StarMap(st Stellar) map[int]string {
+	strPos := st.Layout()[2:]
+	stars := st.Stars()
+	strMap := make(map[int]string)
+	for i, v := range strPos {
+		strMap[v] = stars[i]
+	}
+	return strMap
+}
+
+func met(sl []int, elem int) bool {
+	for _, v := range sl {
+		if v == elem {
+			return true
+		}
+	}
+	return false
+}
+
 func (st *stellar) String() string {
 	str := ""
 	for i := 1; i <= 8; i++ {
@@ -21,6 +47,20 @@ func (st *stellar) String() string {
 		}
 	}
 	return str
+}
+
+func (st *stellar) Layout() []int {
+	return st.lo
+}
+
+func (st *stellar) Stars() []string {
+	strs := []string{}
+	for _, l := range []int{1, 2, 3, 4, 5, 6, 7, 8} {
+		if str, ok := st.systemstars[l]; ok {
+			strs = append(strs, str.star)
+		}
+	}
+	return strs
 }
 
 type dataFeed struct {
@@ -59,36 +99,11 @@ func starLayout(dice *dice.Dicepool) []int {
 	return lo
 }
 
-func ConstructNew(paradigm string, knownData ...dataFeed) (*stellar, error) {
+func ConstructNew(paradigm string, dice *dice.Dicepool) (*stellar, error) {
 	err := (error)(nil)
-	sector := ""
-	subSect := ""
-	hex := ""
-	mwName := ""
-	planets := ""
-	pbg := ""
-	for _, feed := range knownData {
-		switch feed.key {
-		default:
-			return nil, fmt.Errorf("unknown datafeed key: '%v'", feed.key)
-		case KEY_HEX:
-			hex = feed.val
-		case KEY_SECTOR:
-			sector = feed.val
-		case KEY_SUBSECT:
-			subSect = feed.val
-		case KEY_MW:
-			mwName = feed.val
-		case KEY_PLANETS:
-			planets = feed.val
-		case KEY_PBG:
-			pbg = feed.val
-		}
-	}
 	stlr := stellar{}
 	stlr.systemstars = make(map[int]*star)
-	seed := sector + "  " + subSect + "  " + hex + "  " + mwName + "  " + planets + "  " + pbg
-	c := newConstructor(paradigm, seed)
+	c := newConstructor(paradigm, dice)
 	if c.err != nil {
 		return &stlr, fmt.Errorf("constructor: %v", c.err)
 	}
@@ -145,7 +160,7 @@ const (
 	CONSTRUCTOR_PARADIGM_T5 = "T5"
 )
 
-func newConstructor(paradigm, seed string) *constructor {
+func newConstructor(paradigm string, dice *dice.Dicepool) *constructor {
 	c := constructor{}
 	switch paradigm {
 	default:
@@ -154,9 +169,7 @@ func newConstructor(paradigm, seed string) *constructor {
 	case CONSTRUCTOR_PARADIGM_T5:
 		c.paradigm = paradigm
 	}
-	c.dice = dice.New()
-	c.seed = seed
-	c.dice.SetSeed(c.seed)
+	c.dice = dice
 	return &c
 }
 
