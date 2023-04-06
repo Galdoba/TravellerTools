@@ -17,9 +17,7 @@ func TestNew(t *testing.T) {
 		if valueUnexpected(ehex.value) {
 			t.Errorf("i:=%v Value (%v) is unexpected", i, ehex.value)
 		}
-		if ehex.comment != "" {
-			//fmt.Printf("i:=%v Comment (%v) is expected\n%v\n", i, ehex.comment, ehex.printStruct())
-		}
+
 		if ehex.comment == "" {
 			ehex.Encode("some meaning")
 			if ehex.Meaning() != "some meaning" {
@@ -29,7 +27,7 @@ func TestNew(t *testing.T) {
 		}
 		ehex.Code()
 		ehex.Value()
-		ehex.String()
+		fmt.Println(ehex.String())
 
 	}
 }
@@ -118,8 +116,5 @@ func (ehex *ehex) printStruct() string {
 }
 
 func match(ehex1, ehex2 ehex) bool {
-	if ehex1.printStruct() == ehex2.printStruct() {
-		return true
-	}
-	return false
+	return ehex1.printStruct() == ehex2.printStruct()
 }

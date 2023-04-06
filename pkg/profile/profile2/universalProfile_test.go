@@ -6,10 +6,15 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	up, err := New(PROFILE_WORLD)
-	fmt.Println(err)
+	up := New(PROFILE_PERSONALITY)
 	fmt.Println(up)
-	err2 := up.Inject("A123456-8")
-	fmt.Println(err2)
+	fmt.Println(up.Data("C2").Code())
 	fmt.Println(up)
+	up.Inject("C2", 7)
+	fmt.Println(up)
+	fmt.Println(up.StringFull())
+	up2 := New(PROFILE_WORLD)
+	up2.Inject(KEY_PORT, "A")
+	up2.InjectAll("A123456-9")
+	fmt.Println(up2.String())
 }

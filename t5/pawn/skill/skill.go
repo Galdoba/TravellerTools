@@ -1,5 +1,7 @@
 package skill
 
+import "fmt"
+
 const (
 	ID_NONE = iota
 	ID_Actor
@@ -124,6 +126,21 @@ const (
 	ID_Psyhohistory
 	ID_Psyhology
 	ID_Sophontology
+	ID_Compute
+	ID_Empath
+	ID_Hibernate
+	ID_Hypno
+	ID_Intuition
+	ID_Math
+	ID_Memaware
+	ID_Memorize
+	ID_Mempercept
+	ID_Memscent
+	ID_Memsight
+	ID_Memsound
+	ID_Morph
+	ID_Rage
+	ID_Soundmimic
 	ID_END
 	SG_GENERAL      = "General"
 	SG_STARSHIP     = "Starship skill"
@@ -136,24 +153,26 @@ const (
 	SG_PERSONAL     = "Personal"
 	TYPE_SKILL      = "Skill"
 	TYPE_KNOWLEDGE  = "Knowledge"
+	TYPE_TALENT     = "Talent"
 )
 
 type Skill struct {
-	sklType            string
-	Name               string
-	id                 int
-	parentSkl          int
-	associatedKnoledge []int
-	related            []int
-	group              string
-	Default            bool
-	KKSrule            bool
-	value              int
+	sklType             string
+	Name                string
+	id                  int
+	ParentSkl           int
+	AssociatedKnowledge []int
+	related             []int
+	group               string
+	Default             bool
+	KKSrule             bool
+	value               int
 }
 
 func New(id int) *Skill {
 	skl := Skill{}
 	skl.id = id
+	skl.Name = NameByID(id)
 	switch id {
 	case ID_Admin:
 		skl.sklType = TYPE_SKILL
@@ -166,7 +185,7 @@ func New(id int) *Skill {
 	case ID_Animals:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
-		skl.associatedKnoledge = []int{ID_Rider, ID_Teamster, ID_Trainer}
+		skl.AssociatedKnowledge = []int{ID_Rider, ID_Teamster, ID_Trainer}
 		skl.KKSrule = true
 	case ID_Athlete:
 		skl.sklType = TYPE_SKILL
@@ -205,7 +224,7 @@ func New(id int) *Skill {
 	case ID_Driver:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
-		skl.associatedKnoledge = []int{ID_ACV, ID_Legged, ID_Mole, ID_Tracked, ID_Wheeled, ID_Grav_d}
+		skl.AssociatedKnowledge = []int{ID_ACV, ID_Legged, ID_Mole, ID_Tracked, ID_Wheeled, ID_Grav_d}
 		skl.Default = true
 		skl.KKSrule = true
 	case ID_Explosives:
@@ -218,7 +237,7 @@ func New(id int) *Skill {
 	case ID_Flyer:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
-		skl.associatedKnoledge = []int{ID_Flappers, ID_LTA, ID_Rotor, ID_Winged, ID_Grav_f, ID_Aeronautics}
+		skl.AssociatedKnowledge = []int{ID_Flappers, ID_LTA, ID_Rotor, ID_Winged, ID_Grav_f, ID_Aeronautics}
 		skl.related = []int{ID_Pilot}
 		skl.KKSrule = true
 	case ID_Forensics:
@@ -300,12 +319,12 @@ func New(id int) *Skill {
 	case ID_Engineer:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_STARSHIP
-		skl.associatedKnoledge = []int{ID_Jump, ID_Life_Support, ID_Maneuver, ID_Power}
+		skl.AssociatedKnowledge = []int{ID_Jump, ID_Life_Support, ID_Maneuver, ID_Power}
 		skl.KKSrule = true
 	case ID_Gunnery:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_STARSHIP
-		skl.associatedKnoledge = []int{ID_Bay_Weapons, ID_Ortilery, ID_Screens, ID_Spines, ID_Turrets}
+		skl.AssociatedKnowledge = []int{ID_Bay_Weapons, ID_Ortilery, ID_Screens, ID_Spines, ID_Turrets}
 		skl.related = []int{ID_Fighter, ID_Heavy_Weapons}
 		skl.KKSrule = true
 	case ID_Medic:
@@ -314,7 +333,7 @@ func New(id int) *Skill {
 	case ID_Pilot:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_STARSHIP
-		skl.associatedKnoledge = []int{ID_Small_Craft, ID_Spacecraft_ABS, ID_Spacecraft_BCS}
+		skl.AssociatedKnowledge = []int{ID_Small_Craft, ID_Spacecraft_ABS, ID_Spacecraft_BCS}
 		skl.KKSrule = true
 	case ID_Sensors:
 		skl.sklType = TYPE_SKILL
@@ -385,12 +404,12 @@ func New(id int) *Skill {
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_ARTS
 		skl.related = []int{ID_Actor, ID_Artist, ID_Author, ID_Chef, ID_Dancer}
-		skl.associatedKnoledge = []int{ID_Instrument}
+		skl.AssociatedKnowledge = []int{ID_Instrument}
 		skl.KKSrule = true
 	case ID_Fighter:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_SOLDIER
-		skl.associatedKnoledge = []int{ID_Battle_Dress, ID_Beams, ID_Blades, ID_Exotics, ID_Slugs, ID_Sprays, ID_Unarmed}
+		skl.AssociatedKnowledge = []int{ID_Battle_Dress, ID_Beams, ID_Blades, ID_Exotics, ID_Slugs, ID_Sprays, ID_Unarmed}
 		skl.related = []int{ID_Heavy_Weapons, ID_Gunnery}
 		skl.Default = true
 		skl.KKSrule = true
@@ -400,7 +419,7 @@ func New(id int) *Skill {
 	case ID_Heavy_Weapons:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_SOLDIER
-		skl.associatedKnoledge = []int{ID_Artilery, ID_Launchers, ID_Ordinance, ID_WMD}
+		skl.AssociatedKnowledge = []int{ID_Artilery, ID_Launchers, ID_Ordinance, ID_WMD}
 		skl.related = []int{ID_Fighter, ID_Gunnery}
 		skl.KKSrule = true
 	case ID_Navigator:
@@ -415,138 +434,138 @@ func New(id int) *Skill {
 		skl.group = SG_SOLDIER
 	case ID_Bay_Weapons:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Gunnery
+		skl.ParentSkl = ID_Gunnery
 	case ID_Ortilery:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Gunnery
+		skl.ParentSkl = ID_Gunnery
 	case ID_Screens:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Gunnery
+		skl.ParentSkl = ID_Gunnery
 	case ID_Spines:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Gunnery
+		skl.ParentSkl = ID_Gunnery
 	case ID_Turrets:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Gunnery
+		skl.ParentSkl = ID_Gunnery
 		skl.Default = true
 	case ID_Artilery:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Heavy_Weapons
+		skl.ParentSkl = ID_Heavy_Weapons
 	case ID_Launchers:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Heavy_Weapons
+		skl.ParentSkl = ID_Heavy_Weapons
 	case ID_Ordinance:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Heavy_Weapons
+		skl.ParentSkl = ID_Heavy_Weapons
 	case ID_WMD:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Heavy_Weapons
+		skl.ParentSkl = ID_Heavy_Weapons
 	case ID_Battle_Dress:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Fighter
+		skl.ParentSkl = ID_Fighter
 	case ID_Beams:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Fighter
+		skl.ParentSkl = ID_Fighter
 	case ID_Blades:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Fighter
+		skl.ParentSkl = ID_Fighter
 	case ID_Exotics:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Fighter
+		skl.ParentSkl = ID_Fighter
 	case ID_Slugs:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Fighter
+		skl.ParentSkl = ID_Fighter
 	case ID_Sprays:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Fighter
+		skl.ParentSkl = ID_Fighter
 	case ID_Unarmed:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Fighter
+		skl.ParentSkl = ID_Fighter
 	case ID_Aeronautics:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Flyer
+		skl.ParentSkl = ID_Flyer
 	case ID_Flappers:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Flyer
+		skl.ParentSkl = ID_Flyer
 	case ID_Grav_f:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Flyer
+		skl.ParentSkl = ID_Flyer
 	case ID_LTA:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Flyer
+		skl.ParentSkl = ID_Flyer
 	case ID_Rotor:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Flyer
+		skl.ParentSkl = ID_Flyer
 	case ID_Winged:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Flyer
+		skl.ParentSkl = ID_Flyer
 	case ID_ACV:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Driver
+		skl.ParentSkl = ID_Driver
 	case ID_Automotive:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Driver
+		skl.ParentSkl = ID_Driver
 	case ID_Grav_d:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Driver
+		skl.ParentSkl = ID_Driver
 	case ID_Legged:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Driver
+		skl.ParentSkl = ID_Driver
 	case ID_Mole:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Driver
+		skl.ParentSkl = ID_Driver
 	case ID_Tracked:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Driver
+		skl.ParentSkl = ID_Driver
 	case ID_Wheeled:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Driver
+		skl.ParentSkl = ID_Driver
 	case ID_Jump:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Engineer
+		skl.ParentSkl = ID_Engineer
 	case ID_Life_Support:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Engineer
+		skl.ParentSkl = ID_Engineer
 	case ID_Maneuver:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Engineer
+		skl.ParentSkl = ID_Engineer
 	case ID_Power:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Engineer
+		skl.ParentSkl = ID_Engineer
 	case ID_Rider:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Animals
+		skl.ParentSkl = ID_Animals
 	case ID_Teamster:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Animals
+		skl.ParentSkl = ID_Animals
 	case ID_Trainer:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Animals
+		skl.ParentSkl = ID_Animals
 		skl.related = []int{ID_Teacher}
 	case ID_Aquanautics:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Seafarer
+		skl.ParentSkl = ID_Seafarer
 	case ID_Grav_s:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Seafarer
+		skl.ParentSkl = ID_Seafarer
 	case ID_Boat:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Seafarer
+		skl.ParentSkl = ID_Seafarer
 	case ID_Ship:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Seafarer
+		skl.ParentSkl = ID_Seafarer
 	case ID_Sub:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Seafarer
+		skl.ParentSkl = ID_Seafarer
 	case ID_Small_Craft:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Pilot
+		skl.ParentSkl = ID_Pilot
 	case ID_Spacecraft_ABS:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Pilot
+		skl.ParentSkl = ID_Pilot
 	case ID_Spacecraft_BCS:
 		skl.sklType = TYPE_KNOWLEDGE
-		skl.parentSkl = ID_Pilot
+		skl.ParentSkl = ID_Pilot
 	case ID_Biology:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.group = SG_SCIENCE_HARD
@@ -588,6 +607,36 @@ func New(id int) *Skill {
 	case ID_Sophontology:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.group = SG_SCIENCE_SOFT
+	case ID_Compute:
+		skl.sklType = TYPE_TALENT
+	case ID_Empath:
+		skl.sklType = TYPE_TALENT
+	case ID_Hibernate:
+		skl.sklType = TYPE_TALENT
+	case ID_Hypno:
+		skl.sklType = TYPE_TALENT
+	case ID_Intuition:
+		skl.sklType = TYPE_TALENT
+	case ID_Math:
+		skl.sklType = TYPE_TALENT
+	case ID_Memaware:
+		skl.sklType = TYPE_TALENT
+	case ID_Memorize:
+		skl.sklType = TYPE_TALENT
+	case ID_Mempercept:
+		skl.sklType = TYPE_TALENT
+	case ID_Memscent:
+		skl.sklType = TYPE_TALENT
+	case ID_Memsight:
+		skl.sklType = TYPE_TALENT
+	case ID_Memsound:
+		skl.sklType = TYPE_TALENT
+	case ID_Morph:
+		skl.sklType = TYPE_TALENT
+	case ID_Rage:
+		skl.sklType = TYPE_TALENT
+	case ID_Soundmimic:
+		skl.sklType = TYPE_TALENT
 	}
 	return &skl
 }
@@ -842,5 +891,73 @@ func NameByID(id int) string {
 		return "Sophontology"
 	case ID_Instrument:
 		return "Instrument"
+	case ID_Compute:
+		return "Compute"
+	case ID_Empath:
+		return "Empath"
+	case ID_Hibernate:
+		return "Hibernate"
+	case ID_Hypno:
+		return "Hypno"
+	case ID_Intuition:
+		return "Intuition"
+	case ID_Math:
+		return "Math"
+	case ID_Memaware:
+		return "Memaware"
+	case ID_Memorize:
+		return "Memorize"
+	case ID_Mempercept:
+		return "Mempercept"
+	case ID_Memscent:
+		return "Memscent"
+	case ID_Memsight:
+		return "Memsight"
+	case ID_Memsound:
+		return "Memsound"
+	case ID_Morph:
+		return "Morph"
+	case ID_Rage:
+		return "Rage"
+	case ID_Soundmimic:
+		return "Soundmimic"
 	}
+}
+
+const (
+	LongestNameLength = 18
+)
+
+func LongestNameLen() int {
+	lMax := 0
+	for i := ID_NONE; i < ID_END; i++ {
+		lCurrent := len(NameByID(i))
+		if lCurrent > lMax {
+			lMax = lCurrent
+		}
+	}
+	return lMax
+}
+
+func (sk *Skill) SType() string {
+	return sk.sklType
+}
+
+func (sk *Skill) Value() int {
+	return sk.value
+}
+
+func (sk *Skill) Learn() error {
+	switch sk.sklType {
+	case TYPE_SKILL, TYPE_TALENT:
+		if sk.value >= 15 {
+			return fmt.Errorf("cap reached")
+		}
+	case TYPE_KNOWLEDGE:
+		if sk.value >= 6 {
+			return fmt.Errorf("cap reached")
+		}
+	}
+	sk.value++
+	return nil
 }
