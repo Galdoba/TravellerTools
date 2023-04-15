@@ -152,6 +152,19 @@ const (
 	ID_Morph
 	ID_Rage
 	ID_Soundmimic
+	ID_Kkree
+	ID_Anglic
+	ID_Battle
+	ID_Flash
+	ID_Gonk
+	ID_Gvegh
+	ID_Mariel
+	ID_Oynprith
+	ID_Sagamaal
+	ID_Tezapet
+	ID_Trokh
+	ID_Vilani
+	ID_Zdetl
 	ID_END
 	One_Trade
 	One_Art
@@ -276,6 +289,7 @@ func New(id int) (*Skill, error) {
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
 		skl.related = []int{ID_Linguistics}
+		skl.AssociatedKnowledge = []int{ID_Kkree, ID_Anglic, ID_Battle, ID_Flash, ID_Gonk, ID_Gvegh, ID_Mariel, ID_Oynprith, ID_Sagamaal, ID_Tezapet, ID_Trokh, ID_Vilani, ID_Zdetl}
 	case ID_Leader:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
@@ -290,6 +304,7 @@ func New(id int) (*Skill, error) {
 	case ID_Seafarer:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
+		skl.AssociatedKnowledge = []int{ID_Aquanautics, ID_Grav_s, ID_Boat, ID_Ship, ID_Sub}
 		skl.KKSrule = true
 	case ID_Stealth:
 		skl.sklType = TYPE_SKILL
@@ -617,6 +632,45 @@ func New(id int) (*Skill, error) {
 	case ID_Instrument_Cello:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Musician
+	case ID_Kkree:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Anglic:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Battle:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Flash:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Gonk:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Gvegh:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Mariel:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Oynprith:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Sagamaal:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Tezapet:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Trokh:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Vilani:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
+	case ID_Zdetl:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Language
 	case ID_Biology:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.group = SG_SCIENCE_HARD
@@ -689,6 +743,7 @@ func New(id int) (*Skill, error) {
 	case ID_Soundmimic:
 		skl.sklType = TYPE_TALENT
 	}
+	//fmt.Println(skl)
 	return &skl, nil
 }
 
@@ -965,6 +1020,33 @@ func NameByID(id int) string {
 	case ID_Instrument_Cello:
 		return "Instrument (Cello)"
 
+	case ID_Kkree:
+		return "Language: Kkree"
+	case ID_Anglic:
+		return "Language: Anglic"
+	case ID_Battle:
+		return "Language: Battle"
+	case ID_Flash:
+		return "Language: Flash"
+	case ID_Gonk:
+		return "Language: Gonk"
+	case ID_Gvegh:
+		return "Language: Gvegh"
+	case ID_Mariel:
+		return "Language: Mariel"
+	case ID_Oynprith:
+		return "Language: Oynprith"
+	case ID_Sagamaal:
+		return "Language: Sagamaal"
+	case ID_Tezapet:
+		return "Language: Tezapet"
+	case ID_Trokh:
+		return "Language: Trokh"
+	case ID_Vilani:
+		return "Language: Vilani"
+	case ID_Zdetl:
+		return "Language: Zdetl"
+
 	case ID_Compute:
 		return "Compute"
 	case ID_Empath:
@@ -999,7 +1081,7 @@ func NameByID(id int) string {
 }
 
 const (
-	LongestNameLength = 18
+	LongestNameLength = 21
 )
 
 func LongestNameLen() int {
@@ -1050,6 +1132,8 @@ func TradeCode2SkillID(tc string) []int {
 		return []int{ID_Zero_G}
 	case "Ba":
 		return []int{ID_NONE}
+	case "Bo":
+		return []int{ID_Hostile_Environ}
 	case "Co":
 		return []int{ID_Hostile_Environ}
 	case "Cp":

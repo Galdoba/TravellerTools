@@ -26,11 +26,11 @@ func NewSkillSet() (*SkillSet, error) {
 			continue
 		}
 		name := skill.NameByID(id)
-		switch name {
-		default:
-		case "Language", "Instrument":
-			continue //пока не создаем язык ибо особая механика
-		}
+		// switch name {
+		// default:
+		// 	case "Language", "Instrument":
+		// 	continue //пока не создаем язык ибо особая механика
+		// }
 		skl.Name = name
 		ss.ID[id] = skl
 	}
@@ -101,7 +101,6 @@ func KKSruleAllow(sst *SkillSet, sID int) bool {
 	sklVal := -1
 	sklData, err := skill.New(sID)
 	if err != nil {
-		fmt.Println(1)
 		return false
 	}
 	if sklData.SType() != skill.TYPE_SKILL {
@@ -113,7 +112,6 @@ func KKSruleAllow(sst *SkillSet, sID int) bool {
 			sst.AddSkill(sID)
 			return true
 		}
-		fmt.Println(1)
 		return false
 	case true:
 	}
@@ -146,6 +144,7 @@ func sum(iArr []int) int {
 }
 
 var MustChooseErr = fmt.Errorf("must choose exact skill")
+var KKSruleNotAllow = fmt.Errorf("kks rule not allow")
 
 func (sst *SkillSet) Increase(id int) error {
 	switch id {
@@ -153,7 +152,7 @@ func (sst *SkillSet) Increase(id int) error {
 		return MustChooseErr
 	}
 	if !KKSruleAllow(sst, id) {
-		return fmt.Errorf("skillset.Increase(%v): KKS rule not allow", id)
+		return KKSruleNotAllow
 	}
 	if !have(sst, id) {
 		sst.AddSkill(id)

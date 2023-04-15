@@ -58,7 +58,7 @@ const (
 	Tu
 	Tz
 	Fa
-	Mn
+	Mi
 	Mr
 	Pe
 	Re
@@ -82,6 +82,15 @@ const (
 	TypePolitical  = "Political"
 	TypeSpecial    = "Special"
 )
+
+func ListAll() []string {
+	list := []string{}
+	for i := As; i <= Bo; i++ {
+		cls := Call(i)
+		list = append(list, cls.code)
+	}
+	return list
+}
 
 type classificationCode struct {
 	val            int
@@ -258,6 +267,11 @@ func Call(i int) *classificationCode {
 		tc.classification = "Cold"
 		tc.tcType = TypeClimate
 		tc.description = "The world is at the lower temperature range of human endurance. Little liquid water, extencive ice caps, few clouds."
+	case Lk:
+		tc.code = "Lk"
+		tc.classification = "Locked"
+		tc.tcType = TypeClimate
+		tc.description = "The world is a satellite (in orbits Ay through Em) which is locked to the planet it orbits. A Locked satellite does not have a Twilight Zone; its day length equals the time it takes to orbit its planet."
 	case Tu:
 		tc.code = "Tu"
 		tc.classification = "Tundra"
@@ -279,6 +293,103 @@ func Call(i int) *classificationCode {
 		tc.tcType = TypeClimate
 		tc.description = "Boiling world. No ice caps, little liquid water."
 		tc.sourceBook = "MGT2 Core"
+	case Tz:
+		tc.code = "Tz"
+		tc.classification = "Twilight Zone"
+		tc.tcType = TypeClimate
+		tc.description = "The world is tidally locked with a Temperate band at the Twilight Zone, plus a Hot region (hemisphere) facing the Primary and a Cold region (hemisphere) away from the Primary."
+		tc.sourceBook = ""
+	case Fa:
+		tc.code = "Fa"
+		tc.classification = "Farming"
+		tc.tcType = TypeSecondary
+		tc.description = "Farming The world has climate and conditions which promote farming and ranching. In addition, it is in the Habitable Zone and not a Mainworld."
+		tc.sourceBook = ""
+	case Mi:
+		tc.code = "Mi"
+		tc.classification = "Mining"
+		tc.tcType = TypeSecondary
+		tc.description = "The world is the site of extensive mineral resource exploitation. It is not a Mainworld and is located in a star system with an Industrial Mainworld."
+		tc.sourceBook = ""
+	case Mr:
+		tc.code = "Mr"
+		tc.classification = "Military Rule"
+		tc.tcType = TypeSecondary
+		tc.description = "The non-Mainworld is ruled by the military from a nearby world."
+		tc.sourceBook = ""
+	case Pe:
+		tc.code = "Pe"
+		tc.classification = "Penal Colony"
+		tc.tcType = TypeSecondary
+		tc.description = "The world is a dumping ground for individuals who will not / do not / cannot conform to standards of behavior."
+		tc.sourceBook = ""
+	case Re:
+		tc.code = "Re"
+		tc.classification = "Reserve"
+		tc.tcType = TypeSecondary
+		tc.description = "The world has been set aside (by the highest levels of government) to preserve indigenous life forms, to delay resource development, or to frustrate inquiry into local conditions."
+		tc.sourceBook = ""
+	case Cp:
+		tc.code = "Cp"
+		tc.classification = "Subsector Capital"
+		tc.tcType = TypePolitical
+		tc.description = "The world is the political center of a group of tens or dozens of star systems (typically a subsector)."
+		tc.sourceBook = ""
+	case Cs:
+		tc.code = "Cs"
+		tc.classification = "Sector Capital"
+		tc.tcType = TypePolitical
+		tc.description = "The world is the political center of a group of hundreds of star systems (typically a sector)."
+		tc.sourceBook = ""
+	case Cx:
+		tc.code = "Cx"
+		tc.classification = "Capital"
+		tc.tcType = TypePolitical
+		tc.description = "The world is the overall political center of an interstellar government controlling thousands of star systems."
+		tc.sourceBook = ""
+	case Cy:
+		tc.code = "Cy"
+		tc.classification = "Colony"
+		tc.tcType = TypePolitical
+		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
+		tc.sourceBook = ""
+	case Sa:
+		tc.code = "Sa"
+		tc.classification = "Colony"
+		tc.tcType = TypePolitical
+		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
+		tc.sourceBook = ""
+	case Fo:
+		tc.code = "Fo"
+		tc.classification = "Colony"
+		tc.tcType = TypePolitical
+		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
+		tc.sourceBook = ""
+	case Pz:
+		tc.code = "Pz"
+		tc.classification = "Colony"
+		tc.tcType = TypePolitical
+		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
+		tc.sourceBook = ""
+	case Cy:
+		tc.code = "Re"
+		tc.classification = "Colony"
+		tc.tcType = TypePolitical
+		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
+		tc.sourceBook = ""
+	case Cy:
+		tc.code = "Re"
+		tc.classification = "Colony"
+		tc.tcType = TypePolitical
+		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
+		tc.sourceBook = ""
+	case Cy:
+		tc.code = "Re"
+		tc.classification = "Colony"
+		tc.tcType = TypePolitical
+		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
+		tc.sourceBook = ""
+
 	}
 	return &tc
 }
