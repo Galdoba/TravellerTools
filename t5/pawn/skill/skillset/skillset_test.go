@@ -8,8 +8,12 @@ import (
 )
 
 func TestSkillset(t *testing.T) {
-	ss := NewSkillSet()
+	ss, err := NewSkillSet()
+
 	fmt.Println(ss)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	fmt.Println("================")
 	for i := 0; i < 4; i++ {
 		errorArr := []error{}

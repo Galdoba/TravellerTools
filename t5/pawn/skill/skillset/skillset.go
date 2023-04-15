@@ -6,16 +6,22 @@ import (
 	"github.com/Galdoba/TravellerTools/t5/pawn/skill"
 )
 
-type skillSet struct {
+type SkillSet struct {
 	ID           map[int]*skill.Skill
 	incrementLog []int
 }
 
-func NewSkillSet() *skillSet {
-	ss := skillSet{}
+func NewSkillSet() (*SkillSet, error) {
+	ss := SkillSet{}
 	ss.ID = make(map[int]*skill.Skill)
 	for _, id := range skillIDs() {
-		skl := skill.New(id)
+		if id == skill.ID_NONE {
+			continue
+		}
+		skl, err := skill.New(id)
+		if err != nil {
+			return nil, fmt.Errorf("skillset.NewSkillSet(): can not create skillset: \n%v", err.Error())
+		}
 		if !skl.Default {
 			continue
 		}
@@ -28,7 +34,7 @@ func NewSkillSet() *skillSet {
 		skl.Name = name
 		ss.ID[id] = skl
 	}
-	return &ss
+	return &ss, nil
 }
 
 func skillIDs() []int {
@@ -47,7 +53,7 @@ func skillNames() []string {
 	return names
 }
 
-func (ssr *skillSet) String() string {
+func (ssr *SkillSet) String() string {
 	str := ""
 	for _, id := range skillIDs() {
 		if skl, ok := ssr.ID[id]; ok {
@@ -71,33 +77,43 @@ func spacedIntStr(i int) string {
 	return fmt.Sprintf("%v", i)
 }
 
-func have(sst *skillSet, id int) bool {
+func have(sst *SkillSet, id int) bool {
 	if _, ok := sst.ID[id]; ok {
 		return true
 	}
 	return false
 }
 
-func (sst *skillSet) AddSkill(id int) error {
+func (sst *SkillSet) AddSkill(id int) error {
 	if have(sst, id) {
 		return fmt.Errorf("skill already added")
 	}
-	sst.ID[id] = skill.New(id)
+	skl, err := skill.New(id)
+	if err != nil {
+		return fmt.Errorf("skillset.AddSkill(id int): %v\n", err.Error())
+	}
+	sst.ID[id] = skl
 	return nil
 }
 
-func KKSruleAllow(sst *skillSet, sID int) bool {
+func KKSruleAllow(sst *SkillSet, sID int) bool {
 	knlArr := []int{}
 	sklVal := -1
-	if skill.New(sID).SType() != skill.TYPE_SKILL {
+	sklData, err := skill.New(sID)
+	if err != nil {
+		fmt.Println(1)
+		return false
+	}
+	if sklData.SType() != skill.TYPE_SKILL {
 		return true
 	}
 	switch have(sst, sID) {
 	case false:
-		if len(skill.New(sID).AssociatedKnowledge) == 0 {
+		if len(sklData.AssociatedKnowledge) == 0 {
 			sst.AddSkill(sID)
 			return true
 		}
+		fmt.Println(1)
 		return false
 	case true:
 	}
@@ -129,9 +145,15 @@ func sum(iArr []int) int {
 	return s
 }
 
-func (sst *skillSet) Increase(id int) error {
+var MustChooseErr = fmt.Errorf("must choose exact skill")
+
+func (sst *SkillSet) Increase(id int) error {
+	switch id {
+	case skill.One_Art, skill.One_Trade:
+		return MustChooseErr
+	}
 	if !KKSruleAllow(sst, id) {
-		return fmt.Errorf("KKS rule not allow")
+		return fmt.Errorf("skillset.Increase(%v): KKS rule not allow", id)
 	}
 	if !have(sst, id) {
 		sst.AddSkill(id)
@@ -142,13 +164,13 @@ func (sst *skillSet) Increase(id int) error {
 	return sst.ID[id].Learn()
 }
 
-func (sst *skillSet) IncreaseByKKSrule(id int) error {
+func (sst *SkillSet) IncreaseByKKSrule(id int) error {
 
 	//skl := skill.New(id)
 	//knlSet := skl.AssociatedKnowledge
 	return nil
 }
 
-func (sst *skillSet) CanAdd(id int) bool {
+func (sst *SkillSet) CanAdd(id int) bool {
 	return false
 }

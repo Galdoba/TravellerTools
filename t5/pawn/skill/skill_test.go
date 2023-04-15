@@ -7,8 +7,11 @@ import (
 
 func TestSkill(t *testing.T) {
 	for i := ID_NONE; i <= ID_END; i++ {
-		skl := New(i)
+		skl, err := New(i)
 		fmt.Println(i, NameByID(i), skl)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	}
 }
 

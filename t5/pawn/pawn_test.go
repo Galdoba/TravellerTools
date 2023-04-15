@@ -8,9 +8,8 @@ import (
 )
 
 func TestPawn(t *testing.T) {
-	gt := genetics.NewTemplate("SDEIES", "832222")
-	chr, err := New(gt)
+	gt := genetics.NewTemplate("SDEIES", "222222")
+	chr, err := New(control_Random, gt, []string{"Ph", "Pa", "Ri"})
 	fmt.Println(chr)
 	fmt.Println(err)
-	fmt.Println(chr.chrSet.String())
 }

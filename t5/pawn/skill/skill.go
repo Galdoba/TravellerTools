@@ -83,7 +83,18 @@ const (
 	ID_Mechanic
 	ID_Medic
 	ID_Musician
-	ID_Instrument
+	ID_Instrument_Guitar
+	ID_Instrument_Banjo
+	ID_Instrument_Mandolin
+	ID_Instrument_Keyboard
+	ID_Instrument_Piano
+	ID_Instrument_Voice
+	ID_Instrument_Trumpet
+	ID_Instrument_Trombone
+	ID_Instrument_Tuba
+	ID_Instrument_Violin
+	ID_Instrument_Viola
+	ID_Instrument_Cello
 	ID_Naval_Architect
 	ID_Navigator
 	ID_Photonics
@@ -142,6 +153,8 @@ const (
 	ID_Rage
 	ID_Soundmimic
 	ID_END
+	One_Trade
+	One_Art
 	SG_GENERAL      = "General"
 	SG_STARSHIP     = "Starship skill"
 	SG_TRADE        = "Trade"
@@ -169,11 +182,13 @@ type Skill struct {
 	value               int
 }
 
-func New(id int) *Skill {
+func New(id int) (*Skill, error) {
 	skl := Skill{}
 	skl.id = id
 	skl.Name = NameByID(id)
 	switch id {
+	default:
+		return nil, fmt.Errorf("skill.New(): can not create skill with id '%v'", id)
 	case ID_Admin:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
@@ -404,7 +419,7 @@ func New(id int) *Skill {
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_ARTS
 		skl.related = []int{ID_Actor, ID_Artist, ID_Author, ID_Chef, ID_Dancer}
-		skl.AssociatedKnowledge = []int{ID_Instrument}
+		skl.AssociatedKnowledge = []int{ID_Instrument_Guitar, ID_Instrument_Banjo, ID_Instrument_Mandolin, ID_Instrument_Keyboard, ID_Instrument_Piano, ID_Instrument_Voice, ID_Instrument_Trumpet, ID_Instrument_Trombone, ID_Instrument_Tuba, ID_Instrument_Violin, ID_Instrument_Viola, ID_Instrument_Cello}
 		skl.KKSrule = true
 	case ID_Fighter:
 		skl.sklType = TYPE_SKILL
@@ -566,6 +581,42 @@ func New(id int) *Skill {
 	case ID_Spacecraft_BCS:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Pilot
+	case ID_Instrument_Guitar:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Banjo:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Mandolin:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Keyboard:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Piano:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Voice:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Trumpet:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Trombone:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Tuba:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Violin:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Viola:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
+	case ID_Instrument_Cello:
+		skl.sklType = TYPE_KNOWLEDGE
+		skl.ParentSkl = ID_Musician
 	case ID_Biology:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.group = SG_SCIENCE_HARD
@@ -638,7 +689,7 @@ func New(id int) *Skill {
 	case ID_Soundmimic:
 		skl.sklType = TYPE_TALENT
 	}
-	return &skl
+	return &skl, nil
 }
 
 func NameByID(id int) string {
@@ -889,8 +940,31 @@ func NameByID(id int) string {
 		return "Psyhology"
 	case ID_Sophontology:
 		return "Sophontology"
-	case ID_Instrument:
-		return "Instrument"
+	case ID_Instrument_Guitar:
+		return "Instrument (Guitar)"
+	case ID_Instrument_Banjo:
+		return "Instrument (Banjo)"
+	case ID_Instrument_Mandolin:
+		return "Instrument (Mandolin)"
+	case ID_Instrument_Keyboard:
+		return "Instrument (Keyboard)"
+	case ID_Instrument_Piano:
+		return "Instrument (Piano)"
+	case ID_Instrument_Voice:
+		return "Instrument (Voice)"
+	case ID_Instrument_Trombone:
+		return "Instrument (Trombone)"
+	case ID_Instrument_Trumpet:
+		return "Instrument (Trumpet)"
+	case ID_Instrument_Tuba:
+		return "Instrument (Tuba)"
+	case ID_Instrument_Violin:
+		return "Instrument (Violin)"
+	case ID_Instrument_Viola:
+		return "Instrument (Viola)"
+	case ID_Instrument_Cello:
+		return "Instrument (Cello)"
+
 	case ID_Compute:
 		return "Compute"
 	case ID_Empath:
@@ -960,4 +1034,99 @@ func (sk *Skill) Learn() error {
 	}
 	sk.value++
 	return nil
+}
+
+func TradeCode2SkillID(tc string) []int {
+	switch tc {
+	default:
+		return []int{ID_NONE}
+	case "Ab":
+		return []int{ID_NONE}
+	case "Ag":
+		return []int{ID_Animals}
+	case "An":
+		return []int{ID_NONE}
+	case "As":
+		return []int{ID_Zero_G}
+	case "Ba":
+		return []int{ID_NONE}
+	case "Co":
+		return []int{ID_Hostile_Environ}
+	case "Cp":
+		return []int{ID_Admin}
+	case "Cs":
+		return []int{ID_Bureaucrat}
+	case "Cx":
+		return []int{ID_Language}
+	case "Da":
+		return []int{ID_Fighter}
+	case "De":
+		return []int{ID_Survival}
+	case "Di":
+		return []int{ID_NONE}
+	case "Ds":
+		return []int{ID_Vacc_Suit, ID_Zero_G}
+	case "Fa":
+		return []int{ID_Animals}
+	case "Fl":
+		return []int{ID_Hostile_Environ}
+	case "Fo":
+		return []int{ID_NONE}
+	case "Fr":
+		return []int{ID_Hostile_Environ}
+	case "Ga":
+		return []int{ID_Trader}
+	case "He":
+		return []int{ID_Hostile_Environ}
+	case "Hi":
+		return []int{ID_Streetwise}
+	case "Ho":
+		return []int{ID_Hostile_Environ}
+	case "Ic":
+		return []int{ID_Vacc_Suit}
+	case "In":
+		return []int{One_Trade}
+	case "Lk":
+		return []int{ID_NONE}
+	case "Lo":
+		return []int{ID_Flyer}
+	case "Mi":
+		return []int{ID_Survey}
+	case "Mr":
+		return []int{ID_NONE}
+	case "Na":
+		return []int{ID_Survey}
+	case "Ni":
+		return []int{ID_Driver}
+	case "Oc":
+		return []int{ID_High_G}
+	case "Pa":
+		return []int{ID_Trader}
+	case "Ph":
+		return []int{ID_NONE}
+	case "Pi":
+		return []int{ID_JOT}
+	case "Po":
+		return []int{ID_Steward}
+	case "Pr":
+		return []int{ID_Craftsman}
+	case "Px":
+		return []int{ID_NONE}
+	case "Pz":
+		return []int{ID_NONE}
+	case "Re":
+		return []int{ID_NONE}
+	case "Ri":
+		return []int{One_Art}
+	case "Tr":
+		return []int{ID_Survival}
+	case "Tu":
+		return []int{ID_Survival}
+	case "Tz":
+		return []int{ID_Driver}
+	case "Va":
+		return []int{ID_Vacc_Suit}
+	case "Wa":
+		return []int{ID_Seafarer}
+	}
 }
