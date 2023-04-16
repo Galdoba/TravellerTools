@@ -74,6 +74,19 @@ const (
 	ID_Ordinance
 	ID_WMD
 	ID_Language
+	ID_Language_Kkree
+	ID_Language_Anglic
+	ID_Language_Battle
+	ID_Language_Flash
+	ID_Language_Gonk
+	ID_Language_Gvegh
+	ID_Language_Mariel
+	ID_Language_Oynprith
+	ID_Language_Sagamaal
+	ID_Language_Tezapet
+	ID_Language_Trokh
+	ID_Language_Vilani
+	ID_Language_Zdetl
 	ID_High_G
 	ID_Hostile_Environ
 	ID_JOT
@@ -152,19 +165,7 @@ const (
 	ID_Morph
 	ID_Rage
 	ID_Soundmimic
-	ID_Kkree
-	ID_Anglic
-	ID_Battle
-	ID_Flash
-	ID_Gonk
-	ID_Gvegh
-	ID_Mariel
-	ID_Oynprith
-	ID_Sagamaal
-	ID_Tezapet
-	ID_Trokh
-	ID_Vilani
-	ID_Zdetl
+
 	ID_END
 	One_Trade
 	One_Art
@@ -289,7 +290,8 @@ func New(id int) (*Skill, error) {
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
 		skl.related = []int{ID_Linguistics}
-		skl.AssociatedKnowledge = []int{ID_Kkree, ID_Anglic, ID_Battle, ID_Flash, ID_Gonk, ID_Gvegh, ID_Mariel, ID_Oynprith, ID_Sagamaal, ID_Tezapet, ID_Trokh, ID_Vilani, ID_Zdetl}
+		skl.AssociatedKnowledge = []int{ID_Language_Kkree, ID_Language_Anglic, ID_Language_Battle,
+			ID_Language_Flash, ID_Language_Gonk, ID_Language_Gvegh, ID_Language_Mariel, ID_Language_Oynprith, ID_Language_Sagamaal, ID_Language_Tezapet, ID_Language_Trokh, ID_Language_Vilani, ID_Language_Zdetl}
 	case ID_Leader:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_GENERAL
@@ -632,43 +634,43 @@ func New(id int) (*Skill, error) {
 	case ID_Instrument_Cello:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Musician
-	case ID_Kkree:
+	case ID_Language_Kkree:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Anglic:
+	case ID_Language_Anglic:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Battle:
+	case ID_Language_Battle:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Flash:
+	case ID_Language_Flash:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Gonk:
+	case ID_Language_Gonk:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Gvegh:
+	case ID_Language_Gvegh:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Mariel:
+	case ID_Language_Mariel:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Oynprith:
+	case ID_Language_Oynprith:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Sagamaal:
+	case ID_Language_Sagamaal:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Tezapet:
+	case ID_Language_Tezapet:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Trokh:
+	case ID_Language_Trokh:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Vilani:
+	case ID_Language_Vilani:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
-	case ID_Zdetl:
+	case ID_Language_Zdetl:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Language
 	case ID_Biology:
@@ -1020,31 +1022,31 @@ func NameByID(id int) string {
 	case ID_Instrument_Cello:
 		return "Instrument (Cello)"
 
-	case ID_Kkree:
+	case ID_Language_Kkree:
 		return "Language: Kkree"
-	case ID_Anglic:
+	case ID_Language_Anglic:
 		return "Language: Anglic"
-	case ID_Battle:
+	case ID_Language_Battle:
 		return "Language: Battle"
-	case ID_Flash:
+	case ID_Language_Flash:
 		return "Language: Flash"
-	case ID_Gonk:
+	case ID_Language_Gonk:
 		return "Language: Gonk"
-	case ID_Gvegh:
+	case ID_Language_Gvegh:
 		return "Language: Gvegh"
-	case ID_Mariel:
+	case ID_Language_Mariel:
 		return "Language: Mariel"
-	case ID_Oynprith:
+	case ID_Language_Oynprith:
 		return "Language: Oynprith"
-	case ID_Sagamaal:
+	case ID_Language_Sagamaal:
 		return "Language: Sagamaal"
-	case ID_Tezapet:
+	case ID_Language_Tezapet:
 		return "Language: Tezapet"
-	case ID_Trokh:
+	case ID_Language_Trokh:
 		return "Language: Trokh"
-	case ID_Vilani:
+	case ID_Language_Vilani:
 		return "Language: Vilani"
-	case ID_Zdetl:
+	case ID_Language_Zdetl:
 		return "Language: Zdetl"
 
 	case ID_Compute:

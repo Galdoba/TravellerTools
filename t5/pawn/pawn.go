@@ -167,7 +167,10 @@ func ChoseKnowledgeID(controller, skill_ID int) (int, error) {
 	case skill.ID_Pilot:
 		knowledges = append(knowledges, skill.ID_Small_Craft, skill.ID_Spacecraft_ABS, skill.ID_Spacecraft_BCS)
 	case skill.ID_Language:
-		knowledges = append(knowledges, skill.ID_Kkree, skill.ID_Anglic, skill.ID_Battle, skill.ID_Flash, skill.ID_Gonk, skill.ID_Gvegh, skill.ID_Mariel, skill.ID_Oynprith, skill.ID_Sagamaal, skill.ID_Tezapet, skill.ID_Trokh, skill.ID_Vilani, skill.ID_Zdetl)
+		knowledges = append(knowledges, skill.ID_Language_Kkree, skill.ID_Language_Anglic, skill.ID_Language_Battle,
+			skill.ID_Language_Flash, skill.ID_Language_Gonk, skill.ID_Language_Gvegh, skill.ID_Language_Mariel,
+			skill.ID_Language_Oynprith, skill.ID_Language_Sagamaal, skill.ID_Language_Tezapet,
+			skill.ID_Language_Trokh, skill.ID_Language_Vilani, skill.ID_Language_Zdetl)
 	case skill.ID_Musician:
 		knowledges = append(knowledges, skill.ID_Instrument_Guitar, skill.ID_Instrument_Banjo, skill.ID_Instrument_Mandolin, skill.ID_Instrument_Keyboard, skill.ID_Instrument_Piano, skill.ID_Instrument_Voice, skill.ID_Instrument_Trumpet, skill.ID_Instrument_Trombone, skill.ID_Instrument_Tuba, skill.ID_Instrument_Violin, skill.ID_Instrument_Viola, skill.ID_Instrument_Cello)
 	}

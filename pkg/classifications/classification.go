@@ -298,97 +298,81 @@ func Call(i int) *classificationCode {
 		tc.classification = "Twilight Zone"
 		tc.tcType = TypeClimate
 		tc.description = "The world is tidally locked with a Temperate band at the Twilight Zone, plus a Hot region (hemisphere) facing the Primary and a Cold region (hemisphere) away from the Primary."
-		tc.sourceBook = ""
 	case Fa:
 		tc.code = "Fa"
 		tc.classification = "Farming"
 		tc.tcType = TypeSecondary
 		tc.description = "Farming The world has climate and conditions which promote farming and ranching. In addition, it is in the Habitable Zone and not a Mainworld."
-		tc.sourceBook = ""
 	case Mi:
 		tc.code = "Mi"
 		tc.classification = "Mining"
 		tc.tcType = TypeSecondary
 		tc.description = "The world is the site of extensive mineral resource exploitation. It is not a Mainworld and is located in a star system with an Industrial Mainworld."
-		tc.sourceBook = ""
 	case Mr:
 		tc.code = "Mr"
 		tc.classification = "Military Rule"
 		tc.tcType = TypeSecondary
 		tc.description = "The non-Mainworld is ruled by the military from a nearby world."
-		tc.sourceBook = ""
 	case Pe:
 		tc.code = "Pe"
 		tc.classification = "Penal Colony"
 		tc.tcType = TypeSecondary
 		tc.description = "The world is a dumping ground for individuals who will not / do not / cannot conform to standards of behavior."
-		tc.sourceBook = ""
 	case Re:
 		tc.code = "Re"
 		tc.classification = "Reserve"
 		tc.tcType = TypeSecondary
 		tc.description = "The world has been set aside (by the highest levels of government) to preserve indigenous life forms, to delay resource development, or to frustrate inquiry into local conditions."
-		tc.sourceBook = ""
 	case Cp:
 		tc.code = "Cp"
 		tc.classification = "Subsector Capital"
 		tc.tcType = TypePolitical
 		tc.description = "The world is the political center of a group of tens or dozens of star systems (typically a subsector)."
-		tc.sourceBook = ""
 	case Cs:
 		tc.code = "Cs"
 		tc.classification = "Sector Capital"
 		tc.tcType = TypePolitical
 		tc.description = "The world is the political center of a group of hundreds of star systems (typically a sector)."
-		tc.sourceBook = ""
 	case Cx:
 		tc.code = "Cx"
 		tc.classification = "Capital"
 		tc.tcType = TypePolitical
 		tc.description = "The world is the overall political center of an interstellar government controlling thousands of star systems."
-		tc.sourceBook = ""
 	case Cy:
 		tc.code = "Cy"
 		tc.classification = "Colony"
 		tc.tcType = TypePolitical
 		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
-		tc.sourceBook = ""
 	case Sa:
 		tc.code = "Sa"
-		tc.classification = "Colony"
-		tc.tcType = TypePolitical
-		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
-		tc.sourceBook = ""
+		tc.classification = "Satelite"
+		tc.tcType = TypeSpecial
+		tc.description = "The world is the satellite of a planet (or gas giant) in the system."
 	case Fo:
 		tc.code = "Fo"
-		tc.classification = "Colony"
-		tc.tcType = TypePolitical
-		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
-		tc.sourceBook = ""
+		tc.classification = "Forbidden"
+		tc.tcType = TypeSpecial
+		tc.description = "Some conditions, customs, laws, life forms, climate, economics, or other circumstance presents an active threat to the health and well-being of individuals. The world is a TAS Red Zone."
 	case Pz:
 		tc.code = "Pz"
-		tc.classification = "Colony"
-		tc.tcType = TypePolitical
-		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
-		tc.sourceBook = ""
-	case Cy:
-		tc.code = "Re"
-		tc.classification = "Colony"
-		tc.tcType = TypePolitical
-		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
-		tc.sourceBook = ""
-	case Cy:
-		tc.code = "Re"
-		tc.classification = "Colony"
-		tc.tcType = TypePolitical
-		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
-		tc.sourceBook = ""
-	case Cy:
-		tc.code = "Re"
-		tc.classification = "Colony"
-		tc.tcType = TypePolitical
-		tc.description = "The world is a colony Owned by the Most Important, Highest Population, Highest TL world within 6 hexes. Add the remark O:[hex] (=hex of owning world)."
-		tc.sourceBook = ""
+		tc.classification = "Puzzle"
+		tc.tcType = TypeSpecial
+		tc.description = "Some aspect of the world (conditions, customs, laws, life forms, climate, economics, or other) is not well or easily understood by typical visitors. The world is a TAS Amber Zone."
+	case Da:
+		tc.code = "Da"
+		tc.classification = "Dangerous"
+		tc.tcType = TypeSpecial
+		tc.description = "Some aspect of the world (conditions, customs, laws, life forms, climate, economics, or other) is not well understood or easily understood by typical visitors, and it presents a danger. The world is a TAS Amber Zone."
+	case Ab:
+		tc.code = "Ab"
+		tc.classification = "Data Repository"
+		tc.tcType = TypeSpecial
+		tc.description = "The world has a centralized collection point for information and data. Organizations and governments deposit records of their transactions and output in this collection point. The TC refers to AAB, the Imperial designation for data repositories."
+	case An:
+		tc.code = "An"
+		tc.classification = "Antient Site"
+		tc.tcType = TypeSpecial
+		tc.description = "The world (or the star system) includes one or more locations identified as the ruins of the long-dead race called the Ancients. Ancient Sites are exploited for the Artifact remains of this long dead technological civilization."
 
 	}
 	return &tc
