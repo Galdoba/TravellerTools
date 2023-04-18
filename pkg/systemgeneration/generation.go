@@ -373,7 +373,7 @@ func (gs *GenerationState) GenerateData() error {
 		case 11:
 			err = gs.Step11()
 		case 12:
-			err = gs.Step12()
+			//err = gs.Step12()
 		case 13:
 			err = gs.Step13()
 		case 14:
@@ -388,11 +388,11 @@ func (gs *GenerationState) GenerateData() error {
 			err = gs.Step18()
 		case 19:
 			err = gs.Step19()
-		case 20:
-			err = gs.Step20()
-			if err == nil {
-				return nil
-			}
+			// case 20:
+			// 	err = gs.Step20()
+			// 	if err == nil {
+			// 		return nil
+			// 	}
 		}
 		fmt.Printf("concluded\r")
 		//gs.trackStatus()

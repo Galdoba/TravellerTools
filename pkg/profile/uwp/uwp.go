@@ -44,17 +44,17 @@ func New() *uwp {
 	return &u
 }
 
-func Inject(uwpString string) *uwp {
-	u, err := FromString(uwpString)
+// func Inject(uwpString string) *uwp {
+// 	u, err := FromString(uwpString)
 
-	if err != nil {
-		fmt.Println(err.Error(), uwpString)
-		return nil
-	}
-	return u
-}
+// 	if err != nil {
+// 		fmt.Println(err.Error(), uwpString)
+// 		return nil
+// 	}
+// 	return u
+// }
 
-func FromString(uwpString string) (*uwp, error) {
+func FromString0(uwpString string) (profile.Profile, error) {
 	u := New()
 	s := strings.Split(uwpString, "")
 	if len(s) != 9 {
@@ -106,7 +106,8 @@ func FromString(uwpString string) (*uwp, error) {
 			}
 		}
 	}
-	return u, nil
+	panic("NW")
+	return nil, nil
 }
 
 func (u *uwp) Encode(aspect string, val ehex.Ehex) error {

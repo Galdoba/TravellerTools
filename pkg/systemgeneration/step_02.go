@@ -35,11 +35,11 @@ func (gs *GenerationState) Step02() error {
 	case ObjectBlackHole:
 		//return fmt.Errorf("Stop %v", gs.System.ObjectType)
 		//gs.System.Stars = append(gs.System.Stars, &star{})
-		gs.setOrbitSpots()
+		//gs.setOrbitSpots()
 	case ObjectRoguePlanet, ObjectRogueGasGigant, ObjectNebula:
 		return fmt.Errorf("Stop %v", gs.System.ObjectType)
 		//gs.System.Stars = append(gs.System.Stars, &star{})
-		gs.setOrbitSpots()
+		//gs.setOrbitSpots()
 	}
 	gs.ConcludedStep = 2
 	switch gs.NextStep {

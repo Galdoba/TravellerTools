@@ -1,12 +1,5 @@
 package pocketempire
 
-import (
-	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
-	"github.com/Galdoba/TravellerTools/pkg/calendar"
-	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/empire"
-	"github.com/Galdoba/TravellerTools/t4/core/pocketempire/empire/worldcharacter"
-)
-
 /*FLOW
 
 
@@ -29,17 +22,17 @@ import (
 
 */
 
-type Game struct {
-	CurrentDate calendar.Date
-	Universe    map[hexagon.Hexagon]worldcharacter.World
-	Empires     map[int]*empire.PocketEmpire
-}
+// type Game struct {
+// 	CurrentDate calendar.Date
+// 	Universe    map[hexagon.Hexagon]worldcharacter.World
+// 	Empires     map[int]*empire.PocketEmpire
+// }
 
-type eventPlanner struct {
-	current       calendar.Date
-	plannedEvents map[uint64]event
-}
+// type eventPlanner struct {
+// 	current       calendar.Date
+// 	plannedEvents map[uint64]event
+// }
 
-type event struct {
-	descr string
-}
+// type event struct {
+// 	descr string
+// }

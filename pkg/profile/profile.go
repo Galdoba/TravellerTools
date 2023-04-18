@@ -11,13 +11,13 @@ type profileData struct {
 	profileType string
 }
 
-type Profile interface {
+type ProfileEncoder interface {
 	Decode(string) (string, int, string, error)
 	Encode(string, ehex.Ehex) error
 }
 
-//New - Creates new abstarct profile
-func New(dataType ...string) *profileData {
+// New - Creates new abstarct profile
+func NewPD(dataType ...string) *profileData {
 	pd := profileData{}
 	pd.Data = make(map[string]ehex.Ehex)
 	for _, data := range dataType {
@@ -26,7 +26,7 @@ func New(dataType ...string) *profileData {
 	return &pd
 }
 
-//Decode - return all info contained in profile data
+// Decode - return all info contained in profile data
 func (pd *profileData) Decode(data string) (string, int, string, error) {
 	if _, ok := pd.Data[data]; !ok {
 		return "", 0, "", fmt.Errorf("data '%v' not present in profile", data)

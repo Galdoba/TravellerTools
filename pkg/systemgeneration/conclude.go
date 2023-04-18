@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"github.com/Galdoba/TravellerTools/pkg/survey"
 )
@@ -148,14 +149,14 @@ func (gs *GenerationState) callImport(key string) error {
 			if err := gs.injectPBG(imported.data); err != nil {
 				return err
 			}
-		case "MW_UWP":
-			if err := gs.injectMW_UWP(imported.data); err != nil {
-				return err
-			}
-		case "MW_NAME":
-			if err := gs.injectMW_Seed(imported.data); err != nil {
-				return err
-			}
+			// case "MW_UWP":
+			// 	if err := gs.injectMW_UWP(imported.data); err != nil {
+			// 		return err
+			// 	}
+			// case "MW_NAME":
+			// 	if err := gs.injectMW_Seed(imported.data); err != nil {
+			// 		return err
+			// 	}
 		}
 	}
 	return nil
@@ -168,11 +169,11 @@ type worldPosition struct {
 
 func (gs *GenerationState) SuggestWorldPosition() worldPosition {
 	wp := worldPosition{-1, -1.0}
-	world, err := uwp.FromString(gs.System.MW_UWP)
+	world, err := uwp.FromString0(gs.System.MW_UWP)
 	if err != nil {
 		return wp
 	}
-	switch world.Size() {
+	switch world.Data(profile.KEY_SIZE).Value() {
 	case 0:
 		for s, star := range gs.System.Stars {
 			orbits := star.orbitDistances

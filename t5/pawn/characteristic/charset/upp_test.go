@@ -16,7 +16,7 @@ func TestUPP(t *testing.T) {
 	dice := dice.New()
 	total++
 	t.Logf("test %d\n", total)
-	gd, err := genetics.GeneTemplateManual("SDEIES", "222222S")
+	gd, err := genetics.GeneTemplateManual("SDEIES", "222222", "")
 	if err != nil {
 		t.Errorf("GeneDataManual error: %v", err.Error())
 		fail++

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 	"gopkg.in/AlecAivazis/survey.v1"
 )
@@ -153,11 +154,11 @@ func (l *Landing) setDifficulty() {
 }
 
 func (l *Landing) evaluatePlanetaryConditions() {
-	uwp, _ := uwp.FromString(l.uwp)
-	st := uwp.Starport()
-	sz := uwp.Size()
-	at := uwp.Atmo()
-	hd := uwp.Hydr()
+	uwp, _ := uwp.FromString0(l.uwp)
+	st := uwp.Data(profile.KEY_PORT).Code()
+	sz := uwp.Data(profile.KEY_SIZE).Value()
+	at := uwp.Data(profile.KEY_ATMO).Value()
+	hd := uwp.Data(profile.KEY_HYDR).Value()
 	stDM := 0
 	switch st {
 	case "A", "B":

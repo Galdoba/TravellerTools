@@ -28,17 +28,17 @@ func GeneTemplateHuman() *GeneTemplate {
 	return &GeneTemplate{"SDEIES", "222222"}
 }
 
-func GeneTemplateManual(genetics, geneMap string) (GeneTemplate, error) {
+func GeneTemplateManual(genetics, geneMap, seed string) (GeneTemplate, error) {
 	gd := GeneTemplate{genetics, geneMap}
 	if genetics == "" {
-		gd.geneProf = randomGeneProfile()
+		gd.geneProf = randomGeneProfile(seed)
 
 	}
 	if !isInListStr(gd.geneProf, corectProfiles()) {
 		return gd, fmt.Errorf("genetics is invalid '%v'", genetics)
 	}
 	if geneMap == "" {
-		gd.geneMap = randomGenemap(gd.geneProf)
+		gd.geneMap = randomGenemap(gd.geneProf, seed+seed)
 	}
 	if !isInListStr(gd.geneMap, corectGenMaps()) {
 		return gd, fmt.Errorf("geneMap is invalid '%v'", geneMap)
@@ -56,8 +56,8 @@ func isInListStr(elem string, list []string) bool {
 	return false
 }
 
-func randomGeneProfile() string {
-	dice := dice.New()
+func randomGeneProfile(seed string) string {
+	dice := dice.New().SetSeed(seed)
 	genetics := "S"
 	genetics += strings.Split("AAAADDDGGGG", "")[dice.Flux()+5]
 	genetics += strings.Split("SSSSEEEVVVV", "")[dice.Flux()+5]
@@ -67,16 +67,16 @@ func randomGeneProfile() string {
 	return genetics
 }
 
-func newGeneMap(geneprof, genemap string) string {
+func newGeneMap(geneprof, genemap, seed string) string {
 	if genemap == "" {
-		genemap = randomGenemap(geneprof)
+		genemap = randomGenemap(geneprof, seed)
 	}
 	return genemap
 }
 
-func randomGenemap(geneprof string) string {
+func randomGenemap(geneprof, seed string) string {
 	//без учета экологических факторов
-	dice := *dice.New()
+	dice := *dice.New().SetSeed(seed)
 	genemmap := ""
 	genemmap += strings.Split("11222234567", "")[dice.Flux()+5]
 	genemmap += strings.Split("11222223333", "")[dice.Flux()+5]
