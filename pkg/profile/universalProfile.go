@@ -44,6 +44,7 @@ const (
 	KEY_LIMIT_size         = "LIMIT_Size"
 	KEY_LIMIT_pops         = "LIMIT_Pops"
 	KEY_LIMIT_tl           = "LIMIT_tl"
+	KEY_BASES           = "Bases"
 
 	// "HZvar",    //h [0-F] (... Bo Ho Tr [8] Tu Co Fr... F=Ds)
 	// 	"SatCode",  // [0-2] h" Planet, Close Sat, Far Sat

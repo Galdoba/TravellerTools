@@ -202,6 +202,8 @@ func (w *World) Generate(dice *dice.Dicepool) error {
 			err = w.generatePort(dice)
 		case profile.KEY_TL:
 			err = w.generateTL(dice)
+		case profile.KEY_BASES:
+			err = w.generateBases(dice)
 		}
 		if err != nil {
 			return errmaker.ErrorFrom(err, key)
@@ -558,4 +560,15 @@ func (w *World) generateTL(dice *dice.Dicepool) error {
 
 func (w *World) UWP() string {
 	return profile.UWP(w.profile)
+}
+
+func (w *World) generateBases(dice *dice.Dicepool) error {
+	port := w.profile.Data(profile.KEY_PORT)
+	if port == nil {
+		return fmt.Errorf("profile.KEY_PORT undefined")
+	}
+
+	bases := planets.GenerateBases(dice, port)
+	w.profile.Inject(profile.KEY_BASES, bases)
+	return nil
 }

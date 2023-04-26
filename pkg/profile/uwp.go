@@ -49,6 +49,7 @@ func UWPkeys() []string {
 		KEY_TL,
 
 		KEY_POP_DIGIT,
+		KEY_BASES,
 	}
 }
 
