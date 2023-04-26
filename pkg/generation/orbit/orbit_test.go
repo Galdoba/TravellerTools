@@ -10,7 +10,10 @@ import (
 
 func TestGeneration(t *testing.T) {
 	dice := dice.New().SetSeed("Troj 2223 aldo")
-	pair := star.NewPair("G2 V", "M9 VI")
+	pair, err := star.NewPair("G2 V", "M9 VI")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 	spoMap := StarPlanetOrbits(dice, pair)
 	fmt.Println(pair.Class())
 	for i := 0; i < 1000000; i++ {

@@ -31,7 +31,8 @@ const (
 	KEY_SEP                = "separator"
 	KEY_TL                 = "Tech"
 	KEY_WORLDTYPE          = "World Type"
-	KEY_HABITABLE_ZONE     = "HZvar"
+	KEY_HABITABLE_ZONE_VAR = "HZvar"
+	KEY_PLANETARY_ORBIT    = "Orbit"
 	KEY_IS_SATELITE        = "Satelite?"
 	KEY_SATELITE_ORBIT     = "Satelite Orbit"
 	KEY_CLIMATE            = "Climate"
@@ -40,6 +41,9 @@ const (
 	KEY_POP_DIGIT          = "PopDigit"
 	KEY_BELTS              = "Belts"
 	KEY_GAS_GIANTS         = "Gigants"
+	KEY_LIMIT_size         = "LIMIT_Size"
+	KEY_LIMIT_pops         = "LIMIT_Pops"
+	KEY_LIMIT_tl           = "LIMIT_tl"
 
 	// "HZvar",    //h [0-F] (... Bo Ho Tr [8] Tu Co Fr... F=Ds)
 	// 	"SatCode",  // [0-2] h" Planet, Close Sat, Far Sat
@@ -86,7 +90,15 @@ func (up *universalProfile) Format(f int) string {
 }
 
 func (up *universalProfile) Inject(k string, data interface{}) {
-	up.data[k] = ehex.New().Set(data)
+	switch data.(type) {
+	default:
+		up.data[k] = ehex.New().Set(data)
+	case ehex.Ehex:
+		up.data[k] = data.(ehex.Ehex)
+	}
+	if _, ok := up.data[k]; ok != true {
+		panic(fmt.Errorf("injection failed [%v:%v]", k, data))
+	}
 }
 
 // func (up *universalProfile) InjectAll(profile string) error {
@@ -110,7 +122,7 @@ func (up *universalProfile) String() string {
 	str := fmt.Sprintf("profile contains %v points of data:\n", len(up.data))
 	for k, v := range up.data {
 
-		str += k + ": '" + v.Code()
+		str += k + ": '" + v.Code() + "'\n"
 	}
 	return str
 }

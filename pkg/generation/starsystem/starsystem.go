@@ -33,7 +33,10 @@ func New(dice *dice.Dicepool) *starSystem {
 	sts.stellar = stel
 	starMap := stellar.StarMap(sts.stellar)
 	for i := 1; i <= 4; i++ {
-		pair := star.NewPair(starMap[(i*2)-1], starMap[(i*2)])
+		pair, err := star.NewPair(starMap[(i*2)-1], starMap[(i*2)])
+		if err != nil {
+			continue
+		}
 		if pair == nil {
 			continue
 		}

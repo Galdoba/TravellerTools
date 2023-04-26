@@ -1,5 +1,11 @@
 package star
 
+import (
+	"fmt"
+
+	"github.com/Galdoba/devtools/errmaker"
+)
+
 type starpair struct {
 	primary       string
 	companion     string
@@ -18,12 +24,12 @@ type starpair struct {
 // G2 V [M6 VI]
 // G2 V (with companion M6 VI)
 
-func NewPair(p string, c string) *starpair {
+func NewPair(p string, c string) (*starpair, error) {
 	sp := starpair{}
 	primary := New(p)
 	companion := New(c)
-	if primary.Code()+companion.Code() == "" {
-		return nil
+	if primary.Code() == "" {
+		return nil, errmaker.ErrorFrom(fmt.Errorf("bad input"), p, c)
 	}
 	sp.primary = primary.Code()
 	sp.companion = companion.Code()
@@ -36,7 +42,7 @@ func NewPair(p string, c string) *starpair {
 	sp.snowLine = primary.snowLine + companion.snowLine
 	sp.outerLimit = primary.outerLimit + companion.outerLimit
 	sp.habZone = primary.habitableOrbit
-	return &sp
+	return &sp, nil
 }
 
 type StarBody interface {

@@ -8,8 +8,12 @@ import (
 func TestGenome(t *testing.T) {
 
 	wrld, err := NewWorld(Inject(
-		KnownData(Catalog, "111-222"),
-		KnownData("Mainworld", FLAG_TRUE),
+		KnownData(IsMainworld, FLAG_TRUE),
+		KnownData(Primary, "G2 V"),
 	))
+	fmt.Println("===========")
 	fmt.Println(wrld, err)
+	fmt.Println("===========")
+	fmt.Println(wrld.profile)
+	fmt.Println(wrld.UWP())
 }

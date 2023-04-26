@@ -16,6 +16,11 @@ type GeneTemplate struct {
 	geneMap  string
 }
 
+type Genome interface {
+	Profile() string
+	Variations() string
+}
+
 func (gt *GeneTemplate) Profile() string {
 	return gt.geneProf
 }
@@ -47,6 +52,13 @@ func GeneTemplateManual(genetics, geneMap, seed string) (GeneTemplate, error) {
 	return gd, nil
 }
 
+func RollGenome(dice *dice.Dicepool) *GeneTemplate {
+	gt := GeneTemplate{}
+	gt.geneProf = rollGeneProfile(dice)
+	gt.geneMap = rollGenemap(gt.geneProf, dice)
+	return &gt
+}
+
 func isInListStr(elem string, list []string) bool {
 	for _, s := range list {
 		if s == elem {
@@ -67,6 +79,16 @@ func randomGeneProfile(seed string) string {
 	return genetics
 }
 
+func rollGeneProfile(dice *dice.Dicepool) string {
+	genetics := "S"
+	genetics += strings.Split("AAAADDDGGGG", "")[dice.Flux()+5]
+	genetics += strings.Split("SSSSEEEVVVV", "")[dice.Flux()+5]
+	genetics += "I"
+	genetics += strings.Split("IIIIEEETTTT", "")[dice.Flux()+5]
+	genetics += strings.Split("KKKSSSSCCCC", "")[dice.Flux()+5]
+	return genetics
+}
+
 func newGeneMap(geneprof, genemap, seed string) string {
 	if genemap == "" {
 		genemap = randomGenemap(geneprof, seed)
@@ -77,6 +99,23 @@ func newGeneMap(geneprof, genemap, seed string) string {
 func randomGenemap(geneprof, seed string) string {
 	//без учета экологических факторов
 	dice := *dice.New().SetSeed(seed)
+	genemmap := ""
+	genemmap += strings.Split("11222234567", "")[dice.Flux()+5]
+	genemmap += strings.Split("11222223333", "")[dice.Flux()+5]
+	genemmap += strings.Split("11222223333", "")[dice.Flux()+5]
+	genemmap += strings.Split("11222223333", "")[dice.Flux()+5]
+	switch strings.Split(geneprof, "")[4] {
+	default:
+		genemmap += strings.Split("11222222233", "")[dice.Flux()+5]
+	case "I":
+		genemmap += "2"
+	}
+	genemmap += strings.Split("11222222222", "")[dice.Flux()+5]
+	return genemmap
+}
+
+func rollGenemap(geneprof string, dice *dice.Dicepool) string {
+	//без учета экологических факторов
 	genemmap := ""
 	genemmap += strings.Split("11222234567", "")[dice.Flux()+5]
 	genemmap += strings.Split("11222223333", "")[dice.Flux()+5]
@@ -126,4 +165,16 @@ func corectGenMaps() []string {
 		}
 	}
 	return gp
+}
+
+func GenomeCompatability(genome1, genome2 Genome) int {
+	gp1 := strings.Split(genome1.Profile()+genome1.Variations(), "")
+	gp2 := strings.Split(genome2.Profile()+genome2.Variations(), "")
+	match := -2
+	for i := range genome1.Profile() {
+		if gp1[i] == gp2[i] {
+			match++
+		}
+	}
+	return match
 }
