@@ -1,9 +1,11 @@
 package classifications
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/generation/planets"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
@@ -1063,3 +1065,914 @@ The world is tidally locked with a Temperate band at the Twilight Zone, plus a H
 
 
 */
+
+/*
+Port
+Size
+Atmo
+Hydr
+Pops
+Govr
+Laws
+Tech
+worldtype
+HZvar
+Orbit
+MW
+AmberZone
+RedZone
+*/
+
+type tcRequirements struct {
+	Port      string
+	Size      string
+	Atmo      string
+	Hydr      string
+	Pops      string
+	Govr      string
+	Laws      string
+	Tech      string
+	worldtype string
+	HZvar     string
+	Orbit     string
+	MW        bool
+	AmberZone bool
+	RedZone   bool
+}
+
+func (req *tcRequirements) slice() []string {
+	sl := []string{}
+	sl = append(sl, req.Port)
+	sl = append(sl, req.Size)
+	sl = append(sl, req.Atmo)
+	sl = append(sl, req.Hydr)
+	sl = append(sl, req.Pops)
+	sl = append(sl, req.Govr)
+	sl = append(sl, req.Laws)
+	sl = append(sl, req.Tech)
+	sl = append(sl, req.worldtype)
+	sl = append(sl, req.HZvar)
+	sl = append(sl, req.Orbit)
+	switch req.MW {
+	case true:
+		sl = append(sl, "MW")
+	case false:
+	}
+}
+
+type world interface {
+	Data(string) string
+}
+
+func Evaluate(worldData world) []int {
+	tcMatch := []int{}
+	for code := As; code <= Bo; code++ {
+		req := requirements(code)
+		if reqMatch(req, worldData) {
+			tcMatch = append(tcMatch, code)
+		}
+	}
+	return tcMatch
+}
+
+func reqMatch(req tcRequirements, worldData world) bool {
+
+	return false
+}
+
+func requirements(code int) tcRequirements {
+	req := tcRequirements{}
+	switch code {
+	default:
+		panic(fmt.Sprintf("code %v is invalid", code))
+	case As:
+		req = tcRequirements{
+			Size:      "0",
+			Atmo:      "0",
+			Hydr:      "0",
+			worldtype: planets.WORLDTYPE_Planetoid,
+		}
+	case De:
+		req = tcRequirements{
+			Atmo: "23456789",
+			Hydr: "0",
+		}
+	case Fl:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ga:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case He:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ic:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Oc:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Va:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Wa:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Di:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ba:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Lo:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ni:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ph:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Hi:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Pa:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ag:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Na:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Px:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Pi:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case In:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Po:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Pr:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ri:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Lt:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ht:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Fr:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ho:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Co:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Lk:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Tr:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Tu:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Tz:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Fa:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Mi:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Mr:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Pe:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Re:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Cp:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Cs:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Cx:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Cy:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Sa:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Fo:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Pz:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Da:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ab:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case An:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Ts:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	case Bo:
+		req = tcRequirements{
+			Port:      "",
+			Size:      "",
+			Atmo:      "",
+			Hydr:      "",
+			Pops:      "",
+			Govr:      "",
+			Laws:      "",
+			Tech:      "",
+			worldtype: "",
+			HZvar:     "",
+			Orbit:     "",
+			MW:        false,
+			AmberZone: false,
+			RedZone:   false,
+		}
+	}
+	return req
+}

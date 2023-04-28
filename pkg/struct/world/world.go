@@ -48,14 +48,15 @@ GasG [0-4] h  - нужно только в рамках системы или д
 */
 
 type World struct {
-	Alias        string //Самоназвание
-	Catalog      string //номенклатурное название (121-311 Stargos A III 2d)
-	profile      profile.Profile
-	HomeStar     star.StarBody
-	prim         string
-	comp         string
-	nativeGenome genetics.Genome
-	Flag         map[string]bool
+	Alias           string //Самоназвание
+	Catalog         string //номенклатурное название (121-311 Stargos A III 2d)
+	profile         profile.Profile
+	HomeStar        star.StarBody
+	prim            string
+	comp            string
+	nativeGenome    genetics.Genome
+	Flag            map[string]bool
+	classifications []int
 }
 
 type knownData struct {
@@ -571,4 +572,17 @@ func (w *World) generateBases(dice *dice.Dicepool) error {
 	bases := planets.GenerateBases(dice, port)
 	w.profile.Inject(profile.KEY_BASES, bases)
 	return nil
+}
+
+func (w *World) Data(key string) string {
+	data := w.profile.Data(key)
+	if data != nil {
+		return data.Code()
+	}
+	if val, ok := w.Flag[key]; ok {
+		if val {
+			return key
+		}
+	}
+	return ""
 }

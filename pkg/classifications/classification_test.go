@@ -1,5 +1,11 @@
 package classifications
 
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
+
 // import (
 // 	"fmt"
 // 	"testing"
@@ -52,3 +58,10 @@ package classifications
 // 		}
 // 	}
 // }
+
+func TestRequirements(t *testing.T) {
+	fmt.Println(strings.Contains("", "A"))
+	fmt.Println(strings.Contains("A", "A"))
+	fmt.Println(strings.Contains("AB", "A"))
+	fmt.Println(strings.Contains("A", "BA"))
+}

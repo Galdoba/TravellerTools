@@ -22,6 +22,21 @@ Planet Type:
 
 */
 
+const (
+	WORLDTYPE_Hospitable = "A"
+	WORLDTYPE_Planetoid  = "B"
+	WORLDTYPE_Iceworld   = "C"
+	WORLDTYPE_RadWorld   = "D"
+	WORLDTYPE_Inferno    = "E"
+	WORLDTYPE_BigWorld   = "F"
+	WORLDTYPE_Worldlet   = "G"
+	WORLDTYPE_InnerWorld = "H"
+	WORLDTYPE_Stormworld = "J"
+	WORLDTYPE_SSG        = "K"
+	WORLDTYPE_LGG        = "L"
+	WORLDTYPE_IG         = "M"
+)
+
 func GeneratePlanetType(dice *dice.Dicepool, satOrbit, hzVar ehex.Ehex) ehex.Ehex {
 	hzVarInt := hzVar.Value() - 10
 
