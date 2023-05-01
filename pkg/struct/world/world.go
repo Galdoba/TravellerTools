@@ -73,6 +73,7 @@ const (
 	Primary        = "Primary Star"
 	Companion      = "Companion Star"
 	IsMainworld    = "MW"
+	IsNotMainworld = "Not-MW"
 	IsPlanet       = "Planet"
 	IsCloseSat     = "Close Satelite"
 	IsFarSat       = "Far Satelite"
@@ -121,6 +122,9 @@ func (w *World) injectData(kd *knownData) error {
 		}
 		w.Flag[kd.key] = flag
 		return nil
+	}
+	if err := w.defineMW(); err != nil {
+		return errmaker.ErrorFrom(err)
 	}
 	switch kd.key {
 	default:
@@ -571,6 +575,20 @@ func (w *World) generateBases(dice *dice.Dicepool) error {
 
 	bases := planets.GenerateBases(dice, port)
 	w.profile.Inject(profile.KEY_BASES, bases)
+	return nil
+}
+
+func (w *World) defineMW() error {
+	w.profile.Inject(profile.KEY_MAINWORLD, "*")
+	if w.Flag[IsMainworld] && w.Flag[IsNotMainworld] {
+		return errmaker.ErrorFrom(fmt.Errorf("flags '%v' and '%v' active at same time", IsMainworld, IsNotMainworld))
+	}
+	if w.Flag[IsMainworld] {
+		w.profile.Inject(profile.KEY_MAINWORLD, "1")
+	}
+	if w.Flag[IsNotMainworld] {
+		w.profile.Inject(profile.KEY_MAINWORLD, "0")
+	}
 	return nil
 }
 

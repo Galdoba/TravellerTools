@@ -29,6 +29,7 @@ Aralia (100-201 Seigor AB III 1d)
 
 func UWPkeys() []string {
 	return []string{
+		KEY_MAINWORLD,
 		KEY_PLANETARY_ORBIT,
 		KEY_SATELITE_ORBIT,
 		KEY_HABITABLE_ZONE_VAR,

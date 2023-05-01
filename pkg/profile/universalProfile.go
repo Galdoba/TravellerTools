@@ -21,6 +21,7 @@ const (
 	KEY_C6                 = "C6"
 	KEY_CP                 = "CP"
 	KEY_CS                 = "CS"
+	KEY_MAINWORLD          = "MW"
 	KEY_PORT               = "Starport"
 	KEY_SIZE               = "Size"
 	KEY_ATMO               = "Atmo"
@@ -44,7 +45,7 @@ const (
 	KEY_LIMIT_size         = "LIMIT_Size"
 	KEY_LIMIT_pops         = "LIMIT_Pops"
 	KEY_LIMIT_tl           = "LIMIT_tl"
-	KEY_BASES           = "Bases"
+	KEY_BASES              = "Bases"
 
 	// "HZvar",    //h [0-F] (... Bo Ho Tr [8] Tu Co Fr... F=Ds)
 	// 	"SatCode",  // [0-2] h" Planet, Close Sat, Far Sat
