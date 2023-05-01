@@ -6,6 +6,7 @@ import (
 
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/generation/planets"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/pkg/profile/uwp"
 )
 
@@ -1084,23 +1085,29 @@ RedZone
 */
 
 type tcRequirements struct {
-	Port           string
-	Size           string
-	Atmo           string
-	Hydr           string
-	Pops           string
-	Govr           string
-	Laws           string
-	Tech           string
-	worldtype      string
-	HZvar          string
-	PlanetaryOrbit string
-	SateliteOrbit  string
-	MW             string
-	AmberZone      bool
-	RedZone        bool
-	MilitaryRule   bool //MT-Refery Manual 29
-	ResearchLab    bool
+	Port             string
+	Size             string
+	Atmo             string
+	Hydr             string
+	Pops             string
+	Govr             string
+	Laws             string
+	Tech             string
+	worldtype        string
+	HZvar            string
+	PlanetaryOrbit   string
+	SateliteOrbit    string
+	MW               string
+	AmberZone        bool
+	RedZone          bool
+	MilitaryRule     bool //MT-Refery Manual 29
+	ResearchLab      bool
+	SubsectorCapital bool
+	SectorCapital    bool
+	Capital          bool
+	Colony           bool
+	DataRepository   bool
+	AntientSite      bool
 }
 
 func (req *tcRequirements) slice() []string {
@@ -1115,6 +1122,7 @@ func (req *tcRequirements) slice() []string {
 	sl = append(sl, req.Tech)
 	sl = append(sl, req.worldtype)
 	sl = append(sl, req.HZvar)
+	sl = append(sl, req.PlanetaryOrbit)
 	sl = append(sl, req.SateliteOrbit)
 	sl = append(sl, req.MW)
 	switch req.AmberZone {
@@ -1129,6 +1137,55 @@ func (req *tcRequirements) slice() []string {
 	case false:
 		sl = append(sl, "")
 	}
+	switch req.MilitaryRule {
+	case true:
+		sl = append(sl, "Mr")
+	case false:
+		sl = append(sl, "")
+	}
+	switch req.ResearchLab {
+	case true:
+		sl = append(sl, "Rs")
+	case false:
+		sl = append(sl, "")
+	}
+	switch req.SubsectorCapital {
+	case true:
+		sl = append(sl, "Cp")
+	case false:
+		sl = append(sl, "")
+	}
+	switch req.SectorCapital {
+	case true:
+		sl = append(sl, "Cs")
+	case false:
+		sl = append(sl, "")
+	}
+	switch req.Capital {
+	case true:
+		sl = append(sl, "Cx")
+	case false:
+		sl = append(sl, "")
+	}
+	switch req.Colony {
+	case true:
+		sl = append(sl, "Cy")
+	case false:
+		sl = append(sl, "")
+	}
+	switch req.DataRepository {
+	case true:
+		sl = append(sl, "Ab")
+	case false:
+		sl = append(sl, "")
+	}
+	switch req.AntientSite {
+	case true:
+		sl = append(sl, "An")
+	case false:
+		sl = append(sl, "")
+	}
+
 	return sl
 }
 
@@ -1136,20 +1193,99 @@ type world interface {
 	Data(string) string
 }
 
+func worldClassificationSlice(w world) []string {
+	sl := []string{}
+	sl = append(sl, w.Data(profile.KEY_PORT))               //  Port
+	sl = append(sl, w.Data(profile.KEY_SIZE))               //  Size
+	sl = append(sl, w.Data(profile.KEY_ATMO))               //  Atmo
+	sl = append(sl, w.Data(profile.KEY_HYDR))               //  Hydr
+	sl = append(sl, w.Data(profile.KEY_POPS))               //  Pops
+	sl = append(sl, w.Data(profile.KEY_GOVR))               //  Govr
+	sl = append(sl, w.Data(profile.KEY_LAWS))               //  Laws
+	sl = append(sl, w.Data(profile.KEY_TL))                 //  Tech
+	sl = append(sl, w.Data(profile.KEY_WORLDTYPE))          //  worldtype
+	sl = append(sl, w.Data(profile.KEY_HABITABLE_ZONE_VAR)) //  HZvar
+	sl = append(sl, w.Data(profile.KEY_PLANETARY_ORBIT))    //  PlanetaryOrbit
+	sl = append(sl, w.Data(profile.KEY_SATELITE_ORBIT))     //  SateliteOrbit
+	sl = append(sl, w.Data(profile.KEY_MAINWORLD))          //  MW
+	if w.Data("Amber Zone") != "[NO DATA]" {
+		sl = append(sl, "A")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Red Zone") != "[NO DATA]" {
+		sl = append(sl, "R")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Military Rule") != "[NO DATA]" {
+		sl = append(sl, "Mr")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Research Lab") != "[NO DATA]" {
+		sl = append(sl, "Rs")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Subsector Capital") != "[NO DATA]" {
+		sl = append(sl, "Cp")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Sector Capital") != "[NO DATA]" {
+		sl = append(sl, "Cs")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Capital") != "[NO DATA]" {
+		sl = append(sl, "Cx")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Colony") != "[NO DATA]" {
+		sl = append(sl, "Cy")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Data Repository") != "[NO DATA]" {
+		sl = append(sl, "Ab")
+	} else {
+		sl = append(sl, "-")
+	}
+	if w.Data("Antient Site") != "[NO DATA]" {
+		sl = append(sl, "An")
+	} else {
+		sl = append(sl, "-")
+	}
+	return sl
+}
+
 func Evaluate(worldData world) []int {
 	tcMatch := []int{}
+	worldSl := worldClassificationSlice(worldData)
 	for code := As; code <= Bo; code++ {
+
 		req := requirements(code)
-		if reqMatch(req, worldData) {
+		reqSl := req.slice()
+		if reqMatch(code, reqSl, worldSl) {
 			tcMatch = append(tcMatch, code)
 		}
 	}
 	return tcMatch
 }
 
-func reqMatch(req tcRequirements, worldData world) bool {
-
-	return false
+func reqMatch(code int, reqSl, worldSl []string) bool {
+	for i, str := range reqSl {
+		if str == "" {
+			continue
+		}
+		if strings.Contains(str, worldSl[i]) {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func requirements(code int) tcRequirements {
@@ -1343,275 +1479,81 @@ func requirements(code int) tcRequirements {
 		}
 	case Mi:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "12345", //NOT BY RULES
-			Govr:          "1",     //NOT BY RULES
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            "0",
-			AmberZone:     false,
-			RedZone:       false,
+			Pops: "23456", //NOT BY RULES
+			Govr: "1",     //NOT BY RULES
+			MW:   "0",
 		}
-	case Mr:
+	case Mr: //use world.UpdateInContext(MainWorld World)
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Port: "L",
 		}
 	case Pe:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Atmo: "23AB",
+			Hydr: "12345",
+			Pops: "3456",
+			Govr: "6",
+			Laws: "6789",
+			MW:   "0",
 		}
 	case Re:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Pops: "1234",
+			Govr: "6",
+			Laws: "45",
 		}
 	case Cp:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			SubsectorCapital: true,
 		}
 	case Cs:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			SubsectorCapital: true,
 		}
 	case Cx:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Capital: true,
 		}
 	case Cy:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Colony: true,
 		}
 	case Sa:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			SateliteOrbit: "N0PQRSTUVWXYZ",
 		}
 	case Fo:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			RedZone: true,
 		}
 	case Pz:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Pops:      "789ABCDEF",
+			AmberZone: true,
 		}
 	case Da:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Pops:      "0123456",
+			AmberZone: true,
 		}
 	case Ab:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			DataRepository: true,
 		}
 	case An:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			AntientSite: true,
 		}
 	case Ts:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Size:  "23456789ABCDEFGHJK",
+			Atmo:  "01",
+			HZvar: "9AB",
 		}
 	case Bo:
 		req = tcRequirements{
-			Port:          "",
-			Size:          "",
-			Atmo:          "",
-			Hydr:          "",
-			Pops:          "",
-			Govr:          "",
-			Laws:          "",
-			Tech:          "",
-			worldtype:     "",
-			HZvar:         "",
-			SateliteOrbit: "",
-			MW:            false,
-			AmberZone:     false,
-			RedZone:       false,
+			Size:  "23456789ABCDEFGHJK",
+			HZvar: "012345678",
 		}
 	}
 	return req

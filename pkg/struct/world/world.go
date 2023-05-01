@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/Galdoba/TravellerTools/pkg/classifications"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/generation/planets"
@@ -66,18 +67,28 @@ type knownData struct {
 }
 
 const (
-	FLAG_TRUE      = "True"
-	FLAG_FALSE     = "False"
-	Alias          = "Alias"
-	Catalog        = "Catalog Name"
-	Primary        = "Primary Star"
-	Companion      = "Companion Star"
-	IsMainworld    = "MW"
-	IsNotMainworld = "Not-MW"
-	IsPlanet       = "Planet"
-	IsCloseSat     = "Close Satelite"
-	IsFarSat       = "Far Satelite"
-	IsNotColonized = "Not Colonized"
+	FLAG_TRUE          = "True"
+	FLAG_FALSE         = "False"
+	Alias              = "Alias"
+	Catalog            = "Catalog Name"
+	Primary            = "Primary Star"
+	Companion          = "Companion Star"
+	IsMainworld        = "MW"
+	IsNotMainworld     = "Not-MW"
+	IsPlanet           = "Planet"
+	IsCloseSat         = "Close Satelite"
+	IsFarSat           = "Far Satelite"
+	IsNotColonized     = "Not Colonized"
+	IsAmberZone        = "Amber Zone"
+	IsRedZone          = "Red Zone"
+	IsMilitaryRule     = "Military Rule"
+	IsResearchLab      = "Research Lab"
+	IsSubsectorCapital = "Subsector Capital"
+	IsSectorCapital    = "Sector Capital"
+	IsCapital          = "Capital"
+	IsColony           = "Colony"
+	IsDataRepository   = "Data Repository"
+	IsAntientSite      = "Antient Site"
 )
 
 /*
@@ -107,6 +118,7 @@ func NewWorld(kndt []*knownData, flags ...bool) (*World, error) {
 	}
 	w.HomeStar = pair
 	w.Generate(dice)
+	w.classifications = classifications.Evaluate(&w)
 	return &w, nil
 }
 
@@ -599,8 +611,9 @@ func (w *World) Data(key string) string {
 	}
 	if val, ok := w.Flag[key]; ok {
 		if val {
+			fmt.Println("Has Flag", val, key)
 			return key
 		}
 	}
-	return ""
+	return "[NO DATA]"
 }
