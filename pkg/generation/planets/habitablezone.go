@@ -32,10 +32,10 @@ func SetHZVar(i int) ehex.Ehex {
 	hz := ehex.New().Set(i + 10)
 	switch i {
 	default:
-		if i > 10 {
+		if i > 11 {
 			hz.Encode(HZ_OUTER)
 		}
-		if i < 10 {
+		if i < 9 {
 			hz.Encode(HZ_INNER)
 		}
 	case 9, 10, 11:

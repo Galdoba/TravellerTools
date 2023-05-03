@@ -3,6 +3,9 @@ package world
 import (
 	"fmt"
 	"testing"
+
+	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/struct/world/details/sizerelated"
 )
 
 func TestGenome(t *testing.T) {
@@ -17,5 +20,7 @@ func TestGenome(t *testing.T) {
 	fmt.Println("===========")
 	fmt.Println(wrld.profile)
 	fmt.Println(wrld.UWP())
-
+	sDetails := sizerelated.New()
+	sDetails.GenerateDetails(dice.New(), wrld.profile)
+	fmt.Println(sDetails)
 }

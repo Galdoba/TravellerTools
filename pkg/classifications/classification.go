@@ -1208,52 +1208,52 @@ func worldClassificationSlice(w world) []string {
 	sl = append(sl, w.Data(profile.KEY_PLANETARY_ORBIT))    //  PlanetaryOrbit
 	sl = append(sl, w.Data(profile.KEY_SATELITE_ORBIT))     //  SateliteOrbit
 	sl = append(sl, w.Data(profile.KEY_MAINWORLD))          //  MW
-	if w.Data("Amber Zone") != "[NO DATA]" {
+	if w.Data("Amber Zone") != "" {
 		sl = append(sl, "A")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Red Zone") != "[NO DATA]" {
+	if w.Data("Red Zone") != "" {
 		sl = append(sl, "R")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Military Rule") != "[NO DATA]" {
+	if w.Data("Military Rule") != "" {
 		sl = append(sl, "Mr")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Research Lab") != "[NO DATA]" {
+	if w.Data("Research Lab") != "" {
 		sl = append(sl, "Rs")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Subsector Capital") != "[NO DATA]" {
+	if w.Data("Subsector Capital") != "" {
 		sl = append(sl, "Cp")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Sector Capital") != "[NO DATA]" {
+	if w.Data("Sector Capital") != "" {
 		sl = append(sl, "Cs")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Capital") != "[NO DATA]" {
+	if w.Data("Capital") != "" {
 		sl = append(sl, "Cx")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Colony") != "[NO DATA]" {
+	if w.Data("Colony") != "" {
 		sl = append(sl, "Cy")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Data Repository") != "[NO DATA]" {
+	if w.Data("Data Repository") != "" {
 		sl = append(sl, "Ab")
 	} else {
 		sl = append(sl, "-")
 	}
-	if w.Data("Antient Site") != "[NO DATA]" {
+	if w.Data("Antient Site") != "" {
 		sl = append(sl, "An")
 	} else {
 		sl = append(sl, "-")

@@ -643,5 +643,5 @@ func (w *World) Data(key string) string {
 			return key
 		}
 	}
-	return "[NO DATA]"
+	return ""
 }
