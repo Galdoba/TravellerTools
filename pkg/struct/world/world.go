@@ -60,6 +60,34 @@ type World struct {
 	classifications []int
 }
 
+func (w *World) String() string {
+	orbS := " "
+	satS := " "
+	satHex := w.Data(profile.KEY_SATELITE_ORBIT)
+	if satHex == "*" {
+		orbS = w.Data(profile.KEY_PLANETARY_ORBIT)
+	} else {
+		satS = satHex
+	}
+
+	uwp := ""
+	uwp += w.Data(profile.KEY_PORT)
+	uwp += w.Data(profile.KEY_SIZE)
+	uwp += w.Data(profile.KEY_ATMO)
+	uwp += w.Data(profile.KEY_HYDR)
+	uwp += w.Data(profile.KEY_POPS)
+	uwp += w.Data(profile.KEY_GOVR)
+	uwp += w.Data(profile.KEY_LAWS)
+	uwp += "-"
+	uwp += w.Data(profile.KEY_TL)
+	tc := ""
+	for _, code := range w.classifications {
+		tc += classifications.Call(code).String() + " "
+	}
+	str := fmt.Sprintf("%v	%v	%v	%v", orbS, satS, uwp, tc)
+	return str
+}
+
 type knownData struct {
 	key  string
 	val  string
