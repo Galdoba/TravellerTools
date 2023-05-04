@@ -1,6 +1,10 @@
 package skill
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Galdoba/TravellerTools/pkg/classifications"
+)
 
 const (
 	ID_NONE = iota
@@ -1120,99 +1124,99 @@ func (sk *Skill) Learn() error {
 	return nil
 }
 
-func TradeCode2SkillID(tc string) []int {
+func TradeCode2SkillID(tc int) []int {
 	switch tc {
 	default:
 		return []int{ID_NONE}
-	case "Ab":
+	case classifications.Ab:
 		return []int{ID_NONE}
-	case "Ag":
+	case classifications.Ag:
 		return []int{ID_Animals}
-	case "An":
+	case classifications.An:
 		return []int{ID_NONE}
-	case "As":
+	case classifications.As:
 		return []int{ID_Zero_G}
-	case "Ba":
+	case classifications.Ba:
 		return []int{ID_NONE}
-	case "Bo":
+	case classifications.Bo:
 		return []int{ID_Hostile_Environ}
-	case "Co":
+	case classifications.Co:
 		return []int{ID_Hostile_Environ}
-	case "Cp":
+	case classifications.Cp:
 		return []int{ID_Admin}
-	case "Cs":
+	case classifications.Cs:
 		return []int{ID_Bureaucrat}
-	case "Cx":
+	case classifications.Cx:
 		return []int{ID_Language}
-	case "Da":
+	case classifications.Da:
 		return []int{ID_Fighter}
-	case "De":
+	case classifications.De:
 		return []int{ID_Survival}
-	case "Di":
+	case classifications.Di:
 		return []int{ID_NONE}
-	case "Ds":
+	case classifications.Ds:
 		return []int{ID_Vacc_Suit, ID_Zero_G}
-	case "Fa":
+	case classifications.Fa:
 		return []int{ID_Animals}
-	case "Fl":
+	case classifications.Fl:
 		return []int{ID_Hostile_Environ}
-	case "Fo":
+	case classifications.Fo:
 		return []int{ID_NONE}
-	case "Fr":
+	case classifications.Fr:
 		return []int{ID_Hostile_Environ}
-	case "Ga":
+	case classifications.Ga:
 		return []int{ID_Trader}
-	case "He":
+	case classifications.He:
 		return []int{ID_Hostile_Environ}
-	case "Hi":
+	case classifications.Hi:
 		return []int{ID_Streetwise}
-	case "Ho":
+	case classifications.Ho:
 		return []int{ID_Hostile_Environ}
-	case "Ic":
+	case classifications.Ic:
 		return []int{ID_Vacc_Suit}
-	case "In":
+	case classifications.In:
 		return []int{One_Trade}
-	case "Lk":
+	case classifications.Lk:
 		return []int{ID_NONE}
-	case "Lo":
+	case classifications.Lo:
 		return []int{ID_Flyer}
-	case "Mi":
+	case classifications.Mi:
 		return []int{ID_Survey}
-	case "Mr":
+	case classifications.Mr:
 		return []int{ID_NONE}
-	case "Na":
+	case classifications.Na:
 		return []int{ID_Survey}
-	case "Ni":
+	case classifications.Ni:
 		return []int{ID_Driver}
-	case "Oc":
+	case classifications.Oc:
 		return []int{ID_High_G}
-	case "Pa":
+	case classifications.Pa:
 		return []int{ID_Trader}
-	case "Ph":
+	case classifications.Ph:
 		return []int{ID_NONE}
-	case "Pi":
+	case classifications.Pi:
 		return []int{ID_JOT}
-	case "Po":
+	case classifications.Po:
 		return []int{ID_Steward}
-	case "Pr":
+	case classifications.Pr:
 		return []int{ID_Craftsman}
-	case "Px":
+	case classifications.Px:
 		return []int{ID_NONE}
-	case "Pz":
+	case classifications.Pz:
 		return []int{ID_NONE}
-	case "Re":
+	case classifications.Re:
 		return []int{ID_NONE}
-	case "Ri":
+	case classifications.Ri:
 		return []int{One_Art}
-	case "Tr":
+	case classifications.Tr:
 		return []int{ID_Survival}
-	case "Tu":
+	case classifications.Tu:
 		return []int{ID_Survival}
-	case "Tz":
+	case classifications.Tz:
 		return []int{ID_Driver}
-	case "Va":
+	case classifications.Va:
 		return []int{ID_Vacc_Suit}
-	case "Wa":
+	case classifications.Wa:
 		return []int{ID_Seafarer}
 	}
 }

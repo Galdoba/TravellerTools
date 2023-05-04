@@ -77,6 +77,7 @@ const (
 	An
 	Ts
 	Bo
+	Ds
 	TypePlanetary  = "Planetary"
 	TypePopulation = "Population"
 	TypeEconomic   = "Economic"

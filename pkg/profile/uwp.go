@@ -27,6 +27,34 @@ Aralia (100-201 Seigor AB III 1d)
 
 */
 
+const (
+	KEY_MAINWORLD          = "MW"
+	KEY_PORT               = "Starport"
+	KEY_SIZE               = "Size"
+	KEY_ATMO               = "Atmo"
+	KEY_HYDR               = "Hydr"
+	KEY_POPS               = "Pops"
+	KEY_GOVR               = "Govr"
+	KEY_LAWS               = "Laws"
+	KEY_SEP                = "separator"
+	KEY_TL                 = "Tech"
+	KEY_WORLDTYPE          = "World Type"
+	KEY_HABITABLE_ZONE_VAR = "HZvar"
+	KEY_PLANETARY_ORBIT    = "Orbit"
+	KEY_IS_SATELITE        = "Satelite?"
+	KEY_SATELITE_ORBIT     = "Satelite Orbit"
+	KEY_CLIMATE            = "Climate"
+	KEY_LIFE_FACTOR        = "Life"
+	KEY_LIFE_COMPATABILITY = "Life Compatability"
+	KEY_POP_DIGIT          = "PopDigit"
+	KEY_BELTS              = "Belts"
+	KEY_GAS_GIANTS         = "Gigants"
+	KEY_LIMIT_size         = "LIMIT_Size"
+	KEY_LIMIT_pops         = "LIMIT_Pops"
+	KEY_LIMIT_tl           = "LIMIT_tl"
+	KEY_BASES              = "Bases"
+)
+
 func UWPkeys() []string {
 	return []string{
 		KEY_MAINWORLD,

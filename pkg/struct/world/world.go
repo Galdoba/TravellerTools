@@ -81,6 +81,10 @@ func (w *World) String() string {
 	return str
 }
 
+func (w *World) ListTC() []int {
+	return w.classifications
+}
+
 func (w *World) Profile() profile.Profile {
 	return w.profile
 }
@@ -263,14 +267,14 @@ func (w *World) GenerateFull(dice *dice.Dicepool) error {
 	for _, key := range profile.UWPkeys() {
 		var err error
 		if w.profile.Data(key) != nil {
-			fmt.Println("key", key, "was injected or generated")
+			//fmt.Println("key", key, "was injected or generated")
 			injected++
 			continue
 		}
-		fmt.Println("generating key:", key)
+		//fmt.Println("generating key:", key)
 		switch key {
 		default:
-			fmt.Println(key, "generation is NOT IMPLEMENTED")
+			//	fmt.Println(key, "generation is NOT IMPLEMENTED")
 			continue
 		case profile.KEY_PLANETARY_ORBIT:
 			err = w.generateOrbitAndHZvar(dice)
@@ -312,11 +316,12 @@ func (w *World) GenerateFull(dice *dice.Dicepool) error {
 		if err != nil {
 			return errmaker.ErrorFrom(err, key)
 		}
-		fmt.Println("conclude generating", key, w.profile.Data(key).Code())
+		//fmt.Println("conclude generating", key, w.profile.Data(key).Code())
 	}
 	if injected == checkList {
 		return ErrFullyGenerated
 	}
+	w.classifications = classifications.Evaluate(w)
 	return nil
 }
 
@@ -711,4 +716,10 @@ func (w *World) Data(key string) string {
 		}
 	}
 	return ""
+}
+
+func DeepSpace() *World {
+	w := World{}
+	w.classifications = []int{classifications.Ds}
+	return &w
 }

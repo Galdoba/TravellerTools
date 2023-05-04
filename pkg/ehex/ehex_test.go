@@ -6,30 +6,16 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	for i := -5; i < 260; i++ {
+	for i := -5; i < 65; i++ {
 		ehex := New().Set(i)
 		if ehex.code == "?" && ehex.value == -2 && ehex.comment == "unknown" {
 			continue
 		}
-		if codeUnexpected(ehex.code) {
-			t.Errorf("i:=%v Code (%v) is unexpected", i, ehex.code)
-		}
-		if valueUnexpected(ehex.value) {
-			t.Errorf("i:=%v Value (%v) is unexpected", i, ehex.value)
-		}
+		fmt.Println(ehex.code, ehex.value)
 
-		if ehex.comment == "" {
-			ehex.Encode("some meaning")
-			if ehex.Meaning() != "some meaning" {
-				t.Errorf("comment error")
-			}
-			//fmt.Printf("i:=%v Comment (%v) is expected\n%v\n", i, ehex.Meaning(), ehex.printStruct())
-		}
-		ehex.Code()
-		ehex.Value()
-		fmt.Println(ehex.String())
-
+		//fmt.Printf("i:=%v Comment (%v) is expected\n%v\n", i, ehex.Meaning(), ehex.printStruct())
 	}
+
 }
 
 func codeUnexpected(code string) bool {

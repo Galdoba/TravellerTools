@@ -1,17 +1,27 @@
 package education
 
 import (
-	"fmt"
-	"hash/fnv"
+	"github.com/Galdoba/TravellerTools/t5/pawn/characteristic/charset"
 )
 
-func hash(s string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return h.Sum32()
+const (
+	NIL = iota
+	CHAR_EDU
+	CHAR_TRA
+	CHAR_INS
+)
+
+type educationalProcess struct {
+	CHAR_BASE       int
+	Characteristics charset.CharSet
+	Waivers         int
 }
 
-func main() {
-	fmt.Println(hash("HelloWorld"))
-	fmt.Println(hash("HelloWorld."))
+type institution struct {
+	validCHAR int
+}
+
+func New() {
+	ep := educationalProcess{}
+	ep.Characteristics.String()
 }

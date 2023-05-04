@@ -149,36 +149,36 @@ func hashValue(value int) string {
 	codeMap[31] = "X"
 	codeMap[32] = "Y"
 	codeMap[33] = "Z"
-	codeMap[34] = "%"
-	codeMap[35] = "@"
-	codeMap[36] = "#"
-	codeMap[37] = "$"
-	codeMap[38] = "y" //
-	codeMap[39] = "~"
-	codeMap[40] = "_"
-	codeMap[41] = "$"
-	codeMap[42] = "a"
-	codeMap[43] = "b"
-	codeMap[44] = "c"
-	codeMap[45] = "d"
-	codeMap[46] = "e"
-	codeMap[47] = "f"
-	codeMap[48] = "g"
-	codeMap[49] = "h"
-	codeMap[50] = "j"
-	codeMap[51] = "k"
-	codeMap[52] = "z" //
-	codeMap[53] = "m"
-	codeMap[54] = "n"
-	codeMap[55] = "p"
-	codeMap[56] = "q"
-	codeMap[57] = "r"
-	codeMap[58] = "s"
-	codeMap[59] = "t"
-	codeMap[60] = "u"
-	codeMap[61] = "v"
-	codeMap[62] = "w"
-	codeMap[63] = "x"
+	codeMap[34] = "Δ"
+	codeMap[35] = "Λ"
+	codeMap[36] = "Ξ"
+	codeMap[37] = "Σ"
+	codeMap[38] = "Φ"
+	codeMap[39] = "Ψ"
+	codeMap[40] = "Ω"
+	codeMap[41] = "Ϣ"
+	codeMap[42] = "Ϫ"
+	codeMap[43] = "Ћ"
+	codeMap[44] = "Џ"
+	codeMap[45] = "Ы"
+	codeMap[46] = "Э"
+	codeMap[47] = "Ю"
+	codeMap[48] = "Ѥ"
+	codeMap[49] = "Ҧ"
+	codeMap[50] = "Բ"
+	codeMap[51] = "Գ"
+	codeMap[52] = "Դ"
+	codeMap[53] = "Ե"
+	codeMap[54] = "Ը"
+	codeMap[55] = "Թ"
+	codeMap[56] = "Ժ"
+	codeMap[57] = "Ի"
+	codeMap[58] = "Հ"
+	codeMap[59] = "Ն"
+	codeMap[60] = "Ո"
+	codeMap[61] = "Վ"
+	codeMap[62] = "Ւ"
+	codeMap[63] = "Ֆ"
 	if val, ok := codeMap[value]; ok {
 		return val
 	}
@@ -262,36 +262,36 @@ func hashCode(code string) int {
 	valueMap["X"] = 31
 	valueMap["Y"] = 32
 	valueMap["Z"] = 33
-	valueMap["%"] = 34
-	valueMap["@"] = 35
-	valueMap["#"] = 36
-	valueMap["$"] = 37
-	valueMap["y"] = 38
-	valueMap["~"] = 39
-	valueMap["_"] = 40
-	valueMap["$"] = 41
-	valueMap["a"] = 42
-	valueMap["b"] = 43
-	valueMap["c"] = 44
-	valueMap["d"] = 45
-	valueMap["e"] = 46
-	valueMap["f"] = 47
-	valueMap["g"] = 48
-	valueMap["h"] = 49
-	valueMap["j"] = 50
-	valueMap["k"] = 51
-	valueMap["z"] = 52
-	valueMap["m"] = 53
-	valueMap["n"] = 54
-	valueMap["p"] = 55
-	valueMap["q"] = 56
-	valueMap["r"] = 57
-	valueMap["s"] = 58
-	valueMap["t"] = 59
-	valueMap["u"] = 60
-	valueMap["v"] = 61
-	valueMap["w"] = 62
-	valueMap["x"] = 63
+	valueMap["Δ"] = 34
+	valueMap["Λ"] = 35
+	valueMap["Ξ"] = 36
+	valueMap["Σ"] = 37
+	valueMap["Φ"] = 38
+	valueMap["Ψ"] = 39
+	valueMap["Ω"] = 40
+	valueMap["Ϣ"] = 41
+	valueMap["Ϫ"] = 42
+	valueMap["Ћ"] = 43
+	valueMap["Џ"] = 44
+	valueMap["Ы"] = 45
+	valueMap["Э"] = 46
+	valueMap["Ю"] = 47
+	valueMap["Ѥ"] = 48
+	valueMap["Ҧ"] = 49
+	valueMap["Բ"] = 50
+	valueMap["Գ"] = 51
+	valueMap["Դ"] = 52
+	valueMap["Ե"] = 53
+	valueMap["Ը"] = 54
+	valueMap["Թ"] = 55
+	valueMap["Ժ"] = 56
+	valueMap["Ի"] = 57
+	valueMap["Հ"] = 58
+	valueMap["Ն"] = 59
+	valueMap["Ո"] = 60
+	valueMap["Վ"] = 61
+	valueMap["Ւ"] = 62
+	valueMap["Ֆ"] = 63
 
 	if val, ok := valueMap[code]; ok {
 		return val
@@ -306,3 +306,86 @@ func ToCode(i int) string {
 func ValueOf(s string) int {
 	return New().Set(s).Value()
 }
+
+/*
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+A
+B
+C
+D
+E
+F
+G
+H
+J
+K
+L
+M
+N
+P
+Q
+R
+S
+T
+U
+V
+W
+X
+Y
+Z
+Δ
+Λ
+Ξ
+Σ
+Φ
+Ψ
+Ω
+Ϣ
+Ϫ
+Ћ
+Џ
+Ы
+Э
+Ю
+Ѥ
+Ҧ
+Բ
+Գ
+Դ
+Ե
+Ը
+Թ
+Ժ
+Ի
+Հ
+Ն
+Ո
+Վ
+Ւ
+Ֆ
+
+///////////////
+Բ Գ Դ Ե Ը Թ Ժ Ի
+Ⴀ Ⴁ Ⴂ Ⴃ Ⴄ Ⴅ Ⴆ Ⴇ Ⴈ Ⴉ Ⴊ Ⴋ Ⴌ Ⴍ Ⴎ Ⴏ
+ㄅ ㄆ ㄇ ㄈ ㄉ ㄊ
+ㄋ ㄌ ㄍ ㄎ ㄏ ㄐ
+ㄑ ㄓ ㄔ ㄕ ㄖ ㄙ
+ㄜ ㄝ ㄞ ㄟ ㄠ ㄡ
+ㄢ ㄤ ㄥ ㄦ ㄩ ㄪ
+ㄫ ㄭ
+
+
+Y Z % @ # $ y ~
+_ $ a b c d e f
+g h j k z m n p
+q r s t u v w x
+*/

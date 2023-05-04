@@ -40,20 +40,20 @@ type GeneTemplate interface { //фактически это 2 стринга. б
 	Variations() string
 }
 
-// type Homeworld interface {
-// 	UWP() string
-// 	TC() []string
-// }
+type Homeworld interface {
+	//UWP() string
+	ListTC() []int
+}
 
 //func New(geneTemplate genetics.Base, homeworld ) (*pawn, error) {
 
-func New(controller int, gt GeneTemplate, homeworldTradeCodes []string) (*pawn, error) {
+func New(controller int, gt GeneTemplate, hw Homeworld) (*pawn, error) {
 	chr := pawn{}
 	chr.controlType = controller
 	if err := chr.Characteristics(gt); err != nil {
 		return &chr, err
 	}
-	if err := chr.HomeworldSkills(homeworldTradeCodes); err != nil {
+	if err := chr.HomeworldSkills(hw.ListTC()); err != nil {
 		return &chr, err
 	}
 
@@ -74,8 +74,7 @@ func (chr *pawn) SkillSet() error {
 	return nil
 }
 
-func (chr *pawn) HomeworldSkills(homeworldTradeCodes []string) error {
-	fmt.Println(homeworldTradeCodes)
+func (chr *pawn) HomeworldSkills(homeworldTradeCodes []int) error {
 	set, err := skillset.NewSkillSet()
 	if err != nil {
 		return errmaker.ErrorFrom(err, homeworldTradeCodes)
