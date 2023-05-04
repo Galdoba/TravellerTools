@@ -211,36 +211,44 @@ type StarPlanetOrbitsMap struct {
 	ByCode map[int]orbitPlanetary
 }
 
+func NewPlanetOrbit(dice *dice.Dicepool, orbitNbr int) *planetOrbit {
+	orbit := planetOrbit{}
+	orbit.positionCode = orbitNbr
+	orbit.distance = decimalOrbit2(orbitNbr, dice.Flux())
+	return &orbit
+}
+
+func (orbit *planetOrbit) fillInfo(pair star.StarBody) {
+	orbit.parent = pair
+	if orbit.distance < pair.InnerLimit() {
+		orbit.info = "vaporized"
+	}
+	if orbit.distance >= pair.InnerLimit() && orbit.distance < pair.HabitableLow()/3*2 {
+		orbit.info = "inferno"
+	}
+	if orbit.distance > pair.HabitableLow()/2 && orbit.distance < pair.HabitableLow() {
+		orbit.info = "hot"
+	}
+	if orbit.distance > pair.HabitableLow() && orbit.distance < pair.HabitableHigh() {
+		orbit.info = "habitable"
+	}
+	if orbit.distance > pair.HabitableHigh() {
+		orbit.info = "cold"
+	}
+	if orbit.distance > pair.HabitableHigh()/3*5 {
+		orbit.info = "frozen"
+	}
+	if orbit.distance > pair.OuterLimit()*8 {
+		orbit.info = "rogue"
+	}
+}
+
 func StarPlanetOrbits(dice *dice.Dicepool, pair star.StarBody) map[int]*planetOrbit {
 	spoMap := make(map[int]*planetOrbit)
 	for i := 0; i <= 20; i++ {
-		orbit := planetOrbit{}
-		orbit.parent = pair
-		orbit.positionCode = i
-		orbit.distance = decimalOrbit2(i, dice.Flux())
-
-		if orbit.distance < pair.InnerLimit() {
-			orbit.info = "vaporized"
-		}
-		if orbit.distance >= pair.InnerLimit() && orbit.distance < pair.HabitableLow()/3*2 {
-			orbit.info = "inferno"
-		}
-		if orbit.distance > pair.HabitableLow()/2 && orbit.distance < pair.HabitableLow() {
-			orbit.info = "hot"
-		}
-		if orbit.distance > pair.HabitableLow() && orbit.distance < pair.HabitableHigh() {
-			orbit.info = "habitable"
-		}
-		if orbit.distance > pair.HabitableHigh() {
-			orbit.info = "cold"
-		}
-		if orbit.distance > pair.HabitableHigh()/3*5 {
-			orbit.info = "frozen"
-		}
-		if orbit.distance > pair.OuterLimit()*8 {
-			orbit.info = "rogue"
-		}
-		spoMap[orbit.positionCode] = &orbit
+		orbit := NewPlanetOrbit(dice, i)
+		orbit.fillInfo(pair)
+		spoMap[orbit.positionCode] = orbit
 	}
 
 	return spoMap

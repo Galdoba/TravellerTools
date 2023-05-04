@@ -54,6 +54,21 @@ func UWPkeys() []string {
 	}
 }
 
+func UWPbasic() []string {
+	return []string{
+		KEY_PLANETARY_ORBIT,
+		KEY_SATELITE_ORBIT,
+		KEY_HABITABLE_ZONE_VAR,
+		KEY_WORLDTYPE,
+		KEY_LIMIT_size,
+		KEY_SIZE,
+		KEY_ATMO,
+		KEY_HYDR,
+		KEY_LIFE_FACTOR,
+		KEY_LIFE_COMPATABILITY,
+	}
+}
+
 func UWP(profile Profile) string {
 	str := ""
 	for _, key := range []string{KEY_PORT, KEY_SIZE, KEY_ATMO, KEY_HYDR, KEY_POPS, KEY_GOVR, KEY_LAWS, KEY_TL} {

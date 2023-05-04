@@ -49,10 +49,11 @@ GasG [0-4] h  - нужно только в рамках системы или д
 */
 
 type World struct {
-	Alias           string //Самоназвание
-	Catalog         string //номенклатурное название (121-311 Stargos A III 2d)
-	profile         profile.Profile
-	HomeStar        star.StarBody
+	Alias    string //Самоназвание
+	Catalog  string //номенклатурное название (A21-A11 Stargos A III 2d)
+	profile  profile.Profile
+	HomeStar star.StarBody
+	//Orbit           orbit.PlanetOrbit
 	prim            string
 	comp            string
 	nativeGenome    genetics.Genome
@@ -70,22 +71,18 @@ func (w *World) String() string {
 		satS = satHex
 	}
 
-	uwp := ""
-	uwp += w.Data(profile.KEY_PORT)
-	uwp += w.Data(profile.KEY_SIZE)
-	uwp += w.Data(profile.KEY_ATMO)
-	uwp += w.Data(profile.KEY_HYDR)
-	uwp += w.Data(profile.KEY_POPS)
-	uwp += w.Data(profile.KEY_GOVR)
-	uwp += w.Data(profile.KEY_LAWS)
-	uwp += "-"
-	uwp += w.Data(profile.KEY_TL)
+	uwp := w.UWP()
+	life := w.Data(profile.KEY_LIFE_FACTOR) + w.Data(profile.KEY_LIFE_COMPATABILITY)
 	tc := ""
 	for _, code := range w.classifications {
 		tc += classifications.Call(code).String() + " "
 	}
-	str := fmt.Sprintf("%v	%v	%v	%v", orbS, satS, uwp, tc)
+	str := fmt.Sprintf("%v	%v	%v [%v]	%v", orbS, satS, uwp, life, tc)
 	return str
+}
+
+func (w *World) Profile() profile.Profile {
+	return w.profile
 }
 
 type knownData struct {
@@ -126,7 +123,7 @@ New(Inject, Flags... bool) - Создаёт объект
 		Flags - Добавляет заранее известные флаги для планеты (например MW). используем Инекцию со значением FLAG_TRUE/FLAG_FALSE
 */
 
-func NewWorld(kndt []*knownData, flags ...bool) (*World, error) {
+func NewWorld(kndt ...*knownData) (*World, error) {
 	w := World{}
 	//w.Catalog = cat
 	w.profile = profile.New()
@@ -145,8 +142,8 @@ func NewWorld(kndt []*knownData, flags ...bool) (*World, error) {
 		return &w, errmaker.ErrorFrom(err, w.prim, w.comp)
 	}
 	w.HomeStar = pair
-	w.Generate(dice)
-	w.classifications = classifications.Evaluate(&w)
+	//w.Generate(dice)
+	//w.classifications = classifications.Evaluate(&w)
 	return &w, nil
 }
 
@@ -198,7 +195,69 @@ func (w *World) SetCatalogueName(cat string) {
 
 var ErrFullyGenerated = fmt.Errorf("World generation complete")
 
-func (w *World) Generate(dice *dice.Dicepool) error {
+func (w *World) GenerateBasic(dice *dice.Dicepool) error {
+	checkList := len(profile.UWPbasic())
+	injected := 0
+	for _, key := range profile.UWPbasic() {
+		var err error
+		if w.profile.Data(key) != nil {
+			injected++
+			continue
+		}
+		switch key {
+		default:
+			return fmt.Errorf(key, "generation is NOT IMPLEMENTED")
+			continue
+		case profile.KEY_PLANETARY_ORBIT:
+			err = w.generateOrbitAndHZvar(dice)
+		case profile.KEY_SATELITE_ORBIT:
+			err = w.generateSateliteOrbit(dice)
+		case profile.KEY_WORLDTYPE:
+			err = w.generateWorldType(dice)
+		case profile.KEY_LIMIT_size:
+			err = w.generateSizeLimit(dice)
+		case profile.KEY_SIZE:
+			err = w.generateSize(dice)
+		case profile.KEY_ATMO:
+			err = w.generateAtmo(dice)
+		case profile.KEY_HYDR:
+			err = w.generateHydr(dice)
+		case profile.KEY_LIFE_FACTOR:
+			err = w.generateDominantLife(dice)
+		case profile.KEY_LIFE_COMPATABILITY:
+			err = w.determineLifeCompatability(dice)
+			// case profile.KEY_LIMIT_pops:
+			// 	w.SetDefaultPopulationLimit()
+			// case profile.KEY_POPS:
+			// 	err = w.generatePops(dice)
+			// case profile.KEY_POP_DIGIT:
+			// 	err = w.generatePopDigit(dice)
+			// case profile.KEY_GOVR:
+			// 	err = w.generateGovr(dice)
+			// case profile.KEY_LAWS:
+			// 	err = w.generateLaws(dice)
+			// case profile.KEY_LIMIT_tl:
+			// 	err = w.setupMinimumTL()
+			// case profile.KEY_PORT:
+			// 	err = w.generatePort(dice)
+			// case profile.KEY_TL:
+			// 	err = w.generateTL(dice)
+			// case profile.KEY_BASES:
+			// 	err = w.generateBases(dice)
+		}
+		if err != nil {
+			return errmaker.ErrorFrom(err, key)
+		}
+		//fmt.Println("conclude generating", key, w.profile.Data(key).Code())
+	}
+	if injected == checkList {
+		return ErrFullyGenerated
+	}
+	//w.Orbit = orbit.NewPlanetOrbit(dice, w.HomeStar, w.profile.Data(profile.KEY_PLANETARY_ORBIT).Value())
+	return nil
+}
+
+func (w *World) GenerateFull(dice *dice.Dicepool) error {
 	checkList := len(profile.UWPkeys())
 	injected := 0
 	for _, key := range profile.UWPkeys() {
@@ -272,9 +331,15 @@ func (w *World) generateOrbitAndHZvar(dice *dice.Dicepool) error {
 		}
 		w.profile.Inject(profile.KEY_HABITABLE_ZONE_VAR, hzVar)
 		realOrbit := baseOrb + w.profile.Data(profile.KEY_HABITABLE_ZONE_VAR).Value() - 10
+		if realOrbit < 0 {
+			realOrbit = 0
+		}
 		w.profile.Inject(profile.KEY_PLANETARY_ORBIT, realOrbit)
 	case false:
 		baseOrb := planets.GeneratePlanetOrbit(dice)
+		if baseOrb.Value() < 0 {
+			baseOrb = ehex.New().Set(0)
+		}
 		hzVar := planets.HabitableZoneVar(starHZ, baseOrb.Value())
 		w.profile.Inject(profile.KEY_HABITABLE_ZONE_VAR, hzVar)
 		w.profile.Inject(profile.KEY_PLANETARY_ORBIT, baseOrb)
@@ -345,6 +410,9 @@ func (w *World) generateSize(dice *dice.Dicepool) error {
 		size = sizeLim
 	}
 	w.profile.Inject(profile.KEY_SIZE, size)
+	if size.Value() == 0 {
+		w.profile.Inject(profile.KEY_WORLDTYPE, "B")
+	}
 	return nil
 }
 
@@ -639,7 +707,6 @@ func (w *World) Data(key string) string {
 	}
 	if val, ok := w.Flag[key]; ok {
 		if val {
-			fmt.Println("Has Flag", val, key)
 			return key
 		}
 	}

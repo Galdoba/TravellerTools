@@ -2,24 +2,30 @@ package sizerelated
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/generation/orbit"
+	"github.com/Galdoba/TravellerTools/pkg/generation/star"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/devtools/errmaker"
+	"github.com/Galdoba/utils"
 )
 
 type sizeDetails struct {
-	complete            bool
-	diameter            int
-	dessitytype         string
-	dessity             float64
-	mass                float64
-	gravity             float64
-	orbitalPeriod       float64
-	rotationPeriod      float64
-	axialTilt           int
-	seismicStressFactor int
+	star            string
+	complete        bool
+	diameter        int
+	dessitytype     string
+	dessity         float64
+	mass            float64
+	gravity         float64
+	orbitalDistance float64
+	orbitalPeriod   float64
+	rotationPeriod  float64
+	//axialTilt           int
+	//seismicStressFactor int
 }
 
 func New() *sizeDetails {
@@ -44,7 +50,7 @@ Planet Type:
 
 */
 
-func (sd *sizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile) error {
+func (sd *sizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile, star star.StarBody) error {
 	worldtype := prfl.Data(profile.KEY_WORLDTYPE)
 	if worldtype == nil {
 		return errmaker.ErrorFrom(ErrNoData, profile.KEY_WORLDTYPE)
@@ -61,7 +67,20 @@ func (sd *sizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile
 	if hzVar == nil {
 		return errmaker.ErrorFrom(ErrNoData, profile.KEY_HABITABLE_ZONE_VAR)
 	}
+	planetOrbit := prfl.Data(profile.KEY_PLANETARY_ORBIT)
+	if planetOrbit == nil {
+		return errmaker.ErrorFrom(ErrNoData, profile.KEY_PLANETARY_ORBIT)
+	}
+	sateliteOrbit := prfl.Data(profile.KEY_SATELITE_ORBIT)
+	if sateliteOrbit == nil {
+		return errmaker.ErrorFrom(ErrNoData, profile.KEY_SATELITE_ORBIT)
+	}
+
+	if star == nil {
+		return errmaker.ErrorFrom(fmt.Errorf("star class not provided"))
+	}
 	//////////////////
+	sd.star = star.Class()
 	worldtypeCode := worldtype.Code()
 	switch worldtypeCode {
 	default:
@@ -75,6 +94,11 @@ func (sd *sizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile
 			sd.rollDiameter(dice, size),
 			sd.rollDesityType(dice, size, atmo, hzVar),
 			sd.rollDensity(dice),
+			sd.calculateWorldMass(size),
+			sd.calculateWorldGravity(size),
+			sd.rollOrbitalDistance(dice, planetOrbit),
+			sd.calculatePlanetaryOrbitalPeriod(star, sateliteOrbit),
+			sd.rollPlanetaryRotationPeriod(dice, star, sateliteOrbit),
 		} {
 			if err != nil {
 				return errmaker.ErrorFrom(err)
@@ -128,7 +152,7 @@ func (sd *sizeDetails) rollDesityType(dice *dice.Dicepool, size, atmo, hzVar ehe
 	}
 	r := dice.Sroll("2d6") + dm
 	switch {
-	case r <= -1:
+	case r <= 1:
 		sd.dessitytype = DENSITY_HEAVY_CORE
 	case r >= 2 && r <= 10:
 		sd.dessitytype = DENSITY_MOLTEN_CORE
@@ -157,6 +181,117 @@ func (sd *sizeDetails) rollDensity(dice *dice.Dicepool) error {
 	}
 	sd.dessity = densitySl[r-3]
 	return nil
+}
+
+func (sd *sizeDetails) calculateWorldMass(size ehex.Ehex) error {
+	if sd.dessity <= 0 {
+		return fmt.Errorf("density is <= 0")
+	}
+	r := float64(size.Value())
+	m := sd.dessity * (math.Pow((r / 8.0), 3))
+	sd.mass = m
+	sd.mass = utils.RoundFloat64(sd.mass, 3)
+	return nil
+}
+
+func (sd *sizeDetails) calculateWorldGravity(size ehex.Ehex) error {
+	if sd.mass <= 0 {
+		return fmt.Errorf("mass is <= 0")
+	}
+	r := float64(size.Value())
+	m := sd.mass * (64.0 / (math.Pow((r), 2)))
+	sd.gravity = m
+	sd.gravity = utils.RoundFloat64(sd.gravity, 2)
+	return nil
+}
+
+func (sd *sizeDetails) rollOrbitalDistance(dice *dice.Dicepool, planetOrbit ehex.Ehex) error {
+	orbit := orbit.NewPlanetOrbit(dice, planetOrbit.Value())
+	sd.orbitalDistance = orbit.Distance()
+	return nil
+}
+
+func (sd *sizeDetails) calculatePlanetaryOrbitalPeriod(star star.StarBody, sateliteOrbit ehex.Ehex) error {
+	if sateliteOrbit.Code() != "*" {
+		return nil
+	}
+	d := sd.orbitalDistance
+	m := star.Mass()
+	p := (math.Sqrt(math.Pow(d, 3) / m)) * 365.25
+	p = utils.RoundFloat64(p, 1)
+	sd.orbitalPeriod = p
+	return nil
+}
+
+func (sd *sizeDetails) rollPlanetaryRotationPeriod(dice *dice.Dicepool, star star.StarBody, sateliteOrbit ehex.Ehex) error {
+	if sateliteOrbit.Code() != "*" {
+		return nil
+	}
+	d := sd.orbitalDistance
+	m := star.Mass()
+	w := float64(dice.Sroll("4d10+5"))
+	p := w + (m / d)
+	if p > 45 {
+		r := dice.Sroll("2d6")
+		switch r {
+		case 2:
+		case 3:
+			p = float64(dice.Sroll("1d10") * 5)
+		case 4:
+			p = float64(dice.Sroll("1d10") * 10)
+		case 5:
+			p = float64(dice.Sroll("1d10") * 20)
+		case 6:
+			p = float64(dice.Sroll("1d10") * 30)
+		case 7:
+			p = float64(dice.Sroll("1d10")*24) + float64(dice.Sroll("1d24")-12) + float64(dice.Sroll("1d10")/10)
+		case 8:
+			p = float64(dice.Sroll("1d10")*24*5) + float64(dice.Sroll("1d24")-12) + float64(dice.Sroll("1d10")/10)
+		case 9:
+			p = float64(dice.Sroll("1d10")*24*10) + float64(dice.Sroll("1d24")-12) + float64(dice.Sroll("1d10")/10)
+		case 10:
+			p = float64(dice.Sroll("1d10")*24*20) + float64(dice.Sroll("1d24")-12) + float64(dice.Sroll("1d10")/10)
+		case 11:
+			p = float64(dice.Sroll("1d10")*24*30) + float64(dice.Sroll("1d24")-12) + float64(dice.Sroll("1d10")/10)
+		case 12:
+			p = float64(dice.Sroll("1d10")*24*20) + float64(dice.Sroll("1d24")-12) + float64(dice.Sroll("1d10")/10)
+		}
+		if p/24 >= sd.orbitalPeriod {
+			p = sd.orbitalPeriod * 24
+		}
+	}
+	p = utils.RoundFloat64(p, 1)
+	sd.rotationPeriod = p
+	return nil
+}
+
+func rollAxialTilt(dice *dice.Dicepool) int {
+	switch dice.Sroll("2d10") {
+	case 2, 3, 4, 5:
+		return 0 + dice.Sroll("1d10-1")
+	case 6, 7, 8, 9:
+		return 10 + dice.Sroll("1d10-1")
+	case 10, 11, 12, 13:
+		return 20 + dice.Sroll("1d10-1")
+	case 14, 15, 16, 17:
+		return 30 + dice.Sroll("1d10-1")
+	case 18, 19:
+		return 40 + dice.Sroll("1d10-1")
+	case 20:
+		switch dice.Sroll("1d6") {
+		case 1, 2:
+			return 50 + dice.Sroll("1d10-1")
+		case 3:
+			return 60 + dice.Sroll("1d10-1")
+		case 4:
+			return 70 + dice.Sroll("1d10-1")
+		case 5:
+			return 80 + dice.Sroll("1d10-1")
+		case 6:
+			return 90
+		}
+	}
+	return -1
 }
 
 type SizeRelatedDetails interface {

@@ -1258,6 +1258,11 @@ func worldClassificationSlice(w world) []string {
 	} else {
 		sl = append(sl, "-")
 	}
+	for i := range sl {
+		if sl[i] == "" {
+			sl[i] = "-"
+		}
+	}
 	return sl
 }
 
