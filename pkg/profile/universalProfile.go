@@ -99,13 +99,13 @@ func New() *universalProfile {
 	return &up
 }
 
-func validKeys(e string) []string {
-	switch e {
-	default:
-		return []string{}
-	case PROFILE_PERSONALITY:
-		return []string{KEY_C1, KEY_C2, KEY_C3, KEY_C4, KEY_C5, KEY_C6, KEY_CP, KEY_CS}
-	case PROFILE_WORLD:
-		return []string{KEY_PORT, KEY_SIZE, KEY_ATMO, KEY_HYDR, KEY_POPS, KEY_GOVR, KEY_LAWS, KEY_TL}
-	}
-}
+// func validKeys(e string) []string {
+// 	switch e {
+// 	default:
+// 		return []string{}
+// 	case PROFILE_PERSONALITY:
+// 		return []string{KEY_C1, KEY_C2, KEY_C3, KEY_C4, KEY_C5, KEY_C6, KEY_CP, KEY_CS}
+// 	case PROFILE_WORLD:
+// 		return []string{KEY_PORT, KEY_SIZE, KEY_ATMO, KEY_HYDR, KEY_POPS, KEY_GOVR, KEY_LAWS, KEY_TL}
+// 	}
+// }

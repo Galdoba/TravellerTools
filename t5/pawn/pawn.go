@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
+	"github.com/Galdoba/TravellerTools/t5/genetics"
 	"github.com/Galdoba/TravellerTools/t5/pawn/characteristic/charset"
 	"github.com/Galdoba/TravellerTools/t5/pawn/skill"
-	"github.com/Galdoba/TravellerTools/t5/pawn/skill/skillset"
-	"github.com/Galdoba/devtools/errmaker"
 )
 
 const (
@@ -21,9 +21,37 @@ const (
 type pawn struct {
 	controlType int
 	name        string
+	profile     profile.Profile
 	chrSet      *charset.CharSet
-	sklSet      *skillset.SkillSet
+	//sklSet      *skillset.SkillSet
+	sklSet skill.SkillSet
 }
+
+func (p *pawn) Skills() map[int]*skill.Skill {
+	skillSet := make(map[int]*skill.Skill)
+	for i := skill.ID_Actor; i < skill.ID_END; i++ {
+		sklVal := p.profile.Data(skill.NameByID(i))
+		if sklVal != nil {
+			skl, err := skill.New(i)
+
+			if err != nil {
+				panic(err.Error())
+			}
+			skl.ValueInt = sklVal.Value()
+			skillSet[i] = skl
+		}
+	}
+	return nil
+}
+
+/*
+Skills()
+CRUD
+pawn.AddSkill(id int)       //Create
+pawn.Skill(id int) int      //Read
+pawn.SetSkillValue(id int)  //Update
+pawn.DeleteSkill(id int)    //Delete
+*/
 
 /*
 A Characteristics
@@ -35,10 +63,10 @@ E Muster Out
 
 */
 
-type GeneTemplate interface { //фактически это 2 стринга. база находится в генетике
-	Profile() string
-	Variations() string
-}
+// type GeneTemplate interface { //фактически это 2 стринга. база находится в генетике
+// 	Profile() string
+// 	Variations() string
+// }
 
 type Homeworld interface {
 	//UWP() string
@@ -47,72 +75,73 @@ type Homeworld interface {
 
 //func New(geneTemplate genetics.Base, homeworld ) (*pawn, error) {
 
-func New(controller int, gt GeneTemplate, hw Homeworld) (*pawn, error) {
+func New(controller int, gt genetics.Genome, hw Homeworld) (*pawn, error) {
 	chr := pawn{}
 	chr.controlType = controller
 	if err := chr.Characteristics(gt); err != nil {
 		return &chr, err
 	}
-	if err := chr.HomeworldSkills(hw.ListTC()); err != nil {
-		return &chr, err
-	}
+	// if err := chr.HomeworldSkills(hw.ListTC()); err != nil {
+	// 	return &chr, err
+	// }
 
 	return &chr, nil
 }
 
-func (chr *pawn) Characteristics(genetics GeneTemplate) error {
+func (chr *pawn) Characteristics(genetics genetics.Genome) error {
 	chr.chrSet = charset.NewCharSet(dice.New(), genetics.Profile(), genetics.Variations())
 	return nil
 }
 
 func (chr *pawn) SkillSet() error {
-	sklset, err := skillset.NewSkillSet()
-	if err != nil {
-		return errmaker.ErrorFrom(err)
-	}
-	chr.sklSet = sklset
+	chr.sklSet = skill.NewSkillSet(chr.profile)
+	// sklset, err := skillset.NewSkillSet()
+	// if err != nil {
+	// 	return errmaker.ErrorFrom(err)
+	// }
+	// chr.sklSet = sklset
 	return nil
 }
 
-func (chr *pawn) HomeworldSkills(homeworldTradeCodes []int) error {
-	set, err := skillset.NewSkillSet()
-	if err != nil {
-		return errmaker.ErrorFrom(err, homeworldTradeCodes)
-	}
-	chr.sklSet = set
-	for _, tCode := range homeworldTradeCodes {
-		idArray := skill.TradeCode2SkillID(tCode)
-		for _, id := range idArray {
-			if id == skill.ID_NONE {
-				continue //skip codes which gives no skill
-			}
-			if err := chr.sklSet.Increase(id); err != nil {
-				for err != nil {
-					switch err {
-					case skillset.KKSruleNotAllow:
-						id, err = ChoseKnowledgeID(chr.controlType, id)
-						chr.sklSet.Increase(id)
-					case skillset.MustChooseErr:
-						id, err = ChooseExactSkillID(chr.controlType, id)
-						err = chr.sklSet.Increase(id)
-					}
-				}
-				// if err == skillset.MustChooseErr {
+// func (chr *pawn) HomeworldSkills(homeworldTradeCodes []int) error {
+// 	set, err := skillset.NewSkillSet()
+// 	if err != nil {
+// 		return errmaker.ErrorFrom(err, homeworldTradeCodes)
+// 	}
+// 	chr.sklSet = set
+// 	for _, tCode := range homeworldTradeCodes {
+// 		idArray := skill.TradeCode2SkillID(tCode)
+// 		for _, id := range idArray {
+// 			if id == skill.ID_NONE {
+// 				continue //skip codes which gives no skill
+// 			}
+// 			if err := chr.sklSet.Increase(id); err != nil {
+// 				for err != nil {
+// 					switch err {
+// 					case skillset.KKSruleNotAllow:
+// 						id, err = ChoseKnowledgeID(chr.controlType, id)
+// 						chr.sklSet.Increase(id)
+// 					case skillset.MustChooseErr:
+// 						id, err = ChooseExactSkillID(chr.controlType, id)
+// 						err = chr.sklSet.Increase(id)
+// 					}
+// 				}
+// 				// if err == skillset.MustChooseErr {
 
-				// 	id, err = ChooseExactSkillID(chr.controlType, id)
-				// 	err = chr.sklSet.Increase(id)
-				// 	if err == skillset.KKSruleNotAllow {
+// 				// 	id, err = ChooseExactSkillID(chr.controlType, id)
+// 				// 	err = chr.sklSet.Increase(id)
+// 				// 	if err == skillset.KKSruleNotAllow {
 
-				// 		id, err = ChoseKnowledgeID(chr.controlType, id)
-				// 		chr.sklSet.Increase(id)
-				// 	}
-				// }
+// 				// 		id, err = ChoseKnowledgeID(chr.controlType, id)
+// 				// 		chr.sklSet.Increase(id)
+// 				// 	}
+// 				// }
 
-			}
-		}
-	}
-	return nil
-}
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
 
 func ChooseExactSkillID(controler, oldID int) (int, error) {
 	idList := []int{}

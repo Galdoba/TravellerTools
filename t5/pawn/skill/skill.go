@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Galdoba/TravellerTools/pkg/classifications"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 )
 
 const (
@@ -197,7 +198,7 @@ type Skill struct {
 	group               string
 	Default             bool
 	KKSrule             bool
-	value               int
+	ValueInt            int
 }
 
 func New(id int) (*Skill, error) {
@@ -1106,21 +1107,21 @@ func (sk *Skill) SType() string {
 }
 
 func (sk *Skill) Value() int {
-	return sk.value
+	return sk.ValueInt
 }
 
 func (sk *Skill) Learn() error {
 	switch sk.sklType {
 	case TYPE_SKILL, TYPE_TALENT:
-		if sk.value >= 15 {
+		if sk.ValueInt >= 15 {
 			return fmt.Errorf("cap reached")
 		}
 	case TYPE_KNOWLEDGE:
-		if sk.value >= 6 {
+		if sk.ValueInt >= 6 {
 			return fmt.Errorf("cap reached")
 		}
 	}
-	sk.value++
+	sk.ValueInt++
 	return nil
 }
 
@@ -1219,4 +1220,23 @@ func TradeCode2SkillID(tc int) []int {
 	case classifications.Wa:
 		return []int{ID_Seafarer}
 	}
+}
+
+type SkillSet map[int]*Skill
+
+func NewSkillSet(prf profile.Profile) SkillSet {
+	skillSet := SkillSet{}
+	for i := ID_Actor; i < ID_END; i++ {
+		sklVal := prf.Data(NameByID(i))
+		if sklVal != nil {
+			skl, err := New(i)
+
+			if err != nil {
+				panic(err.Error())
+			}
+			skl.ValueInt = sklVal.Value()
+			skillSet[i] = skl
+		}
+	}
+	return skillSet
 }

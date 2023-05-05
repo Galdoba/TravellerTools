@@ -5,15 +5,176 @@ import (
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
+)
+
+const (
+	CHAR_STRENGHT = iota
+	CHAR_DEXTERITY
+	CHAR_AGILITY
+	CHAR_GRACE
+	CHAR_ENDURANCE
+	CHAR_STAMINA
+	CHAR_VIGOR
+	CHAR_INTELLIGENCE
+	CHAR_EDUCATION
+	CHAR_TRAINING
+	CHAR_INSTINCT
+	CHAR_SOCIAL
+	CHAR_CHARISMA
+	CHAR_CASTE
+	CHAR_SANITY
+	CHAR_PSIONICS
+	KEY_GENE_PRF_1 = "GenePrf1"
+	KEY_GENE_PRF_2 = "GenePrf2"
+	KEY_GENE_PRF_3 = "GenePrf3"
+	KEY_GENE_PRF_4 = "GenePrf4"
+	KEY_GENE_PRF_5 = "GenePrf5"
+	KEY_GENE_PRF_6 = "GenePrf6"
+	KEY_GENE_MAP_1 = "GeneMap1"
+	KEY_GENE_MAP_2 = "GeneMap2"
+	KEY_GENE_MAP_3 = "GeneMap3"
+	KEY_GENE_MAP_4 = "GeneMap4"
+	KEY_GENE_MAP_5 = "GeneMap5"
+	KEY_GENE_MAP_6 = "GeneMap6"
 )
 
 func NewTemplate(profile, variations string) *GeneTemplate {
-	return &GeneTemplate{profile, variations}
+	gp := &GeneTemplate{profile, variations}
+	return gp
+}
+
+func EmptyTemplate() *GeneTemplate {
+	gp := &GeneTemplate{}
+	return gp
+}
+
+func IsEmpty(gp Genome) bool {
+	if gp.Profile()+gp.Variations() == "" {
+		return true
+	}
+	return false
+}
+
+func Check(gp *GeneTemplate) error {
+	for i, p := range strings.Split(gp.Profile(), "") {
+		correctValues := []string{}
+		switch i {
+		case 0:
+			correctValues = []string{"S"}
+		case 1:
+			correctValues = []string{"D", "A", "G"}
+		case 2:
+			correctValues = []string{"E", "S", "V"}
+		case 3:
+			correctValues = []string{"I"}
+		case 4:
+			correctValues = []string{"E", "T", "I"}
+		case 6:
+			correctValues = []string{"S", "C", "K"}
+		}
+		if !isInListStr(p, correctValues) {
+			return fmt.Errorf("gp.Profile(): position %v is incorect", i)
+		}
+	}
+	for i, p := range strings.Split(gp.Variations(), "") {
+		correctValues := []string{}
+		switch i {
+		case 0:
+			correctValues = []string{"1", "2", "3", "4", "5", "6", "7", "8"}
+		case 1:
+			correctValues = []string{"1", "2", "3"}
+		case 2:
+			correctValues = []string{"1", "2", "3"}
+		case 3:
+			correctValues = []string{"1", "2", "3"}
+		case 4:
+			correctValues = []string{"1", "2", "3"}
+		case 6:
+			correctValues = []string{"1", "2"}
+		}
+		if !isInListStr(p, correctValues) {
+			return fmt.Errorf("gp.Variations(): position %v is incorect", i)
+		}
+	}
+	return nil
 }
 
 type GeneTemplate struct {
 	geneProf string
 	geneMap  string
+}
+
+type GeneProfile profile.Profile
+
+func HumanGeneData() (string, string) {
+	return "SDEIES", "222222"
+}
+
+func NewGeneData(prfl, variations string) GeneProfile {
+	gd := profile.New()
+	for i, p := range strings.Split(prfl, "") {
+		switch i {
+		case 0:
+			gd.Inject(KEY_GENE_PRF_1, CHAR_STRENGHT)
+		case 1:
+			switch p {
+			case "D":
+				gd.Inject(KEY_GENE_PRF_2, CHAR_DEXTERITY)
+			case "A":
+				gd.Inject(KEY_GENE_PRF_2, CHAR_AGILITY)
+			case "G":
+				gd.Inject(KEY_GENE_PRF_2, CHAR_GRACE)
+			}
+		case 2:
+			switch p {
+			case "E":
+				gd.Inject(KEY_GENE_PRF_3, CHAR_ENDURANCE)
+			case "S":
+				gd.Inject(KEY_GENE_PRF_3, CHAR_STAMINA)
+			case "V":
+				gd.Inject(KEY_GENE_PRF_3, CHAR_VIGOR)
+			}
+		case 3:
+			gd.Inject(KEY_GENE_PRF_4, CHAR_INTELLIGENCE)
+		case 4:
+			switch p {
+			case "E":
+				gd.Inject(KEY_GENE_PRF_5, CHAR_EDUCATION)
+			case "T":
+				gd.Inject(KEY_GENE_PRF_5, CHAR_TRAINING)
+			case "I":
+				gd.Inject(KEY_GENE_PRF_5, CHAR_INSTINCT)
+			}
+		case 5:
+			switch p {
+			case "S":
+				gd.Inject(KEY_GENE_PRF_6, CHAR_SOCIAL)
+			case "C":
+				gd.Inject(KEY_GENE_PRF_6, CHAR_CHARISMA)
+			case "K":
+				gd.Inject(KEY_GENE_PRF_6, CHAR_CASTE)
+			}
+
+		}
+	}
+	for i, v := range strings.Split(variations, "") {
+		switch i {
+		case 0:
+			gd.Inject(KEY_GENE_MAP_1, v)
+		case 1:
+			gd.Inject(KEY_GENE_MAP_2, v)
+		case 2:
+			gd.Inject(KEY_GENE_MAP_3, v)
+		case 3:
+			gd.Inject(KEY_GENE_MAP_4, v)
+		case 4:
+			gd.Inject(KEY_GENE_MAP_5, v)
+		case 5:
+			gd.Inject(KEY_GENE_MAP_6, v)
+		}
+	}
+	return gd
 }
 
 type Genome interface {

@@ -3,6 +3,8 @@ package skill
 import (
 	"fmt"
 	"testing"
+
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 )
 
 func TestSkill(t *testing.T) {
@@ -13,6 +15,9 @@ func TestSkill(t *testing.T) {
 			fmt.Println(err.Error())
 		}
 	}
+	pr := profile.New()
+	pr.Inject(NameByID(17), 5)
+	NewSkillSet(pr)
 }
 
 func TestSkillNameLenLongest(t *testing.T) {
