@@ -1,7 +1,7 @@
 package education
 
 import (
-	"github.com/Galdoba/TravellerTools/t5/pawn/characteristic/charset"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 )
 
 const (
@@ -12,16 +12,16 @@ const (
 )
 
 type educationalProcess struct {
-	CHAR_BASE       int
-	Characteristics charset.CharSet
-	Waivers         int
+	CHAR_BASE int
+	Character profile.Profile
+	Waivers   int
 }
 
 type institution struct {
 	validCHAR int
 }
 
-func New() {
+func New(char profile.Profile) {
 	ep := educationalProcess{}
-	ep.Characteristics.String()
+	ep.Character = char
 }

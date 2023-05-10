@@ -1222,21 +1222,92 @@ func TradeCode2SkillID(tc int) []int {
 	}
 }
 
-type SkillSet map[int]*Skill
+type SkillSet profile.Profile
+
+func Increase(sklset SkillSet, id int) error {
+	if err := skillIncreaseErr(sklset, id); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DefaultSkills() []int {
+	ids := []int{}
+	for i := ID_NONE; i < ID_END; i++ {
+		skl, err := New(i)
+		if err != nil {
+			continue
+		}
+		if !skl.Default {
+			continue
+		}
+		ids = append(ids, i)
+	}
+	return ids
+}
 
 func NewSkillSet(prf profile.Profile) SkillSet {
-	skillSet := SkillSet{}
+	skillSet := profile.New()
 	for i := ID_Actor; i < ID_END; i++ {
-		sklVal := prf.Data(NameByID(i))
-		if sklVal != nil {
-			skl, err := New(i)
-
-			if err != nil {
-				panic(err.Error())
-			}
-			skl.ValueInt = sklVal.Value()
-			skillSet[i] = skl
+		skill := prf.Data(NameByID(i))
+		if skill != nil {
+			value := skill.Value()
+			skillSet.Inject(NameByID(i), value)
 		}
 	}
 	return skillSet
 }
+
+func kksRuleAllow(skillSet SkillSet, id int) bool {
+	key := NameByID(id)
+	skl, err := New(id)
+	if err != nil {
+		return false
+	}
+
+	if skl.sklType != TYPE_SKILL {
+		return true
+	}
+	if len(skl.AssociatedKnowledge) == 0 {
+		return true
+	}
+	value := 0
+	actual := skillSet.Data(key)
+	if actual != nil {
+		value = skillSet.Data(key).Value()
+	}
+
+	if value < sumOfSkills(skillSet, skl.AssociatedKnowledge)/2 {
+		return true
+	}
+	return false
+}
+
+func sumOfSkills(sklSt SkillSet, skls []int) int {
+	sum := 0
+	for _, id := range skls {
+		key := NameByID(id)
+		sklVal := sklSt.Data(key)
+		if sklVal == nil {
+			continue
+		}
+		sum += sklVal.Value()
+	}
+	return sum
+}
+
+var MustChooseErr = fmt.Errorf("must choose exact skill")
+var KKSruleNotAllow = fmt.Errorf("kks rule not allow")
+
+func skillIncreaseErr(skillset SkillSet, id int) error {
+	switch id {
+	case One_Art, One_Trade:
+		return MustChooseErr
+	}
+	if !kksRuleAllow(skillset, id) {
+		return KKSruleNotAllow
+	}
+	return nil
+}
+
+//////////////////////////////////////////

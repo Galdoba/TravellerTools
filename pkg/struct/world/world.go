@@ -56,7 +56,7 @@ type World struct {
 	//Orbit           orbit.PlanetOrbit
 	prim            string
 	comp            string
-	nativeGenome    genetics.Genome
+	nativeGenome    genetics.GeneProfile
 	Flag            map[string]bool
 	classifications []int
 }

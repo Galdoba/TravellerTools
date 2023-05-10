@@ -1,7 +1,6 @@
 package genetics
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
@@ -39,15 +38,15 @@ const (
 	KEY_GENE_MAP_6 = "GeneMap6"
 )
 
-func NewTemplate(profile, variations string) *GeneTemplate {
-	gp := &GeneTemplate{profile, variations}
-	return gp
-}
+// func NewTemplate(profile, variations string) *GeneTemplate {
+// 	gp := &GeneTemplate{profile, variations}
+// 	return gp
+// }
 
-func EmptyTemplate() *GeneTemplate {
-	gp := &GeneTemplate{}
-	return gp
-}
+// func EmptyTemplate() *GeneTemplate {
+// 	gp := &GeneTemplate{}
+// 	return gp
+// }
 
 func IsEmpty(gp Genome) bool {
 	if gp.Profile()+gp.Variations() == "" {
@@ -56,56 +55,80 @@ func IsEmpty(gp Genome) bool {
 	return false
 }
 
-func Check(gp *GeneTemplate) error {
-	for i, p := range strings.Split(gp.Profile(), "") {
-		correctValues := []string{}
-		switch i {
-		case 0:
-			correctValues = []string{"S"}
-		case 1:
-			correctValues = []string{"D", "A", "G"}
-		case 2:
-			correctValues = []string{"E", "S", "V"}
-		case 3:
-			correctValues = []string{"I"}
-		case 4:
-			correctValues = []string{"E", "T", "I"}
-		case 6:
-			correctValues = []string{"S", "C", "K"}
-		}
-		if !isInListStr(p, correctValues) {
-			return fmt.Errorf("gp.Profile(): position %v is incorect", i)
-		}
-	}
-	for i, p := range strings.Split(gp.Variations(), "") {
-		correctValues := []string{}
-		switch i {
-		case 0:
-			correctValues = []string{"1", "2", "3", "4", "5", "6", "7", "8"}
-		case 1:
-			correctValues = []string{"1", "2", "3"}
-		case 2:
-			correctValues = []string{"1", "2", "3"}
-		case 3:
-			correctValues = []string{"1", "2", "3"}
-		case 4:
-			correctValues = []string{"1", "2", "3"}
-		case 6:
-			correctValues = []string{"1", "2"}
-		}
-		if !isInListStr(p, correctValues) {
-			return fmt.Errorf("gp.Variations(): position %v is incorect", i)
-		}
-	}
-	return nil
-}
+// func Check(gp *GeneTemplate) error {
+// 	for i, p := range strings.Split(gp.Profile(), "") {
+// 		correctValues := []string{}
+// 		switch i {
+// 		case 0:
+// 			correctValues = []string{"S"}
+// 		case 1:
+// 			correctValues = []string{"D", "A", "G"}
+// 		case 2:
+// 			correctValues = []string{"E", "S", "V"}
+// 		case 3:
+// 			correctValues = []string{"I"}
+// 		case 4:
+// 			correctValues = []string{"E", "T", "I"}
+// 		case 6:
+// 			correctValues = []string{"S", "C", "K"}
+// 		}
+// 		if !isInListStr(p, correctValues) {
+// 			return fmt.Errorf("gp.Profile(): position %v is incorect", i)
+// 		}
+// 	}
+// 	for i, p := range strings.Split(gp.Variations(), "") {
+// 		correctValues := []string{}
+// 		switch i {
+// 		case 0:
+// 			correctValues = []string{"1", "2", "3", "4", "5", "6", "7", "8"}
+// 		case 1:
+// 			correctValues = []string{"1", "2", "3"}
+// 		case 2:
+// 			correctValues = []string{"1", "2", "3"}
+// 		case 3:
+// 			correctValues = []string{"1", "2", "3"}
+// 		case 4:
+// 			correctValues = []string{"1", "2", "3"}
+// 		case 6:
+// 			correctValues = []string{"1", "2"}
+// 		}
+// 		if !isInListStr(p, correctValues) {
+// 			return fmt.Errorf("gp.Variations(): position %v is incorect", i)
+// 		}
+// 	}
+// 	return nil
+// }
 
-type GeneTemplate struct {
-	geneProf string
-	geneMap  string
-}
+// type GeneTemplate struct {
+// 	geneProf string
+// 	geneMap  string
+// }
 
 type GeneProfile profile.Profile
+
+// func GenomeString(gp GeneProfile) string {
+// 	str := ""
+// 	val := "?"
+// 	for _, key := range []string{
+// 		KEY_GENE_PRF_1, KEY_GENE_PRF_2, KEY_GENE_PRF_3, KEY_GENE_PRF_4, KEY_GENE_PRF_5, KEY_GENE_PRF_6,
+// 	} {
+// 		if gp.Data(key) == nil {
+// 			continue
+// 		}
+// 		switch key {
+// 		default:
+// 		case KEY_GENE_MAP_1, KEY_GENE_MAP_2, KEY_GENE_MAP_3, KEY_GENE_MAP_4, KEY_GENE_MAP_5, KEY_GENE_MAP_6:
+// 			switch gp.Data(key).Code() {
+// 			case "1", "2", "3", "4", "5", "6", "7", "8":
+// 				val = gp.Data(key).Code()
+// 			}
+
+// 		}
+// 		str += val
+// 		val = "?"
+// 	}
+// 	return str
+// }
 
 func HumanGeneData() (string, string) {
 	return "SDEIES", "222222"
@@ -182,42 +205,108 @@ type Genome interface {
 	Variations() string
 }
 
-func (gt *GeneTemplate) Profile() string {
-	return gt.geneProf
+func Profile(gp GeneProfile) string {
+	str := ""
+	val := "?"
+	for _, key := range []string{
+		KEY_GENE_PRF_1, KEY_GENE_PRF_2, KEY_GENE_PRF_3, KEY_GENE_PRF_4, KEY_GENE_PRF_5, KEY_GENE_PRF_6,
+	} {
+		if gp.Data(key) == nil {
+			//str += "?"
+			continue
+		}
+		switch key {
+		default:
+		case "-":
+			val = "-"
+		case KEY_GENE_PRF_1:
+			switch gp.Data(key).Value() {
+			case CHAR_STRENGHT:
+				val = "S"
+			}
+		case KEY_GENE_PRF_2:
+			switch gp.Data(key).Value() {
+			case CHAR_DEXTERITY:
+				val = "D"
+			case CHAR_AGILITY:
+				val = "A"
+			case CHAR_GRACE:
+				val = "G"
+			}
+		case KEY_GENE_PRF_3:
+			switch gp.Data(key).Value() {
+			case CHAR_ENDURANCE:
+				val = "E"
+			case CHAR_STAMINA:
+				val = "S"
+			case CHAR_VIGOR:
+				val = "V"
+			}
+		case KEY_GENE_PRF_4:
+			switch gp.Data(key).Value() {
+			case CHAR_INTELLIGENCE:
+				val = "I"
+			}
+		case KEY_GENE_PRF_5:
+			switch gp.Data(key).Value() {
+			case CHAR_EDUCATION:
+				val = "E"
+			case CHAR_TRAINING:
+				val = "T"
+			case CHAR_INSTINCT:
+				val = "I"
+			}
+		case KEY_GENE_PRF_6:
+			switch gp.Data(key).Value() {
+			case CHAR_SOCIAL:
+				val = "S"
+			case CHAR_CHARISMA:
+				val = "C"
+			case CHAR_CASTE:
+				val = "K"
+			}
+
+		}
+		str += val
+		val = "?"
+	}
+	return str
 }
 
-func (gt *GeneTemplate) Variations() string {
-	return gt.geneMap
+func Variations(gp GeneProfile) string {
+	str := ""
+	val := "?"
+	for _, key := range []string{
+		KEY_GENE_MAP_1, KEY_GENE_MAP_2, KEY_GENE_MAP_3, KEY_GENE_MAP_4, KEY_GENE_MAP_5, KEY_GENE_MAP_6,
+	} {
+		if gp.Data(key) == nil {
+			//str += "?"
+			continue
+		}
+		switch key {
+		case KEY_GENE_MAP_1, KEY_GENE_MAP_2, KEY_GENE_MAP_3, KEY_GENE_MAP_4, KEY_GENE_MAP_5, KEY_GENE_MAP_6:
+			switch gp.Data(key).Code() {
+			case "1", "2", "3", "4", "5", "6", "7", "8":
+				val = gp.Data(key).Code()
+			}
+
+		}
+		str += val
+		val = "?"
+	}
+	return str
 }
 
-func GeneTemplateHuman() *GeneTemplate {
-	return &GeneTemplate{"SDEIES", "222222"}
+func GeneTemplateHuman() GeneProfile {
+	gp := NewGeneData("SDEIES", "222222")
+	return gp
 }
 
-func GeneTemplateManual(genetics, geneMap, seed string) (GeneTemplate, error) {
-	gd := GeneTemplate{genetics, geneMap}
-	if genetics == "" {
-		gd.geneProf = randomGeneProfile(seed)
-
-	}
-	if !isInListStr(gd.geneProf, corectProfiles()) {
-		return gd, fmt.Errorf("genetics is invalid '%v'", genetics)
-	}
-	if geneMap == "" {
-		gd.geneMap = randomGenemap(gd.geneProf, seed+seed)
-	}
-	if !isInListStr(gd.geneMap, corectGenMaps()) {
-		return gd, fmt.Errorf("geneMap is invalid '%v'", geneMap)
-	}
-	fmt.Println(gd)
-	return gd, nil
-}
-
-func RollGenome(dice *dice.Dicepool) *GeneTemplate {
-	gt := GeneTemplate{}
-	gt.geneProf = rollGeneProfile(dice)
-	gt.geneMap = rollGenemap(gt.geneProf, dice)
-	return &gt
+func RollGenome(dice *dice.Dicepool) GeneProfile {
+	geneProf := rollGeneProfile(dice)
+	geneMap := rollGenemap(geneProf, dice)
+	gp := NewGeneData(geneProf, geneMap)
+	return gp
 }
 
 func isInListStr(elem string, list []string) bool {
@@ -328,11 +417,11 @@ func corectGenMaps() []string {
 	return gp
 }
 
-func GenomeCompatability(genome1, genome2 Genome) int {
-	gp1 := strings.Split(genome1.Profile()+genome1.Variations(), "")
-	gp2 := strings.Split(genome2.Profile()+genome2.Variations(), "")
+func GenomeCompatability(genome1, genome2 GeneProfile) int {
+	gp1 := strings.Split(Profile(genome1)+Variations(genome1), "")
+	gp2 := strings.Split(Profile(genome2)+Variations(genome2), "")
 	match := -2
-	for i := range genome1.Profile() {
+	for i := range gp1 {
 		if gp1[i] == gp2[i] {
 			match++
 		}

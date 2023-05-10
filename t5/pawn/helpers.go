@@ -5,7 +5,7 @@ import (
 	"github.com/Galdoba/TravellerTools/t5/genetics"
 )
 
-func (p *pawn2) GenomeTemplate() (genetics.GeneProfile, error) {
+func (p *pawn) Genome() (genetics.GeneProfile, error) {
 	gp := profile.New()
 	nodata := 0
 	for _, key := range []string{

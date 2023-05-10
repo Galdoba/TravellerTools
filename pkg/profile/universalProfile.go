@@ -39,6 +39,8 @@ type Profile interface {
 	Data(string) ehex.Ehex
 	//Format(int) string
 	Inject(string, interface{})
+	Map() map[string]ehex.Ehex
+	Delete(string)
 }
 
 func (up *universalProfile) Data(k string) ehex.Ehex {
@@ -46,6 +48,19 @@ func (up *universalProfile) Data(k string) ehex.Ehex {
 		return v
 	}
 	return nil
+}
+
+func (up *universalProfile) Map() map[string]ehex.Ehex {
+	// prMap := make(map[string]ehex.Ehex)
+	// for k, v := range up.data {
+	// 	prMap[k] = v
+	// }
+	// return prMap
+	return up.data
+}
+
+func (up *universalProfile) Delete(s string) {
+	delete(up.data, s)
 }
 
 // func (up *universalProfile) Format(f int) string {
@@ -97,6 +112,19 @@ func New() *universalProfile {
 	up := universalProfile{}
 	up.data = make(map[string]ehex.Ehex)
 	return &up
+}
+
+func Merge(oldPr, newPr Profile) Profile {
+	outPr := New()
+	for k, v := range oldPr.Map() {
+		outPr.data[k] = v
+	}
+	for k, v := range newPr.Map() {
+		if _, ok := outPr.data[k]; !ok {
+			outPr.data[k] = v
+		}
+	}
+	return outPr
 }
 
 // func validKeys(e string) []string {
