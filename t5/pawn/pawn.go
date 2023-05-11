@@ -35,6 +35,14 @@ const (
 	CHAR_CASTE
 	CHAR_SANITY
 	CHAR_PSIONICS
+	C1
+	C2
+	C3
+	C4
+	C5
+	C6
+	CP
+	CS
 	KEY_VAL_C1     = "C1"
 	KEY_VAL_C2     = "C2"
 	KEY_VAL_C3     = "C3"
@@ -55,32 +63,42 @@ const (
 	KEY_GENE_MAP_4 = "GeneMap4"
 	KEY_GENE_MAP_5 = "GeneMap5"
 	KEY_GENE_MAP_6 = "GeneMap6"
+	MajorSkill     = "Major Skill"
+	MinorSkill     = "Minor Skill"
 )
 
-type pawn struct {
+type Pawn struct {
 	generationState int
 	controlType     int
 	name            string
 	profile         profile.Profile
+	major           int
+	minor           int
 }
 
-func New(control int, homeworldTC []int) *pawn {
-	p := pawn{}
+func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {
+	p := Pawn{}
 	p.controlType = control
 	p.profile = profile.New()
+	if err := p.RollCharacteristics(dice); err != nil {
+		return nil, errmaker.ErrorFrom(err)
+	}
 	for _, id := range skill.DefaultSkills() {
-		p.IncreaseSkill(id)
+		p.CreateSkill(id)
 	}
 	for _, tCode := range homeworldTC {
 		idArray := skill.TradeCode2SkillID(tCode)
+
 		for _, id := range idArray {
 			p.IncreaseSkill(id)
 		}
 	}
-	return &p
+	///////////EDUCATION
+
+	return &p, nil
 }
 
-func (p *pawn) String() string {
+func (p *Pawn) String() string {
 	str := "UPP: "
 	keys := []string{KEY_VAL_C1, KEY_VAL_C2, KEY_VAL_C3, KEY_VAL_C4, KEY_VAL_C5, KEY_VAL_C6}
 	for _, k := range keys {
@@ -88,21 +106,17 @@ func (p *pawn) String() string {
 	}
 	str += "\n"
 	sklset := p.Skills()
-	//err := skill.Increase(sklset, 17)
-	//if err != nil {
-	//	str += err.Error()
-	//}
+
 	for i := skill.ID_NONE; i < skill.ID_END; i++ {
 		skl := sklset.Data(skill.NameByID(i))
 		if skl != nil {
 			str += fmt.Sprintf("%v %v\n", skill.NameByID(i), skl.Value())
-			//str += sklset[i].SType()
 		}
 	}
 	return str
 }
 
-func (p *pawn) RollCharacteristics(dice *dice.Dicepool) error {
+func (p *Pawn) RollCharacteristics(dice *dice.Dicepool) error {
 	genome, err := p.Genome()
 	if err != nil {
 		return errmaker.ErrorFrom(err)
@@ -156,7 +170,7 @@ func CharacteristicProfileKeys() []string {
 	}
 }
 
-func (p *pawn) InjectGenetics(gp genetics.GeneProfile) error {
+func (p *Pawn) InjectGenetics(gp genetics.GeneProfile) error {
 	keys := CharacteristicProfileKeys()
 	for _, key := range keys {
 		p.profile.Inject(key, gp.Data(key).Code())
@@ -241,13 +255,16 @@ func ChoseKnowledgeID(controller, skill_ID int) (int, error) {
 
 }
 
-func (p *pawn) Skills() skill.SkillSet {
+func (p *Pawn) Skills() skill.SkillSet {
 
 	sklset := skill.NewSkillSet(p.profile)
 	return sklset
 }
 
-func (p *pawn) CreateSkill(i int) error {
+func (p *Pawn) CreateSkill(i int) error {
+	if i == skill.ID_NONE {
+		return nil
+	}
 	sklKey := skill.NameByID(i)
 	if sklKey == "UNDEFINED" {
 		return fmt.Errorf("skill [%v] undefined", i)
@@ -259,7 +276,7 @@ func (p *pawn) CreateSkill(i int) error {
 	return nil
 }
 
-func (p *pawn) ReadSkill(ID int) *skill.Skill {
+func (p *Pawn) ReadSkill(ID int) *skill.Skill {
 	sklKey := skill.NameByID(ID)
 	if sklKey == "UNDEFINED" {
 		return nil
@@ -276,7 +293,7 @@ func (p *pawn) ReadSkill(ID int) *skill.Skill {
 	return skl
 }
 
-func (p *pawn) UpdateSkill(ID, newVal int) error {
+func (p *Pawn) UpdateSkill(ID, newVal int) error {
 	sklKey := skill.NameByID(ID)
 	if sklKey == "UNDEFINED" {
 		return fmt.Errorf("cann't update skill")
@@ -285,6 +302,7 @@ func (p *pawn) UpdateSkill(ID, newVal int) error {
 	if err != nil {
 		return err
 	}
+
 	switch skl.SType() {
 	case skill.TYPE_SKILL:
 		if newVal > 15 {
@@ -300,10 +318,17 @@ func (p *pawn) UpdateSkill(ID, newVal int) error {
 		}
 	}
 	p.profile.Inject(sklKey, newVal)
+	if newVal > 0 {
+		parentID := skl.ParentSkl
+		parentKey := skill.NameByID(parentID)
+		if parent := p.profile.Data(parentKey); parent == nil {
+			p.CreateSkill(parentID)
+		}
+	}
 	return nil
 }
 
-func (p *pawn) Learn(ID int) error {
+func (p *Pawn) Learn(ID int) error {
 	sklKey := skill.NameByID(ID)
 	if sklKey == "UNDEFINED" {
 		return fmt.Errorf("cann't update skill")
@@ -313,10 +338,12 @@ func (p *pawn) Learn(ID int) error {
 		p.UpdateSkill(ID, skl.ValueInt+1)
 		return nil
 	}
-	return p.CreateSkill(ID)
+	p.CreateSkill(ID)
+	p.UpdateSkill(ID, 1)
+	return nil
 }
 
-func (p *pawn) DeleteSkill(ID int) error {
+func (p *Pawn) DeleteSkill(ID int) error {
 	sklKey := skill.NameByID(ID)
 	if sklKey == "UNDEFINED" {
 		return fmt.Errorf("cann't delete skill")
@@ -325,34 +352,33 @@ func (p *pawn) DeleteSkill(ID int) error {
 	return nil
 }
 
-func (p *pawn) IncreaseSkill(id int) error {
-	switch skill.Increase(p.profile, id) {
-	case skill.MustChooseErr:
-		switch id {
-		case skill.One_Art, skill.One_Trade:
-			newId, err := ChooseExactSkillID(p.controlType, id)
+func (p *Pawn) IncreaseSkill(id int) error {
+	for {
+		switch skill.Increase(p.profile, id) {
+		case skill.MustChooseErr:
+			switch id {
+			case skill.One_Art, skill.One_Trade:
+				newId, err := ChooseExactSkillID(p.controlType, id)
+				if err != nil {
+					return fmt.Errorf("%v %v", newId, err.Error())
+				}
+				if skill.Increase(p.profile, newId) == nil {
+					id = newId
+					continue
+				}
+			}
+		case skill.KKSruleNotAllow:
+			newId, err := ChoseKnowledgeID(p.controlType, id)
 			if err != nil {
 				return fmt.Errorf("%v %v", newId, err.Error())
 			}
-			if err = p.IncreaseSkill(newId); err == nil {
-				return p.Learn(newId)
-			} else {
-				panic(err.Error())
+			if err = skill.Increase(p.profile, newId); err == nil {
+				id = newId
+				continue
 			}
-
+		default:
+			return p.Learn(id)
 		}
-	case skill.KKSruleNotAllow:
-		newId, err := ChoseKnowledgeID(p.controlType, id)
-		if err != nil {
-			return fmt.Errorf("%v %v", newId, err.Error())
-		}
-		if err = p.IncreaseSkill(newId); err == nil {
-			return p.Learn(newId)
-		} else {
-			panic(err.Error())
-		}
-	default:
-		return p.Learn(id)
+		return nil
 	}
-	return nil
 }

@@ -6,11 +6,13 @@ import (
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
+	"github.com/Galdoba/TravellerTools/t5/genetics"
 )
 
-const (
-	GP_Human = "SDEIES"
-)
+// const (
+// 	GP_Human = "SDEIES"
+// )
 
 type Frame struct {
 	positionCode   string
@@ -451,4 +453,57 @@ func nameToCode(name string) string {
 	case Psionics:
 		return "CP"
 	}
+}
+
+//////////////CONNECTOR
+
+const (
+	CHAR_STRENGHT = iota
+	CHAR_DEXTERITY
+	CHAR_AGILITY
+	CHAR_GRACE
+	CHAR_ENDURANCE
+	CHAR_STAMINA
+	CHAR_VIGOR
+	CHAR_INTELLIGENCE
+	CHAR_EDUCATION
+	CHAR_TRAINING
+	CHAR_INSTINCT
+	CHAR_SOCIAL
+	CHAR_CHARISMA
+	CHAR_CASTE
+	CHAR_SANITY
+	CHAR_PSIONICS
+	C1
+	C2
+	C3
+	C4
+	C5
+	C6
+	CP
+	CS
+)
+
+//FromProfile - Создает Frame из данных профайла
+func FromProfile(prf profile.Profile, code int) *Frame {
+
+	chr := &Frame{}
+	geneDice := 0
+	actual := 0
+	switch code {
+	default:
+		panic(fmt.Sprintf("unknown code %v", code))
+	case CHAR_STRENGHT:
+		geneMap := genetics.KEY_GENE_MAP_1
+		if gm := prf.Data(geneMap); gm != nil {
+			geneDice = gm.Value()
+		}
+		prfValue := "C1"
+		if val := prf.Data(prfValue); val != nil {
+			actual = val.Value()
+		}
+		chr = New(Strength, geneDice)
+		chr.value = actual
+	}
+	return chr
 }

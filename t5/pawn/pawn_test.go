@@ -7,6 +7,7 @@ import (
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/struct/world"
+	"github.com/Galdoba/TravellerTools/t5/pawn/characteristic"
 )
 
 func TestPawn(t *testing.T) {
@@ -26,7 +27,11 @@ func TestPawn(t *testing.T) {
 		//fmt.Println(w)
 		//gt := genetics.NewTemplate("SDEIES", "222222")
 		//fmt.Println("==============")
-		chr2 := New(control_Random, w.ListTC())
+		fmt.Println(w)
+		chr2, err := New(dice, control_Random, w.ListTC())
+		if err != nil {
+			t.Errorf(err.Error())
+		}
 		//dice := dice.New()
 		//fmt.Println("==============")
 		//genome := genetics.NewGeneData("SDEIES", "222222")
@@ -36,7 +41,9 @@ func TestPawn(t *testing.T) {
 		//}
 
 		fmt.Println("==============")
-		fmt.Println(chr2.profile)
+		fmt.Println(chr2)
+		fmt.Println(chr2.CheckCharacteristic(CheckAverage, CHAR_STRENGHT))
+		fmt.Println(characteristic.FromProfile(chr2.profile, CHAR_STRENGHT))
 		time.Sleep(time.Millisecond * 100)
 
 	}

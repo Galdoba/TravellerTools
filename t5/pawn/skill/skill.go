@@ -1225,25 +1225,27 @@ func TradeCode2SkillID(tc int) []int {
 type SkillSet profile.Profile
 
 func Increase(sklset SkillSet, id int) error {
-	if err := skillIncreaseErr(sklset, id); err != nil {
+	if err := SkillIncreaseErr(sklset, id); err != nil {
 		return err
 	}
 	return nil
 }
 
 func DefaultSkills() []int {
-	ids := []int{}
-	for i := ID_NONE; i < ID_END; i++ {
-		skl, err := New(i)
-		if err != nil {
-			continue
-		}
-		if !skl.Default {
-			continue
-		}
-		ids = append(ids, i)
+	return []int{
+		ID_Actor,
+		ID_Artist,
+		ID_Athlete,
+		ID_Author,
+		ID_Comms,
+		ID_Computer,
+		ID_Driver,
+		ID_Fighter,
+		ID_Turrets,
+		ID_Mechanic,
+		ID_Steward,
+		ID_Vacc_Suit,
 	}
-	return ids
 }
 
 func NewSkillSet(prf profile.Profile) SkillSet {
@@ -1299,7 +1301,7 @@ func sumOfSkills(sklSt SkillSet, skls []int) int {
 var MustChooseErr = fmt.Errorf("must choose exact skill")
 var KKSruleNotAllow = fmt.Errorf("kks rule not allow")
 
-func skillIncreaseErr(skillset SkillSet, id int) error {
+func SkillIncreaseErr(skillset SkillSet, id int) error {
 	switch id {
 	case One_Art, One_Trade:
 		return MustChooseErr

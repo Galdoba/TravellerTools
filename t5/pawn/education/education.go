@@ -1,7 +1,7 @@
 package education
 
 import (
-	"github.com/Galdoba/TravellerTools/pkg/profile"
+	"github.com/Galdoba/TravellerTools/t5/pawn"
 )
 
 const (
@@ -11,17 +11,44 @@ const (
 	CHAR_INS
 )
 
+const (
+	CHAR_STRENGHT = iota
+	CHAR_DEXTERITY
+	CHAR_AGILITY
+	CHAR_GRACE
+	CHAR_ENDURANCE
+	CHAR_STAMINA
+	CHAR_VIGOR
+	CHAR_INTELLIGENCE
+	CHAR_EDUCATION
+	CHAR_TRAINING
+	CHAR_INSTINCT
+	CHAR_SOCIAL
+	CHAR_CHARISMA
+	CHAR_CASTE
+	CHAR_SANITY
+	CHAR_PSIONICS
+	C1
+	C2
+	C3
+	C4
+	C5
+	C6
+	AUTO
+)
+
 type educationalProcess struct {
-	CHAR_BASE int
-	Character profile.Profile
-	Waivers   int
+	Character *pawn.Pawn
+	BA        bool
+	MA        bool
 }
 
 type institution struct {
-	validCHAR int
+	validPassFailCHAR []int
+	name              string
 }
 
-func New(char profile.Profile) {
+func New(char *pawn.Pawn) {
 	ep := educationalProcess{}
 	ep.Character = char
 }
