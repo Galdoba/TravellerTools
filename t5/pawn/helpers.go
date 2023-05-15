@@ -1,11 +1,10 @@
 package pawn
 
 import (
-	"fmt"
-
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/t5/genetics"
+	"github.com/Galdoba/TravellerTools/t5/pawn/characteristic"
 	"github.com/Galdoba/TravellerTools/t5/pawn/skill"
 )
 
@@ -186,20 +185,26 @@ func charID2Map(id int) string {
 }
 
 func (p *Pawn) CheckCharacteristic(diff, asset int) bool {
-	chr := p.Characteristic(asset)
-	df := p.profile.Data(charID2Map(asset)).Value() + diff
-	if df < 1 {
-		return true
-	}
+	chr := characteristic.FromProfile(p.profile, asset)
 	switch p.controlType {
-	default:
-		panic("control type not implemented")
 	case control_Random:
-		dice := dice.New()
-		dice.Vocal()
-		if dice.Sroll(fmt.Sprintf("%vd6", df)) <= chr {
-			return true
-		}
+		return chr.Check(diff, dice.New())
 	}
+	// chr := p.Characteristic(asset)
+	// df := p.profile.Data(charID2Map(asset)).Value() + diff
+	// if df < 1 {
+	// 	return true
+	// }
+	// switch p.controlType {
+	// default:
+	// 	panic("control type not implemented")
+	// case control_Random:
+	// 	dice := dice.New()
+	// 	dice.Vocal()
+	// 	if dice.Sroll(fmt.Sprintf("%vd6", df)) <= chr {
+	// 		return true
+	// 	}
+	// }
+	panic(0)
 	return false
 }

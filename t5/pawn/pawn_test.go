@@ -42,8 +42,12 @@ func TestPawn(t *testing.T) {
 
 		fmt.Println("==============")
 		fmt.Println(chr2)
-		fmt.Println(chr2.CheckCharacteristic(CheckAverage, CHAR_STRENGHT))
-		fmt.Println(characteristic.FromProfile(chr2.profile, CHAR_STRENGHT))
+
+		fmt.Println(chr2.CheckCharacteristic(CheckAverage, CHAR_TRAINING))
+		for i := CHAR_STRENGHT; i < 18; i++ {
+			fmt.Println(characteristic.FromProfile(chr2.profile, i))
+		}
+
 		time.Sleep(time.Millisecond * 100)
 
 	}

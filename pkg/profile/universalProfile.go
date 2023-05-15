@@ -127,6 +127,20 @@ func Merge(oldPr, newPr Profile) Profile {
 	return outPr
 }
 
+func (pr *universalProfile) Update(newPr Profile) {
+	for k, v := range newPr.Map() {
+		pr.data[k] = v
+	}
+}
+
+func (pr *universalProfile) UpdateSafe(newPr Profile) {
+	for k, v := range newPr.Map() {
+		if _, ok := pr.data[k]; !ok {
+			pr.data[k] = v
+		}
+	}
+}
+
 // func validKeys(e string) []string {
 // 	switch e {
 // 	default:

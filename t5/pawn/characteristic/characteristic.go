@@ -484,26 +484,96 @@ const (
 	CS
 )
 
+func dataByID(id int) (string, string, string, string) {
+	switch id {
+	case CHAR_STRENGHT:
+		return Strength, genetics.KEY_GENE_PRF_1, "C1", genetics.KEY_GENE_MAP_1
+	case CHAR_DEXTERITY:
+		return Dexterity, genetics.KEY_GENE_PRF_2, "C2", genetics.KEY_GENE_MAP_2
+	case CHAR_AGILITY:
+		return Agility, genetics.KEY_GENE_PRF_2, "C2", genetics.KEY_GENE_MAP_2
+	case CHAR_GRACE:
+		return Grace, genetics.KEY_GENE_PRF_2, "C2", genetics.KEY_GENE_MAP_2
+	case CHAR_ENDURANCE:
+		return Endurance, genetics.KEY_GENE_PRF_3, "C3", genetics.KEY_GENE_MAP_3
+	case CHAR_STAMINA:
+		return Stamina, genetics.KEY_GENE_PRF_3, "C3", genetics.KEY_GENE_MAP_3
+	case CHAR_VIGOR:
+		return Vigor, genetics.KEY_GENE_PRF_3, "C3", genetics.KEY_GENE_MAP_3
+	case CHAR_INTELLIGENCE:
+		return Intelligence, genetics.KEY_GENE_PRF_4, "C4", genetics.KEY_GENE_MAP_4
+	case CHAR_EDUCATION:
+		return Education, genetics.KEY_GENE_PRF_5, "C5", genetics.KEY_GENE_MAP_5
+	case CHAR_TRAINING:
+		return Training, genetics.KEY_GENE_PRF_5, "C5", genetics.KEY_GENE_MAP_5
+	case CHAR_INSTINCT:
+		return Instinct, genetics.KEY_GENE_PRF_5, "C5", genetics.KEY_GENE_MAP_5
+	case CHAR_SOCIAL:
+		return SocialStanding, genetics.KEY_GENE_PRF_6, "C6", genetics.KEY_GENE_MAP_6
+	case CHAR_CHARISMA:
+		return Charisma, genetics.KEY_GENE_PRF_6, "C6", genetics.KEY_GENE_MAP_6
+	case CHAR_CASTE:
+		return Caste, genetics.KEY_GENE_PRF_6, "C6", genetics.KEY_GENE_MAP_6
+	case CHAR_SANITY:
+		return Sanity, "", "CS", ""
+	case CHAR_PSIONICS:
+		return Psionics, "", "CP", ""
+	}
+	return PseudoCHR, "", "", ""
+}
+
+func genePrf(id int) string {
+	switch id {
+	case CHAR_STRENGHT:
+		return genetics.KEY_GENE_PRF_1
+	case CHAR_DEXTERITY, CHAR_AGILITY, CHAR_GRACE:
+		return genetics.KEY_GENE_PRF_2
+	case CHAR_ENDURANCE, CHAR_STAMINA, CHAR_VIGOR:
+		return genetics.KEY_GENE_PRF_3
+	case CHAR_INTELLIGENCE:
+		return genetics.KEY_GENE_PRF_4
+	case CHAR_EDUCATION, CHAR_TRAINING, CHAR_INSTINCT:
+		return genetics.KEY_GENE_PRF_5
+	case CHAR_SOCIAL, CHAR_CASTE, CHAR_CHARISMA:
+		return genetics.KEY_GENE_PRF_6
+	}
+	return ""
+}
+
 //FromProfile - Создает Frame из данных профайла
 func FromProfile(prf profile.Profile, code int) *Frame {
-
 	chr := &Frame{}
 	geneDice := 0
 	actual := 0
-	switch code {
-	default:
-		panic(fmt.Sprintf("unknown code %v", code))
-	case CHAR_STRENGHT:
-		geneMap := genetics.KEY_GENE_MAP_1
-		if gm := prf.Data(geneMap); gm != nil {
-			geneDice = gm.Value()
+	name, genePrf, posKey, geneMap := dataByID(code)
+	if val := prf.Data(posKey); val != nil {
+		actual = val.Value()
+	}
+	if gm := prf.Data(geneMap); gm != nil {
+		geneDice = gm.Value()
+	}
+	chr = New(name, geneDice)
+	chr.value = actual
+	profiledID := prf.Data(genePrf)
+	if profiledID != nil {
+		if profiledID.Value() != code {
+			profiledName, _, _, _ := dataByID(profiledID.Value())
+			actual = chr.ValueAs(profiledName)
 		}
-		prfValue := "C1"
-		if val := prf.Data(prfValue); val != nil {
-			actual = val.Value()
-		}
-		chr = New(Strength, geneDice)
 		chr.value = actual
 	}
 	return chr
+}
+
+func (chr *Frame) Check(diff int, dice *dice.Dicepool) bool {
+	diceNum := diff + chr.generationDice
+	if diceNum < 1 {
+		return true
+	}
+	diceNumStr := fmt.Sprintf("%v", diceNum)
+	tn := chr.value
+	if dice.Sroll(diceNumStr+"d6") <= tn {
+		return true
+	}
+	return false
 }
