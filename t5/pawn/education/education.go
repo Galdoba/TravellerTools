@@ -44,8 +44,22 @@ type educationalProcess struct {
 }
 
 type institution struct {
-	validPassFailCHAR []int
 	name              string
+	preRequsite       string
+	applyCheck        string
+	duration          int //years
+	validPassFailCHAR []string
+	howManyRolls      int
+	provides          string
+	graduation        string
+	form              string
+	/*
+		ED5
+		Trade School
+		Colledge/University
+
+
+	*/
 }
 
 func New(char *pawn.Pawn) {

@@ -1313,3 +1313,17 @@ func SkillIncreaseErr(skillset SkillSet, id int) error {
 }
 
 //////////////////////////////////////////
+
+func FromProfile(prf profile.Profile, id int) *Skill {
+	sklKey := NameByID(id)
+	skl, _ := New(id)
+	if skl == nil {
+		return nil
+	}
+	sklData := prf.Data(sklKey)
+	if sklData == nil {
+		return nil
+	}
+	skl.ValueInt = sklData.Value()
+	return skl
+}
