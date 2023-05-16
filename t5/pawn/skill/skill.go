@@ -118,7 +118,7 @@ const (
 	ID_Photonics
 	ID_Pilot
 	ID_Small_Craft
-	ID_Spacecraft_ABS
+	ID_Spacecraft_ACS
 	ID_Spacecraft_BCS
 	ID_Polymers
 	ID_Programmer
@@ -370,7 +370,7 @@ func New(id int) (*Skill, error) {
 	case ID_Pilot:
 		skl.sklType = TYPE_SKILL
 		skl.group = SG_STARSHIP
-		skl.AssociatedKnowledge = []int{ID_Small_Craft, ID_Spacecraft_ABS, ID_Spacecraft_BCS}
+		skl.AssociatedKnowledge = []int{ID_Small_Craft, ID_Spacecraft_ACS, ID_Spacecraft_BCS}
 		skl.KKSrule = true
 	case ID_Sensors:
 		skl.sklType = TYPE_SKILL
@@ -597,7 +597,7 @@ func New(id int) (*Skill, error) {
 	case ID_Small_Craft:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Pilot
-	case ID_Spacecraft_ABS:
+	case ID_Spacecraft_ACS:
 		skl.sklType = TYPE_KNOWLEDGE
 		skl.ParentSkl = ID_Pilot
 	case ID_Spacecraft_BCS:
@@ -972,7 +972,7 @@ func NameByID(id int) string {
 		return "Sub"
 	case ID_Small_Craft:
 		return "Small Craft"
-	case ID_Spacecraft_ABS:
+	case ID_Spacecraft_ACS:
 		return "Spacecraft ABS"
 	case ID_Spacecraft_BCS:
 		return "Spacecraft BCS"

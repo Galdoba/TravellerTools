@@ -230,7 +230,7 @@ func ChoseKnowledgeID(controller, skill_ID int) (int, error) {
 	case skill.ID_Seafarer:
 		knowledges = append(knowledges, skill.ID_Aquanautics, skill.ID_Grav_s, skill.ID_Boat, skill.ID_Ship, skill.ID_Sub)
 	case skill.ID_Pilot:
-		knowledges = append(knowledges, skill.ID_Small_Craft, skill.ID_Spacecraft_ABS, skill.ID_Spacecraft_BCS)
+		knowledges = append(knowledges, skill.ID_Small_Craft, skill.ID_Spacecraft_ACS, skill.ID_Spacecraft_BCS)
 	case skill.ID_Language:
 		knowledges = append(knowledges, skill.ID_Language_Kkree, skill.ID_Language_Anglic, skill.ID_Language_Battle,
 			skill.ID_Language_Flash, skill.ID_Language_Gonk, skill.ID_Language_Gvegh, skill.ID_Language_Mariel,
