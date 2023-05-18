@@ -74,6 +74,11 @@ type Pawn struct {
 	profile         profile.Profile
 	major           int
 	minor           int
+	degree          string
+}
+
+func (p *Pawn) EducationState() (int, int, string) {
+	return p.major, p.minor, p.degree
 }
 
 func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {

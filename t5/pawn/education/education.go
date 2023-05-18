@@ -3,6 +3,7 @@ package education
 import (
 	"fmt"
 
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/t5/pawn"
 	"github.com/Galdoba/TravellerTools/t5/pawn/skill"
 )
@@ -75,7 +76,7 @@ type institution struct {
 	majMinID          int
 	/*
 		ED5
-			Trade School
+		Trade School
 			Colledge
 				Honors
 			University
@@ -85,7 +86,8 @@ type institution struct {
 				Masters
 				Professors
 			Service Academy
-
+				ANM Schools
+				Command Colledge
 
 
 
@@ -95,9 +97,19 @@ type institution struct {
 func newInstitution(id int) *institution {
 	inst := institution{}
 	switch id {
-	case 1:
+	case BasicSchoolED5:
 		inst.form = "ED5"
 		inst.preRequsite = "Edu 4 -"
+		inst.applyCheck = "auto"
+		inst.duration = 0
+		inst.validPassFailCHAR = []string{"Int"}
+		inst.howManyRolls = 1
+		inst.provides = ""
+		inst.graduation = "Edu=5"
+		inst.caa = []string{"", "", ""}
+	case BasicSchoolTradeSchool:
+		inst.form = "Trade School"
+		inst.preRequsite = "Edu 5 +"
 		inst.applyCheck = "auto"
 		inst.duration = 0
 		inst.validPassFailCHAR = []string{"Int"}
@@ -109,9 +121,14 @@ func newInstitution(id int) *institution {
 	return &inst
 }
 
-func New(char *pawn.Pawn) {
-	ep := educationalProcess{}
-	ep.Character = char
+type Student interface {
+	Profile() profile.Profile
+	EducationState() (int, int, string)
+	CheckCharacteristic(int, int) bool
+}
+
+type Institution interface {
+	Form() string
 }
 
 func listMajorMinorSkillID(institutionID int) ([]int, error) {
