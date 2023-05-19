@@ -174,6 +174,8 @@ const (
 	ID_END
 	One_Trade
 	One_Art
+	SolderSkill
+	ShipSkill
 	SG_GENERAL      = "General"
 	SG_STARSHIP     = "Starship skill"
 	SG_TRADE        = "Trade"
@@ -1303,7 +1305,7 @@ var KKSruleNotAllow = fmt.Errorf("kks rule not allow")
 
 func SkillIncreaseErr(skillset SkillSet, id int) error {
 	switch id {
-	case One_Art, One_Trade:
+	case One_Art, One_Trade, SolderSkill, ShipSkill:
 		return MustChooseErr
 	}
 	if !kksRuleAllow(skillset, id) {

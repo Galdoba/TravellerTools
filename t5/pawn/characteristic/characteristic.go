@@ -565,13 +565,16 @@ func FromProfile(prf profile.Profile, code int) *Frame {
 	return chr
 }
 
-func (chr *Frame) Check(diff int, dice *dice.Dicepool) bool {
+func (chr *Frame) Check(diff int, dice *dice.Dicepool, mods ...int) bool {
 	diceNum := diff + chr.generationDice
 	if diceNum < 1 {
 		return true
 	}
 	diceNumStr := fmt.Sprintf("%v", diceNum)
 	tn := chr.value
+	for _, m := range mods {
+		tn += m
+	}
 	if dice.Sroll(diceNumStr+"d6") <= tn {
 		return true
 	}

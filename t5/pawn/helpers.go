@@ -184,7 +184,7 @@ func charID2Map(id int) string {
 	return mp
 }
 
-func (p *Pawn) CheckCharacteristic(diff, asset int) bool {
+func (p *Pawn) CheckCharacteristic(diff, asset int, mods ...int) bool {
 	chr := characteristic.FromProfile(p.profile, asset)
 	switch p.controlType {
 	case control_Random:

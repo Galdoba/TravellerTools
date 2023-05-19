@@ -68,21 +68,66 @@ const (
 )
 
 type Pawn struct {
-	generationState int
-	controlType     int
-	name            string
-	profile         profile.Profile
-	major           int
-	minor           int
-	degree          string
+	generationState  int
+	controlType      int
+	name             string
+	profile          profile.Profile
+	major            int
+	minor            int
+	waiversUsed      int
+	degree           string
+	age              int
+	generationEvents []string
 }
 
-func (p *Pawn) EducationState() (int, int, string) {
-	return p.major, p.minor, p.degree
+func (p *Pawn) Profile() profile.Profile {
+	return p.profile
+}
+
+func (p *Pawn) EducationState() (int, int, int, string) {
+	return p.major, p.minor, p.waiversUsed, p.degree
+}
+
+func (p *Pawn) SetMajorMinorWaiver(major, minor, waiver int) {
+	p.major = major
+	p.minor = minor
+	p.waiversUsed = waiver
+}
+
+func (p *Pawn) ControlType() int {
+	return p.controlType
+}
+
+func (p *Pawn) InjectEducationOutcome(gainedMajor, gainedMinor, yearsPassed, waiversUsed int, degreeGained string, newEducationVal int, skillsGained []int, events []string) {
+	p.major = gainedMajor
+	p.minor = gainedMinor
+	p.age += yearsPassed
+	p.waiversUsed += waiversUsed
+	p.degree = degreeGained
+	for _, skillID := range skillsGained {
+		p.IncreaseSkill(skillID)
+	}
+	for _, ev := range events {
+		p.generationEvents = append(p.generationEvents, ev)
+	}
+	code := p.profile.Data(KEY_GENE_PRF_5)
+	if code.Value() != CHAR_EDUCATION {
+		return
+	}
+	if newEducationVal != 0 {
+		edu := p.profile.Data("C5")
+		if edu.Value() < newEducationVal {
+			p.profile.Inject("C5", newEducationVal)
+		} else {
+			p.profile.Inject("C5", edu.Value()+1)
+		}
+	}
 }
 
 func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {
 	p := Pawn{}
+	p.degree = ""
+
 	p.controlType = control
 	p.profile = profile.New()
 	if err := p.RollCharacteristics(dice); err != nil {
@@ -99,7 +144,7 @@ func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {
 		}
 	}
 	///////////EDUCATION
-
+	p.age = 18
 	return &p, nil
 }
 
@@ -118,6 +163,9 @@ func (p *Pawn) String() string {
 			str += fmt.Sprintf("%v %v\n", skill.NameByID(i), skl.Value())
 		}
 	}
+	str += fmt.Sprintf("Degree: %v\n", p.degree)
+	str += fmt.Sprintf("Age: %v\n", p.age)
+	str += fmt.Sprintf("Waifers: %v\n", p.waiversUsed)
 	return str
 }
 
@@ -185,39 +233,36 @@ func (p *Pawn) InjectGenetics(gp genetics.GeneProfile) error {
 
 /////////////////////////
 
-func ChooseExactSkillID(controler, oldID int) (int, error) {
+func (p *Pawn) ChooseExactSkillID(oldID int) int {
 	idList := []int{}
 	switch oldID {
 	case skill.One_Art:
 		idList = []int{skill.ID_Actor, skill.ID_Artist, skill.ID_Author, skill.ID_Chef, skill.ID_Dancer, skill.ID_Musician}
 	case skill.One_Trade:
-		//Biologics, Craftsman, Electronics, Fluidics, Gravitics, Magnetics, Mechanic, Photonics, Polymers, Programmer.
 		idList = []int{skill.ID_Biologics, skill.ID_Craftsman, skill.ID_Electronics, skill.ID_Fluidics,
 			skill.ID_Gravitics, skill.ID_Magnetics, skill.ID_Mechanic, skill.ID_Photonics, skill.ID_Polymers, skill.ID_Programmer}
+	case skill.SolderSkill:
+		idList = []int{skill.ID_Fighter, skill.ID_Forward_Observer, skill.ID_Heavy_Weapons, skill.ID_Navigator,
+			skill.ID_Recon, skill.ID_Sapper}
+	case skill.ShipSkill:
+		idList = []int{skill.ID_Astrogator, skill.ID_Engineer, skill.ID_Gunnery, skill.ID_Medic,
+			skill.ID_Pilot, skill.ID_Sensors, skill.ID_Steward}
 	}
-	dicePool := dice.New()
-	switch controler {
-	default:
-		return 0, fmt.Errorf("ChooseExactSkillId(controlType(%v), oldID(%v)): unknown controlType value", controler, oldID)
-	case control_Random:
-		return idList[dicePool.Sroll(fmt.Sprintf("1d%v-1", len(idList)))], nil
-	case control_PseudoRandom:
-		return 0, fmt.Errorf("ChooseExactSkillId(controlType(%v), oldID(%v)): controlType PSEUDORANDOM not implemented", controler, oldID)
-	case control_User:
-		return 0, fmt.Errorf("ChooseExactSkillId(controlType(%v), oldID(%v)): controlType USER not implemented", controler, oldID)
-	}
+	return p.ChooseOne(idList)
+
 }
 
-func ChoseKnowledgeID(controller, skill_ID int) (int, error) {
-	skl, err := skill.New(skill_ID)
+func (p *Pawn) ChoseKnowledgeID(skill_ID int) int {
+	_, err := skill.New(skill_ID)
 	if err != nil {
-		return 0, fmt.Errorf("")
+		panic("ChoseKnowledgeID: " + err.Error())
+		//return 0
 	}
 	knowledges := []int{}
 	//     Language, Musician
 	switch skill_ID {
 	default:
-		return skill.ID_NONE, fmt.Errorf("skill %v has %v associated knowledges", skl.Name, len(skl.AssociatedKnowledge))
+		return skill.ID_NONE //, fmt.Errorf("skill %v has %v associated knowledges", skl.Name, len(skl.AssociatedKnowledge))
 	case skill.ID_Gunnery:
 		knowledges = append(knowledges, skill.ID_Bay_Weapons, skill.ID_Ortilery, skill.ID_Screens, skill.ID_Spines, skill.ID_Turrets)
 	case skill.ID_Heavy_Weapons:
@@ -244,19 +289,10 @@ func ChoseKnowledgeID(controller, skill_ID int) (int, error) {
 	case skill.ID_Musician:
 		knowledges = append(knowledges, skill.ID_Instrument_Guitar, skill.ID_Instrument_Banjo, skill.ID_Instrument_Mandolin, skill.ID_Instrument_Keyboard, skill.ID_Instrument_Piano, skill.ID_Instrument_Voice, skill.ID_Instrument_Trumpet, skill.ID_Instrument_Trombone, skill.ID_Instrument_Tuba, skill.ID_Instrument_Violin, skill.ID_Instrument_Viola, skill.ID_Instrument_Cello)
 	}
-	dicePool := dice.New()
-	switch controller {
-	default:
-		return 0, fmt.Errorf("ChooseExactSkillId(controlType(%v), oldID(%v)): unknown controlType value", controller, skill_ID)
-	case control_Random:
-		//fmt.Println(dicePool.Sroll("1d100"))
-		time.Sleep(time.Nanosecond)
-		return knowledges[dicePool.Sroll(fmt.Sprintf("1d%v-1", len(knowledges)))], nil
-	case control_PseudoRandom:
-		return 0, fmt.Errorf("ChooseExactSkillId(controlType(%v), oldID(%v)): controlType PSEUDORANDOM not implemented", controller, skill_ID)
-	case control_User:
-		return 0, fmt.Errorf("ChooseExactSkillId(controlType(%v), oldID(%v)): controlType USER not implemented", controller, skill_ID)
+	if len(knowledges) == 0 {
+		return skill.ID_NONE
 	}
+	return p.ChooseOne(knowledges)
 
 }
 
@@ -362,22 +398,20 @@ func (p *Pawn) IncreaseSkill(id int) error {
 		switch skill.Increase(p.profile, id) {
 		case skill.MustChooseErr:
 			switch id {
-			case skill.One_Art, skill.One_Trade:
-				newId, err := ChooseExactSkillID(p.controlType, id)
-				if err != nil {
-					return fmt.Errorf("%v %v", newId, err.Error())
-				}
+			case skill.One_Art, skill.One_Trade, skill.SolderSkill, skill.ShipSkill:
+
+				newId := p.ChooseExactSkillID(id)
 				if skill.Increase(p.profile, newId) == nil {
 					id = newId
 					continue
 				}
 			}
 		case skill.KKSruleNotAllow:
-			newId, err := ChoseKnowledgeID(p.controlType, id)
-			if err != nil {
-				return fmt.Errorf("%v %v", newId, err.Error())
-			}
-			if err = skill.Increase(p.profile, newId); err == nil {
+			newId := p.ChoseKnowledgeID(id)
+			// if err != nil {
+			// 	return fmt.Errorf("%v %v", newId, err.Error())
+			// }
+			if err := skill.Increase(p.profile, newId); err == nil {
 				id = newId
 				continue
 			}
@@ -386,4 +420,20 @@ func (p *Pawn) IncreaseSkill(id int) error {
 		}
 		return nil
 	}
+}
+
+func (p *Pawn) ChooseOne(options []int) int {
+	time.Sleep(time.Millisecond * 5)
+	switch p.controlType {
+	default:
+		panic(fmt.Sprintf("option %v unimplemented", p.controlType))
+	case control_Random:
+		dice := dice.New()
+		return dice.PickIntVal(options)
+	case control_PseudoRandom:
+		seed := p.String()
+		dice := dice.New().SetSeed(seed)
+		return dice.PickIntVal(options)
+	}
+
 }

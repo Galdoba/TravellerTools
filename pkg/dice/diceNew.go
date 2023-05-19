@@ -271,6 +271,12 @@ func (d *Dicepool) PickStrOnly(slice []string) string {
 	return slice[r]
 }
 
+func (d *Dicepool) PickIntVal(options []int) int {
+	l := fmt.Sprintf("%v", len(options))
+	r := d.Roll("1d" + l).DM(-1).Sum()
+	return options[r]
+}
+
 /*
 чего ку
 амиксин
