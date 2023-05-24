@@ -77,6 +77,7 @@ type preRequsite struct {
 }
 
 type institution struct {
+	ID                int
 	name              string
 	baseCharID        int
 	baseCharMin       int
@@ -118,6 +119,7 @@ func (i *institution) Form() string {
 
 func NewInstitution(id int) *institution {
 	inst := institution{}
+	inst.ID = id
 	inst.provides = make(map[int][]string)
 	switch id {
 	default:
@@ -207,6 +209,56 @@ func NewInstitution(id int) *institution {
 		inst.haveHonors = true
 		inst.graduationEdu = 8
 		inst.caa = []string{"", "", ""}
+	case Masters:
+		inst.form = "Masters Program"
+		inst.applyCheck = []int{characteristic.CHAR_INTELLIGENCE, characteristic.CHAR_EDUCATION}
+		inst.duration = 2
+		inst.validPassFailCHAR = []int{characteristic.CHAR_INTELLIGENCE, characteristic.CHAR_EDUCATION}
+		inst.howManyRolls = 2
+		inst.graduationDegree = "MA"
+		inst.provides[1] = []string{"Mj"}
+		inst.provides[2] = []string{"Mj", "Mn"}
+		inst.haveHonors = false
+		inst.graduationEdu = 9
+		inst.caa = []string{"", "", ""}
+	case LawSchool:
+		inst.form = "Law School"
+		inst.applyCheck = []int{characteristic.CHAR_INTELLIGENCE, characteristic.CHAR_EDUCATION}
+		inst.duration = 0
+		inst.validPassFailCHAR = []int{characteristic.CHAR_INTELLIGENCE, characteristic.CHAR_EDUCATION}
+		inst.howManyRolls = 2
+		inst.graduationDegree = "Attorney"
+		inst.provides[1] = []string{"Advocate"}
+		inst.provides[2] = []string{"Advocate"}
+		inst.haveHonors = false
+		inst.graduationEdu = 10
+		inst.caa = []string{"", "", ""}
+	case MedicalSchool:
+		inst.form = "Medical School"
+		inst.applyCheck = []int{characteristic.CHAR_INTELLIGENCE, characteristic.CHAR_EDUCATION}
+		inst.duration = 4
+		inst.validPassFailCHAR = []int{characteristic.CHAR_INTELLIGENCE, characteristic.CHAR_EDUCATION}
+		inst.howManyRolls = 4
+		inst.graduationDegree = "Doctor"
+		inst.provides[1] = []string{"Medic"}
+		inst.provides[2] = []string{"Medic"}
+		inst.provides[3] = []string{"Medic"}
+		inst.provides[4] = []string{"Medic"}
+		inst.haveHonors = false
+		inst.graduationEdu = 10
+		inst.caa = []string{"", "", ""}
+	case Proffessors:
+		inst.form = "Professors Program"
+		inst.applyCheck = []int{characteristic.CHAR_INTELLIGENCE, characteristic.CHAR_EDUCATION}
+		inst.duration = 2
+		inst.validPassFailCHAR = []int{characteristic.CHAR_INTELLIGENCE, characteristic.CHAR_EDUCATION}
+		inst.howManyRolls = 2
+		inst.graduationDegree = "Professor"
+		inst.provides[1] = []string{"Mj"}
+		inst.provides[2] = []string{"Mj", "Mn"}
+		inst.haveHonors = false
+		inst.graduationEdu = 12
+		inst.caa = []string{"", "", ""}
 
 	}
 	return &inst
@@ -227,76 +279,37 @@ func Outcome(out studyOutcome) (int, int, int, int, string, int, []int, []string
 	return out.gainedMajor, out.gainedMinor, out.yearsPassed, out.waiversUsed, out.degreeGained, out.newEducationVal, out.skillsGained, out.events
 }
 
+/*
+Циклы образования:
+Тренировка: Training, Apprenticeship, Mentor, None
+Базовое: ED5, Trade School, None
+Высшее: College, University, Service Academy, None
+Дополнительное: Аспирантура, Адвокат, Медицина, None
+Карьерное: Command Colledge, Flight School
+
+*/
+
 func Attend(student Student, institutionID int) studyOutcome {
 	outcome := studyOutcome{}
-	_, _, wav, _ := student.EducationState()
-	//selectMajorMinor
-	switch institutionID {
-	case Colledge, University, MilitaryAcademy, NavalAcademy, BasicSchoolTradeSchool:
-		outcome.gainedMajor, outcome.gainedMinor = selectMjMn(institutionID, student)
-	}
-	outcome.waiversUsed = wav
-
+	outcome.gainedMajor, outcome.gainedMinor, outcome.waiversUsed, _ = student.EducationState()
 	institution := NewInstitution(institutionID)
 	outcome.events = append(outcome.events, fmt.Sprintf("%v selected for education", institution.form))
 
-	//APPLY
-	autoApply := false
-	if len(institution.applyCheck) == 0 {
-		autoApply = true
+	//ADMISSION
+	if !applyTo(institution, student, &outcome) {
+		return outcome
 	}
-	applyChar := maxValChar(student.Profile(), institution.applyCheck) //выбираем большую характеристику для поступления
-	switch {
-	case autoApply:
-	default:
-		switch student.CheckCharacteristic(pawn.CheckAverage, applyChar) {
-		case true:
-		case false:
-			if !student.CheckCharacteristic(pawn.CheckAverage, characteristic.CHAR_SOCIAL, -outcome.waiversUsed) {
-				outcome.events = append(outcome.events, fmt.Sprintf("Apply test (waifer) failed"))
-				outcome.waiversUsed++ //если вейфер не прошел - тратим год и уходим
-				outcome.yearsPassed = 1
-				return outcome
-			}
-			outcome.waiversUsed++
-		}
-	}
-	outcome.events = append(outcome.events, fmt.Sprintf("Character joined %v", institution.form))
 
 	//STUDY
 	passChar := maxValChar(student.Profile(), institution.validPassFailCHAR) //выбираем большую характеристику для учебы
 	for i := 0; i < institution.howManyRolls; i++ {
-		outcome.yearsPassed++
-		if !student.CheckCharacteristic(pawn.CheckAverage, passChar) {
-			outcome.events = append(outcome.events, fmt.Sprintf("Year %v exams fail", i+1))
-			if !student.CheckCharacteristic(pawn.CheckAverage, characteristic.CHAR_SOCIAL, -outcome.waiversUsed) {
-				outcome.waiversUsed++
-				outcome.events = append(outcome.events, fmt.Sprintf("On year %v character was expelled from %v", i+1, institution.form))
-				return outcome
-			}
-			outcome.waiversUsed++
-		}
-		outcome.events = append(outcome.events, fmt.Sprintf("Year %v exams pass", i+1))
-		for _, gain := range institution.provides[i+1] {
-			if gain == "" {
-				panic("no skill gain provided")
-			}
-			switch gain {
-			default:
-				fmt.Println(outcome)
-				panic("skill gain unknown")
-			case "Mj":
-				outcome.skillsGained = append(outcome.skillsGained, outcome.gainedMajor)
-				outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(outcome.gainedMajor)))
-			case "Mn":
-				outcome.skillsGained = append(outcome.skillsGained, outcome.gainedMinor)
-				outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(outcome.gainedMinor)))
-			}
+		if !studyYearSucces(institution, student, &outcome, i, passChar) {
+			return outcome
 		}
 	}
-	if institution.graduationEdu > 0 {
-		outcome.newEducationVal = institution.graduationEdu
-	}
+	// if institution.graduationEdu > 0 {
+	// 	outcome.newEducationVal = institution.graduationEdu
+	// }
 	if institution.haveHonors == false {
 		outcome.events = append(outcome.events, fmt.Sprintf("Character graduated from %v", institution.form))
 		return outcome
@@ -308,24 +321,25 @@ func Attend(student Student, institutionID int) studyOutcome {
 	if honors == false {
 		outcome.events = append(outcome.events, fmt.Sprintf("Character fail to get Honors Degree"))
 		if student.CheckCharacteristic(pawn.CheckAverage, characteristic.CHAR_SOCIAL, -outcome.waiversUsed) {
-			outcome.events = append(outcome.events, fmt.Sprintf("Waver Used"))
 			honors = true
 		}
 		outcome.waiversUsed++
+		outcome.events = append(outcome.events, fmt.Sprintf("Waiver used %v times", outcome.waiversUsed))
 	}
 	outcome.degreeGained = institution.graduationDegree
 	if honors {
 		outcome.degreeGained = "Honors " + outcome.degreeGained
 		outcome.skillsGained = append(outcome.skillsGained, outcome.gainedMajor)
 	}
+	if institution.graduationEdu > 0 {
+		outcome.newEducationVal = institution.graduationEdu
+	}
 	///OTC, NOTC
 	switch institutionID {
 	case Colledge, University:
 		volonteerOptions := []int{0, 1, 2, 3, OTC, NOTC}
-		if institutionID == University {
-			volonteerOptions = append(volonteerOptions, Masters, LawSchool, MedicalSchool)
-		}
-		volonteer := student.ChooseOne([]int{0, 1, OTC, NOTC, Masters})
+
+		volonteer := student.ChooseOne(volonteerOptions)
 		switch volonteer {
 		case 0, 1:
 		case OTC, NOTC:
@@ -346,66 +360,61 @@ func Attend(student Student, institutionID int) studyOutcome {
 				case OTC:
 					outcome.skillsGained = append(outcome.skillsGained, skill.SolderSkill)
 					outcome.degreeGained = "Army Officer1 " + outcome.degreeGained
+					outcome.events = append(outcome.events, fmt.Sprintf("Army commision resiived"))
 				case NOTC:
 					outcome.skillsGained = append(outcome.skillsGained, skill.ShipSkill)
 					switch student.ChooseOne([]int{0, 1}) {
 					case 0:
 						outcome.degreeGained = "Navy Officer1 " + outcome.degreeGained
+						outcome.events = append(outcome.events, fmt.Sprintf("Navy commision resiived"))
 					case 1:
 						outcome.degreeGained = "Marine Officer1 " + outcome.degreeGained
+						outcome.events = append(outcome.events, fmt.Sprintf("Marine commision resiived"))
 					}
 
 				}
 
 			}
-		case Masters:
-			outcome.events = append(outcome.events, fmt.Sprintf("Character apply to Masters Program"))
-			pass := false
-			if student.CheckCharacteristic(pawn.CheckAverage, passChar) {
-				outcome.events = append(outcome.events, fmt.Sprintf("Character fail to get to Masters Program"))
-				if student.CheckCharacteristic(pawn.CheckAverage, characteristic.CHAR_SOCIAL, -outcome.waiversUsed) {
-					outcome.events = append(outcome.events, fmt.Sprintf("Waver Used"))
-					pass = true
-				}
-			} else {
-				outcome.events = append(outcome.events, fmt.Sprintf("Masters Program joined"))
-				pass = true
+
+		}
+		higherEdu := true
+		for higherEdu {
+			higherEducationOptions := []int{0, 1, 2}
+			if strings.Contains(outcome.degreeGained, "BA") && institutionID == University {
+				higherEducationOptions = append(higherEducationOptions, Masters, Masters)
 			}
-			if pass {
-				for i := 4; i < 6; i++ {
-					outcome.yearsPassed++
-					if !student.CheckCharacteristic(pawn.CheckAverage, passChar) {
-						outcome.events = append(outcome.events, fmt.Sprintf("Year %v exams fail", i+1))
-						if !student.CheckCharacteristic(pawn.CheckAverage, characteristic.CHAR_SOCIAL, -outcome.waiversUsed) {
-							outcome.waiversUsed++
-							outcome.events = append(outcome.events, fmt.Sprintf("On year %v character was expelled from %v", i+1, institution.form))
+			if strings.Contains(outcome.degreeGained, "Honors BA") && institutionID == University {
+				higherEducationOptions = append(higherEducationOptions, LawSchool, MedicalSchool)
+			}
+			if strings.Contains(outcome.degreeGained, "MA") {
+				higherEducationOptions = append(higherEducationOptions, Proffessors, Proffessors)
+			}
+			higherEducationSelected := student.ChooseOne(higherEducationOptions)
+			switch higherEducationSelected {
+			default:
+				higherEdu = false
+			case Masters, LawSchool, MedicalSchool, Proffessors:
+				higherEducationProgram := NewInstitution(higherEducationSelected)
+				if applyTo(higherEducationProgram, student, &outcome) {
+					for i := 0; i < higherEducationProgram.howManyRolls; i++ {
+						fmt.Println("YEAR", i)
+						if !studyYearSucces(higherEducationProgram, student, &outcome, i, passChar) {
 							return outcome
 						}
-						outcome.waiversUsed++
 					}
-					outcome.events = append(outcome.events, fmt.Sprintf("Year %v exams pass", i+1))
-					for _, gain := range institution.provides[i+1] {
-						if gain == "" {
-							panic("no skill gain provided")
-						}
-						switch gain {
-						default:
-							fmt.Println(outcome)
-							panic("skill gain unknown")
-						case "Mj":
-							outcome.skillsGained = append(outcome.skillsGained, outcome.gainedMajor)
-							outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(outcome.gainedMajor)))
-						case "Mn":
-							outcome.skillsGained = append(outcome.skillsGained, outcome.gainedMinor)
-							outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(outcome.gainedMinor)))
-						}
+					outcome.degreeGained = higherEducationProgram.graduationDegree
+					outcome.newEducationVal = higherEducationProgram.graduationEdu
+					edu := student.Profile().Data("C5")
+					if edu.Value() < outcome.newEducationVal {
+						student.Profile().Inject("C5", outcome.newEducationVal)
+					} else {
+						student.Profile().Inject("C5", edu.Value()+1)
 					}
 				}
-				outcome.skillsGained = append(outcome.skillsGained, skill.SolderSkill)
-				outcome.degreeGained = "MA"
-				outcome.newEducationVal = 9
+
 			}
 		}
+		outcome.events = append(outcome.events, "End Education")
 	case MilitaryAcademy:
 		outcome.degreeGained = "Army Officer1 " + outcome.degreeGained
 	case NavalAcademy:
@@ -453,6 +462,18 @@ func Attend(student Student, institutionID int) studyOutcome {
 
 	outcome.events = append(outcome.events, fmt.Sprintf("Character graduated from %v with %v degree", institution.form, outcome.degreeGained))
 	return outcome
+}
+
+func printSl(sl []string) {
+	for _, s := range sl {
+		fmt.Println(s)
+	}
+}
+
+func (o *studyOutcome) String() string {
+	str := o.degreeGained
+	printSl(o.events)
+	return str
 }
 
 func maxValChar(prf profile.Profile, chars []int) int {
@@ -556,7 +577,7 @@ func listMajorMinorSkillID(institutionID int) []int {
 			skill.ID_Ship,
 			skill.ID_Sub,
 		}
-	case Colledge, University:
+	case Colledge, University, Masters, Proffessors:
 		list = []int{
 			skill.ID_Athlete,
 			skill.ID_Broker,
@@ -776,7 +797,7 @@ func selectMjMn(institutionID int, student Student) (int, int) {
 	switch institutionID {
 	case BasicSchoolTradeSchool:
 		gainedMajor = student.ChooseOne(listMajorMinorSkillID(institutionID))
-	case Colledge, University, MilitaryAcademy, NavalAcademy:
+	case Colledge, University, MilitaryAcademy, NavalAcademy, Masters, LawSchool, MedicalSchool, Proffessors:
 		gainedMajor = student.ChooseOne(listMajorMinorSkillID(institutionID))
 		gainedMinor = student.ChooseOne(listMajorMinorSkillID(institutionID))
 		for gainedMajor == gainedMinor {
@@ -785,4 +806,74 @@ func selectMjMn(institutionID int, student Student) (int, int) {
 		}
 	}
 	return gainedMajor, gainedMinor
+}
+
+func applyTo(institution *institution, student Student, outcome *studyOutcome) bool {
+	autoApply := false
+	if len(institution.applyCheck) == 0 {
+		autoApply = true
+	}
+	applyChar := maxValChar(student.Profile(), institution.applyCheck) //выбираем большую характеристику для поступления
+	switch {
+	case autoApply:
+	default:
+		switch student.CheckCharacteristic(pawn.CheckAverage, applyChar) {
+		case true:
+			outcome.events = append(outcome.events, fmt.Sprintf("Apply test Success"))
+		case false:
+			if !student.CheckCharacteristic(pawn.CheckAverage, characteristic.CHAR_SOCIAL, -outcome.waiversUsed) {
+				outcome.waiversUsed++ //если вейфер не прошел - тратим год и уходим
+				outcome.events = append(outcome.events, fmt.Sprintf("Waiver used %v times", outcome.waiversUsed))
+				outcome.yearsPassed = 1
+				return false
+			}
+			outcome.waiversUsed++
+			outcome.events = append(outcome.events, fmt.Sprintf("Waiver used %v times", outcome.waiversUsed))
+		}
+	}
+	outcome.events = append(outcome.events, fmt.Sprintf("Character joined %v", institution.form))
+	if outcome.gainedMajor == outcome.gainedMinor || student.ChooseOne([]int{0, 1}) == 1 {
+		outcome.gainedMajor, outcome.gainedMinor = selectMjMn(institution.ID, student)
+	}
+	return true
+}
+
+func studyYearSucces(institution *institution, student Student, outcome *studyOutcome, year, passChar int) bool {
+	outcome.yearsPassed++
+	if !student.CheckCharacteristic(pawn.CheckAverage, passChar) {
+		outcome.events = append(outcome.events, fmt.Sprintf("Year %v exams fail", year+1))
+		if !student.CheckCharacteristic(pawn.CheckAverage, characteristic.CHAR_SOCIAL, -outcome.waiversUsed) {
+			outcome.waiversUsed++
+			outcome.events = append(outcome.events, fmt.Sprintf("Waiver used %v times", outcome.waiversUsed))
+			outcome.events = append(outcome.events, fmt.Sprintf("On year %v character was expelled from %v", year+1, institution.form))
+			return false
+		}
+		outcome.waiversUsed++
+		outcome.events = append(outcome.events, fmt.Sprintf("Waiver used %v times", outcome.waiversUsed))
+	}
+	outcome.events = append(outcome.events, fmt.Sprintf("Year %v exams pass", year+1))
+	//gain Skill
+	for _, gain := range institution.provides[year+1] {
+		if gain == "" {
+			panic("no skill gain provided")
+		}
+		switch gain {
+		default:
+			fmt.Println(outcome)
+			panic("skill gain unknown")
+		case "Mj":
+			outcome.skillsGained = append(outcome.skillsGained, outcome.gainedMajor)
+			outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(outcome.gainedMajor)))
+		case "Mn":
+			outcome.skillsGained = append(outcome.skillsGained, outcome.gainedMinor)
+			outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(outcome.gainedMinor)))
+		case "Advocate":
+			outcome.skillsGained = append(outcome.skillsGained, skill.ID_Advocate)
+			outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(skill.ID_Advocate)))
+		case "Medic":
+			outcome.skillsGained = append(outcome.skillsGained, skill.ID_Medic)
+			outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(skill.ID_Medic)))
+		}
+	}
+	return true
 }

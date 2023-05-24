@@ -110,18 +110,18 @@ func (p *Pawn) InjectEducationOutcome(gainedMajor, gainedMinor, yearsPassed, wai
 	for _, ev := range events {
 		p.generationEvents = append(p.generationEvents, ev)
 	}
-	code := p.profile.Data(KEY_GENE_PRF_5)
-	if code.Value() != CHAR_EDUCATION {
-		return
-	}
-	if newEducationVal != 0 {
-		edu := p.profile.Data("C5")
-		if edu.Value() < newEducationVal {
-			p.profile.Inject("C5", newEducationVal)
-		} else {
-			p.profile.Inject("C5", edu.Value()+1)
-		}
-	}
+	// code := p.profile.Data(KEY_GENE_PRF_5)
+	// if code.Value() != CHAR_EDUCATION {
+	// 	return
+	// }
+	// if newEducationVal != 0 {
+	// 	edu := p.profile.Data("C5")
+	// 	if edu.Value() < newEducationVal {
+	// 		p.profile.Inject("C5", newEducationVal)
+	// 	} else {
+	// 		p.profile.Inject("C5", edu.Value()+1)
+	// 	}
+	// }
 }
 
 func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {
@@ -255,8 +255,8 @@ func (p *Pawn) ChooseExactSkillID(oldID int) int {
 func (p *Pawn) ChoseKnowledgeID(skill_ID int) int {
 	_, err := skill.New(skill_ID)
 	if err != nil {
-		panic("ChoseKnowledgeID: " + err.Error())
-		//return 0
+		//panic(fmt.Sprintf("ChoseKnowledgeID: %v - %v", err.Error(), skill_ID))
+		return 0
 	}
 	knowledges := []int{}
 	//     Language, Musician

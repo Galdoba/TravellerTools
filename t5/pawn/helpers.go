@@ -188,7 +188,7 @@ func (p *Pawn) CheckCharacteristic(diff, asset int, mods ...int) bool {
 	chr := characteristic.FromProfile(p.profile, asset)
 	switch p.controlType {
 	case control_Random:
-		return chr.Check(diff, dice.New())
+		return chr.Check(diff, dice.New(), mods...)
 	}
 	// chr := p.Characteristic(asset)
 	// df := p.profile.Data(charID2Map(asset)).Value() + diff

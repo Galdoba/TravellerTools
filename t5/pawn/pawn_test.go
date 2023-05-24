@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/pkg/struct/world"
 	"github.com/Galdoba/TravellerTools/t5/pawn/characteristic"
 )
@@ -18,16 +19,17 @@ func TestPawn(t *testing.T) {
 		default:
 			w, _ = world.NewWorld(
 				world.KnownData(world.IsMainworld, world.FLAG_TRUE),
+				world.KnownData(profile.KEY_SIZE, "7"),
+				world.KnownData(profile.KEY_HYDR, "7"),
 			)
 			w.GenerateFull(dice)
 		case 12:
 			fmt.Println("DEEP SPACE CHARACTER")
 			w = world.DeepSpace()
 		}
-		//fmt.Println(w)
+
 		//gt := genetics.NewTemplate("SDEIES", "222222")
 		//fmt.Println("==============")
-		fmt.Println(w)
 		chr2, err := New(dice, control_Random, w.ListTC())
 		if err != nil {
 			t.Errorf(err.Error())
