@@ -9,6 +9,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/pkg/struct/world"
 	"github.com/Galdoba/TravellerTools/t5/pawn/characteristic"
+	"github.com/Galdoba/TravellerTools/t5/pawn/education"
 )
 
 func TestPawn(t *testing.T) {
@@ -49,9 +50,24 @@ func TestPawn(t *testing.T) {
 		for i := CHAR_STRENGHT; i < 18; i++ {
 			fmt.Println(characteristic.FromProfile(chr2.profile, i))
 		}
+		for _, ev := range chr2.generationEvents {
+			fmt.Println(ev)
+		}
+		chr2.StartEducationProgram(education.ArmySchool)
+		for _, ev := range chr2.generationEvents {
+			fmt.Println(ev)
+		}
+		chr2.StartEducationProgram(education.NavalSchool)
+		for _, ev := range chr2.generationEvents {
+			fmt.Println(ev)
+		}
+		chr2.StartEducationProgram(education.MarineSchool)
+		fmt.Println("----------")
+		for _, ev := range chr2.generationEvents {
 
+			fmt.Println(ev)
+		}
 		time.Sleep(time.Millisecond * 100)
-
 	}
 
 }

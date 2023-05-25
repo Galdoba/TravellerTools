@@ -486,7 +486,7 @@ const (
 
 func dataByID(id int) (string, string, string, string) {
 	switch id {
-	case CHAR_STRENGHT:
+	case CHAR_STRENGHT, C1:
 		return Strength, genetics.KEY_GENE_PRF_1, "C1", genetics.KEY_GENE_MAP_1
 	case CHAR_DEXTERITY:
 		return Dexterity, genetics.KEY_GENE_PRF_2, "C2", genetics.KEY_GENE_MAP_2
@@ -500,7 +500,7 @@ func dataByID(id int) (string, string, string, string) {
 		return Stamina, genetics.KEY_GENE_PRF_3, "C3", genetics.KEY_GENE_MAP_3
 	case CHAR_VIGOR:
 		return Vigor, genetics.KEY_GENE_PRF_3, "C3", genetics.KEY_GENE_MAP_3
-	case CHAR_INTELLIGENCE:
+	case CHAR_INTELLIGENCE, C4:
 		return Intelligence, genetics.KEY_GENE_PRF_4, "C4", genetics.KEY_GENE_MAP_4
 	case CHAR_EDUCATION:
 		return Education, genetics.KEY_GENE_PRF_5, "C5", genetics.KEY_GENE_MAP_5
@@ -518,6 +518,14 @@ func dataByID(id int) (string, string, string, string) {
 		return Sanity, "", "CS", ""
 	case CHAR_PSIONICS:
 		return Psionics, "", "CP", ""
+	case C2:
+		return PseudoCHR, genetics.KEY_GENE_PRF_2, "C2", genetics.KEY_GENE_MAP_2
+	case C3:
+		return PseudoCHR, genetics.KEY_GENE_PRF_3, "C3", genetics.KEY_GENE_MAP_3
+	case C5:
+		return PseudoCHR, genetics.KEY_GENE_PRF_5, "C5", genetics.KEY_GENE_MAP_5
+	case C6:
+		return PseudoCHR, genetics.KEY_GENE_PRF_2, "C6", genetics.KEY_GENE_MAP_6
 	}
 	return PseudoCHR, "", "", ""
 }
@@ -543,9 +551,11 @@ func genePrf(id int) string {
 //FromProfile - Создает Frame из данных профайла
 func FromProfile(prf profile.Profile, code int) *Frame {
 	chr := &Frame{}
+
 	geneDice := 0
 	actual := 0
 	name, genePrf, posKey, geneMap := dataByID(code)
+	//fmt.Println(dataByID(code))
 	if val := prf.Data(posKey); val != nil {
 		actual = val.Value()
 	}
@@ -554,7 +564,9 @@ func FromProfile(prf profile.Profile, code int) *Frame {
 	}
 	chr = New(name, geneDice)
 	chr.value = actual
+
 	profiledID := prf.Data(genePrf)
+
 	if profiledID != nil {
 		if profiledID.Value() != code {
 			profiledName, _, _, _ := dataByID(profiledID.Value())
@@ -562,6 +574,20 @@ func FromProfile(prf profile.Profile, code int) *Frame {
 		}
 		chr.value = actual
 	}
+	// switch code {
+	// case C1:
+	// 	genePrf = "C1"
+	// case C2:
+	// 	genePrf = "C2"
+	// case C3:
+	// 	genePrf = "C3"
+	// case C4:
+	// 	genePrf = "C4"
+	// case C5:
+	// 	genePrf = "C5"
+	// case C6:
+	// 	genePrf = "C6"
+	// }
 	return chr
 }
 

@@ -190,21 +190,7 @@ func (p *Pawn) CheckCharacteristic(diff, asset int, mods ...int) bool {
 	case control_Random:
 		return chr.Check(diff, dice.New(), mods...)
 	}
-	// chr := p.Characteristic(asset)
-	// df := p.profile.Data(charID2Map(asset)).Value() + diff
-	// if df < 1 {
-	// 	return true
-	// }
-	// switch p.controlType {
-	// default:
-	// 	panic("control type not implemented")
-	// case control_Random:
-	// 	dice := dice.New()
-	// 	dice.Vocal()
-	// 	if dice.Sroll(fmt.Sprintf("%vd6", df)) <= chr {
-	// 		return true
-	// 	}
-	// }
+
 	panic(0)
 	return false
 }

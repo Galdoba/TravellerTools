@@ -2,11 +2,13 @@ package pawn
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/t5/genetics"
+	"github.com/Galdoba/TravellerTools/t5/pawn/education"
 	"github.com/Galdoba/TravellerTools/t5/pawn/skill"
 	"github.com/Galdoba/devtools/errmaker"
 )
@@ -145,6 +147,22 @@ func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {
 	}
 	///////////EDUCATION
 	p.age = 18
+	if p.HasRequsite("Edu 4-") {
+		p.StartEducationProgram(education.BasicSchoolED5)
+	}
+	want := p.ChooseOne([]int{1, 2, 3, 4, 5, 6})
+	concluded := 0
+	for want-concluded > 3 {
+		educationOptions := education.CurrentOptions(&p)
+		if len(educationOptions) == 0 {
+			break
+		}
+		institutionID := p.ChooseOne(educationOptions)
+		p.StartEducationProgram(institutionID)
+		concluded++
+		want = p.ChooseOne([]int{1, 2, 3, 4, 5, 6})
+	}
+
 	return &p, nil
 }
 
@@ -369,6 +387,19 @@ func (p *Pawn) UpdateSkill(ID, newVal int) error {
 	return nil
 }
 
+func (p *Pawn) ApplyLanguageRule(ID int) bool {
+	if ID < skill.ID_Language || ID > skill.ID_Language_Zdetl {
+		return false
+	}
+	if p.major <= skill.ID_Language_Zdetl && p.major >= skill.ID_Language {
+		return true
+	}
+	if p.minor <= skill.ID_Language_Zdetl && p.minor >= skill.ID_Language {
+		return true
+	}
+	return false
+}
+
 func (p *Pawn) Learn(ID int) error {
 	sklKey := skill.NameByID(ID)
 	if sklKey == "UNDEFINED" {
@@ -377,6 +408,7 @@ func (p *Pawn) Learn(ID int) error {
 	skl := p.ReadSkill(ID)
 	if skl != nil {
 		p.UpdateSkill(ID, skl.ValueInt+1)
+
 		return nil
 	}
 	p.CreateSkill(ID)
@@ -408,6 +440,7 @@ func (p *Pawn) IncreaseSkill(id int) error {
 			}
 		case skill.KKSruleNotAllow:
 			newId := p.ChoseKnowledgeID(id)
+
 			// if err != nil {
 			// 	return fmt.Errorf("%v %v", newId, err.Error())
 			// }
@@ -436,4 +469,63 @@ func (p *Pawn) ChooseOne(options []int) int {
 		return dice.PickIntVal(options)
 	}
 
+}
+
+func (p *Pawn) StartEducationProgram(ID int) error {
+
+	outcome := education.Attend(p, ID)
+	p.InjectEducationOutcome(education.Outcome(outcome))
+	//fmt.Println(outcome.String())
+	return nil
+}
+
+func (p *Pawn) HasRequsite(code string) bool {
+	switch code {
+	case "Edu 4-":
+		if p.Characteristic(CHAR_EDUCATION) <= 4 {
+			return true
+		}
+	case "Edu 5+":
+		if p.Characteristic(CHAR_EDUCATION) >= 5 {
+			return true
+		}
+	case "Edu 6+":
+		if p.Characteristic(CHAR_EDUCATION) >= 6 {
+			return true
+		}
+	case "Edu 7+":
+		if p.Characteristic(CHAR_EDUCATION) >= 7 {
+			return true
+		}
+	case "C5=Tra":
+		c5 := p.profile.Data(KEY_GENE_PRF_5)
+		if c5.Value() == genetics.CHAR_TRAINING {
+			return true
+		}
+	case "Tra 5+":
+		if p.Characteristic(CHAR_TRAINING) >= 5 {
+			return true
+		}
+	case "none":
+		return true
+	case "BA":
+		if strings.Contains(p.degree, "BA") {
+			return true
+		}
+	case "Honors BA":
+		if strings.Contains(p.degree, "Honors BA") {
+			return true
+		}
+	case "MA":
+		if strings.Contains(p.degree, "MA") {
+			return true
+		}
+	case "noED5":
+		if p.degree == "" {
+			return true
+		}
+	default:
+		panic(fmt.Sprintf("unknown requisite '%v'", code))
+	}
+	return false
 }
