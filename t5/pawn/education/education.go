@@ -61,6 +61,7 @@ const (
 	Masters
 	Proffessors
 	Mentor
+	FlightSchool
 )
 
 // type educationalProcess struct {
@@ -329,6 +330,33 @@ func NewInstitution(id int) *institution {
 		inst.provides[1] = []string{"Marine Skill", "Marine Skill"}
 		inst.haveHonors = false
 		inst.graduationEdu = 0
+	case BasicSchoolTrainingCourse:
+		inst.form = "Training Course"
+		inst.applyCheck = []int{}
+		inst.duration = 0
+		inst.validPassFailCHAR = []int{characteristic.CHAR_TRAINING}
+		inst.howManyRolls = 1
+		inst.provides[1] = []string{"School Skill"}
+		inst.haveHonors = false
+		inst.graduationEdu = 0
+	case Mentor:
+		inst.form = "Mentor"
+		inst.applyCheck = []int{}
+		inst.duration = 0
+		inst.validPassFailCHAR = []int{characteristic.CHAR_TRAINING, characteristic.CHAR_INTELLIGENCE}
+		inst.howManyRolls = 1
+		inst.provides[1] = []string{}
+		inst.haveHonors = false
+		inst.graduationEdu = 0
+	case FlightSchool:
+		inst.form = "Flight School"
+		inst.applyCheck = []int{}
+		inst.duration = 0
+		inst.validPassFailCHAR = []int{characteristic.CHAR_DEXTERITY, characteristic.CHAR_AGILITY, characteristic.CHAR_GRACE}
+		inst.howManyRolls = 1
+		inst.provides[1] = []string{"Pilot", "Pilot", "Pilot"}
+		inst.haveHonors = false
+		inst.graduationEdu = 0
 
 	}
 	return &inst
@@ -439,58 +467,6 @@ func Attend(student Student, institutionID int) studyOutcome {
 				outcome.processEducationEvents(trainingCorps, student)
 			}
 		}
-		//HIGHER EDUCATION AS LATER CYCLE
-		// higherEdu := true
-		// for higherEdu {
-		// 	higherEducationOptions := []int{0, 1, 2}
-		// 	if strings.Contains(outcome.degreeGained, "BA") && institutionID == University {
-		// 		higherEducationOptions = append(higherEducationOptions, Masters, Masters)
-		// 	}
-		// 	if strings.Contains(outcome.degreeGained, "Honors BA") && institutionID == University {
-		// 		higherEducationOptions = append(higherEducationOptions, LawSchool, MedicalSchool)
-		// 	}
-		// 	if strings.Contains(outcome.degreeGained, "MA") {
-		// 		higherEducationOptions = append(higherEducationOptions, Proffessors, Proffessors)
-		// 	}
-		// 	higherEducationSelected := student.ChooseOne(higherEducationOptions)
-		// 	switch higherEducationSelected {
-		// 	default:
-		// 		higherEdu = false
-		// 	case Masters, LawSchool, MedicalSchool, Proffessors:
-		// 		higherEducationProgram := NewInstitution(higherEducationSelected)
-		// 		switch addmissionSuccess(higherEducationProgram, student, &outcome) {
-		// 		case false:
-		// 		case true:
-		// 		}
-		// 		if addmissionSuccess(higherEducationProgram, student, &outcome) {
-		// 			for i := 0; i < higherEducationProgram.howManyRolls; i++ {
-		// 				fmt.Println("YEAR", i)
-		// 				passChar := maxValChar(student.Profile(), higherEducationProgram.validPassFailCHAR) //выбираем большую характеристику для учебы
-		// 				if !studyYearSucces(higherEducationProgram, student, &outcome, i, passChar) {
-		// 					return outcome
-		// 				}
-		// 			}
-		// 			outcome.degreeGained = higherEducationProgram.graduationDegree
-		// 			outcome.newEducationVal = higherEducationProgram.graduationEdu
-		// 			edu := student.Profile().Data("C5")
-		// 			if edu.Value() < outcome.newEducationVal {
-		// 				student.Profile().Inject("C5", outcome.newEducationVal)
-		// 			} else {
-		// 				student.Profile().Inject("C5", edu.Value()+1)
-		// 			}
-		// 		}
-
-		// 	}
-		// }
-		// case MilitaryAcademy:
-		// 	outcome.degreeGained = "Army Officer1 " + outcome.degreeGained
-		// case NavalAcademy:
-		// 	switch student.ChooseOne([]int{0, 1}) {
-		// 	case 0:
-		// 		outcome.degreeGained = "Navy Officer1 " + outcome.degreeGained
-		// 	case 1:
-		// 		outcome.degreeGained = "Marine Officer1 " + outcome.degreeGained
-		// 	}
 	}
 	//FLIGHT BRANCH IN CAREER
 	// flBranch := false
@@ -575,7 +551,7 @@ func listMajorMinorSkillID(institutionID int) []int {
 	switch institutionID {
 	default:
 		panic(fmt.Sprintf("no list for %v", institutionID))
-	case BasicSchoolED5:
+	case BasicSchoolED5, Mentor, FlightSchool:
 		list = []int{}
 	case BasicSchoolTradeSchool, BasicSchoolApprentice, BasicSchoolTrainingCourse:
 		list = []int{
@@ -958,10 +934,13 @@ func studyYearSucces(institution *institution, student Student, outcome *studyOu
 			choise := student.ChooseOne(listMajorMinorSkillID(NavalSchool))
 			outcome.skillsGained = append(outcome.skillsGained, choise)
 			outcome.events = append(outcome.events, fmt.Sprintf("Learn Naval Skill %v", skill.NameByID(choise)))
-		case "Marine Skill":
-			choise := student.ChooseOne(listMajorMinorSkillID(MarineSchool))
+		case "School Skill":
+			choise := student.ChooseOne(listMajorMinorSkillID(BasicSchoolTradeSchool))
 			outcome.skillsGained = append(outcome.skillsGained, choise)
-			outcome.events = append(outcome.events, fmt.Sprintf("Learn Marine Skill %v", skill.NameByID(choise)))
+			outcome.events = append(outcome.events, fmt.Sprintf("Learn School Skill %v", skill.NameByID(choise)))
+		case "Pilot":
+			outcome.skillsGained = append(outcome.skillsGained, skill.ID_Pilot)
+			outcome.events = append(outcome.events, fmt.Sprintf("Learn %v", skill.NameByID(skill.ID_Pilot)))
 		}
 	}
 	return true

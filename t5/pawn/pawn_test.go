@@ -53,15 +53,16 @@ func TestPawn(t *testing.T) {
 		for _, ev := range chr2.generationEvents {
 			fmt.Println(ev)
 		}
-		chr2.StartEducationProgram(education.ArmySchool)
+		chr2.StartEducationProgram(education.BasicSchoolTrainingCourse)
 		for _, ev := range chr2.generationEvents {
 			fmt.Println(ev)
 		}
-		chr2.StartEducationProgram(education.NavalSchool)
+		chr2.StartEducationProgram(education.Mentor)
 		for _, ev := range chr2.generationEvents {
 			fmt.Println(ev)
 		}
-		chr2.StartEducationProgram(education.MarineSchool)
+
+		chr2.StartEducationProgram(education.BasicSchoolApprentice)
 		fmt.Println("----------")
 		for _, ev := range chr2.generationEvents {
 
