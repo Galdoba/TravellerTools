@@ -350,7 +350,7 @@ func NewInstitution(id int) *institution {
 		inst.graduationEdu = 0
 	case FlightSchool:
 		inst.form = "Flight School"
-		inst.applyCheck = []int{}
+		inst.applyCheck = []int{characteristic.CHAR_SOCIAL}
 		inst.duration = 0
 		inst.validPassFailCHAR = []int{characteristic.CHAR_DEXTERITY, characteristic.CHAR_AGILITY, characteristic.CHAR_GRACE}
 		inst.howManyRolls = 1
@@ -373,8 +373,8 @@ type studyOutcome struct {
 	events          []string
 }
 
-func Outcome(out studyOutcome) (int, int, int, int, string, int, []int, []string) {
-	return out.gainedMajor, out.gainedMinor, out.yearsPassed, out.waiversUsed, out.degreeGained, out.newEducationVal, out.skillsGained, out.events
+func Outcome(out studyOutcome) (int, int, int, int, string, []int, []string) {
+	return out.gainedMajor, out.gainedMinor, out.yearsPassed, out.waiversUsed, out.degreeGained, out.skillsGained, out.events
 }
 
 /*
@@ -412,12 +412,12 @@ func (outcome *studyOutcome) honors(institution *institution, student Student) {
 	return
 }
 
-func (outcome *studyOutcome) processEducationEvents(institution *institution, student Student) {
+func (outcome *studyOutcome) processEducationEvents(institution *institution, student Student) bool {
 	passChar := maxValChar(student.Profile(), institution.validPassFailCHAR) //выбираем большую характеристику для учебы
 
 	for i := 0; i < institution.howManyRolls; i++ {
 		if !studyYearSucces(institution, student, outcome, i, passChar) {
-			return
+			return false
 		}
 	}
 	switch institution.ID {
@@ -437,6 +437,7 @@ func (outcome *studyOutcome) processEducationEvents(institution *institution, st
 		outcome.newEducationVal = institution.graduationEdu
 	}
 	outcome.honors(institution, student)
+	return true
 }
 
 func Attend(student Student, institutionID int) studyOutcome {
@@ -449,7 +450,9 @@ func Attend(student Student, institutionID int) studyOutcome {
 	if !addmissionSuccess(institution, student, &outcome) {
 		return outcome
 	}
-	outcome.processEducationEvents(institution, student)
+	if !outcome.processEducationEvents(institution, student) {
+		return outcome
+	}
 
 	///OTC, NOTC
 	switch institutionID {
@@ -465,6 +468,7 @@ func Attend(student Student, institutionID int) studyOutcome {
 			case false:
 			case true:
 				outcome.processEducationEvents(trainingCorps, student)
+
 			}
 		}
 	}
@@ -849,7 +853,19 @@ func addmissionSuccess(institution *institution, student Student, outcome *study
 	if len(institution.applyCheck) == 0 {
 		autoApply = true
 	}
+	switch {
+	case institution.ID == FlightSchool:
+		_, _, _, degree := student.EducationState()
+		if strings.Contains(degree, "Officer1 Honors BA") {
+			autoApply = true
+		} else {
+			outcome.events = append(outcome.events, fmt.Sprintf("Addmission to %v rejected", institution.form))
+			return false
+		}
+	}
+
 	applyChar := maxValChar(student.Profile(), institution.applyCheck) //выбираем большую характеристику для поступления
+
 	switch {
 	case autoApply:
 		outcome.events = append(outcome.events, fmt.Sprintf("Admission is automatic to %v", institution.form))

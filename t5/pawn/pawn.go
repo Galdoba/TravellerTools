@@ -100,7 +100,7 @@ func (p *Pawn) ControlType() int {
 	return p.controlType
 }
 
-func (p *Pawn) InjectEducationOutcome(gainedMajor, gainedMinor, yearsPassed, waiversUsed int, degreeGained string, newEducationVal int, skillsGained []int, events []string) {
+func (p *Pawn) InjectEducationOutcome(gainedMajor, gainedMinor, yearsPassed, waiversUsed int, degreeGained string, skillsGained []int, events []string) {
 	p.major = gainedMajor
 	p.minor = gainedMinor
 	p.age += yearsPassed
@@ -158,11 +158,13 @@ func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {
 			break
 		}
 		institutionID := p.ChooseOne(educationOptions)
-		p.StartEducationProgram(institutionID)
+		err := p.StartEducationProgram(institutionID)
+		if err != nil {
+			panic("Unknown EDU ERR: " + err.Error())
+		}
 		concluded++
 		want = p.ChooseOne([]int{1, 2, 3, 4, 5, 6})
 	}
-
 	return &p, nil
 }
 
