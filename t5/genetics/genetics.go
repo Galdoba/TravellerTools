@@ -437,3 +437,28 @@ func GenomeCompatability(genome1, genome2 GeneProfile) int {
 	}
 	return match
 }
+
+func FromProfile(prf profile.Profile) GeneProfile {
+	gen := profile.New()
+	for _, key := range []string{
+		KEY_GENE_PRF_1,
+		KEY_GENE_PRF_2,
+		KEY_GENE_PRF_3,
+		KEY_GENE_PRF_4,
+		KEY_GENE_PRF_5,
+		KEY_GENE_PRF_6,
+		KEY_GENE_MAP_1,
+		KEY_GENE_MAP_2,
+		KEY_GENE_MAP_3,
+		KEY_GENE_MAP_4,
+		KEY_GENE_MAP_5,
+		KEY_GENE_MAP_6,
+	} {
+		data := prf.Data(key)
+		if data == nil {
+			return nil
+		}
+		gen.Inject(key, data)
+	}
+	return gen
+}

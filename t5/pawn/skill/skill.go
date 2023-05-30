@@ -190,6 +190,14 @@ const (
 	TYPE_TALENT     = "Talent"
 )
 
+func AllID() []int {
+	list := []int{}
+	for i := ID_Actor; i <= ID_Sophontology; i++ {
+		list = append(list, i)
+	}
+	return list
+}
+
 type Skill struct {
 	sklType             string
 	Name                string

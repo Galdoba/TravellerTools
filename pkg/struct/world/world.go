@@ -11,6 +11,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/generation/star"
 	"github.com/Galdoba/TravellerTools/pkg/generation/stellar"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
+	"github.com/Galdoba/TravellerTools/pkg/struct/world/details/sizerelated"
 	"github.com/Galdoba/TravellerTools/t5/genetics"
 	"github.com/Galdoba/devtools/errmaker"
 )
@@ -59,6 +60,7 @@ type World struct {
 	nativeGenome    genetics.GeneProfile
 	Flag            map[string]bool
 	classifications []int
+	SizeDetails     *sizerelated.SizeDetails
 }
 
 func (w *World) String() string {
@@ -722,4 +724,9 @@ func DeepSpace() *World {
 	w := World{}
 	w.classifications = []int{classifications.Ds}
 	return &w
+}
+
+func (w *World) MergeSizeRelated(sd *sizerelated.SizeDetails) error {
+
+	return nil
 }

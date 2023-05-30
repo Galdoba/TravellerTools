@@ -13,23 +13,32 @@ import (
 	"github.com/Galdoba/utils"
 )
 
-type sizeDetails struct {
-	star            string
-	complete        bool
-	diameter        int
-	dessitytype     string
-	dessity         float64
-	mass            float64
-	gravity         float64
-	orbitalDistance float64
-	orbitalPeriod   float64
-	rotationPeriod  float64
-	//axialTilt           int
-	//seismicStressFactor int
+type SizeDetails struct {
+	Star                string
+	Complete            bool
+	Diameter            int
+	Dessitytype         string
+	Dessity             float64
+	Mass                float64
+	Gravity             float64
+	OrbitalDistance     float64
+	OrbitalPeriod       float64
+	RotationPeriod      float64
+	AxialTilt           int
+	OrbitalEccentricity float64
+	//SeismicStressFactor int не могу расчитать без данных о спутниках
+	IsBelt                       bool
+	PredominatePlanetoidDiameter string
+	MaximumPlanetoidDiameter     string
+	PredominateBeltZone          string
+	NZone                        int
+	MZone                        int
+	CZone                        int
+	BeltOrbitWidth               float64
 }
 
-func New() *sizeDetails {
-	sd := sizeDetails{}
+func New() *SizeDetails {
+	sd := SizeDetails{}
 	return &sd
 }
 
@@ -50,7 +59,7 @@ Planet Type:
 
 */
 
-func (sd *sizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile, star star.StarBody) error {
+func (sd *SizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile, star star.StarBody) error {
 	worldtype := prfl.Data(profile.KEY_WORLDTYPE)
 	if worldtype == nil {
 		return errmaker.ErrorFrom(ErrNoData, profile.KEY_WORLDTYPE)
@@ -80,12 +89,27 @@ func (sd *sizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile
 		return errmaker.ErrorFrom(fmt.Errorf("star class not provided"))
 	}
 	//////////////////
-	sd.star = star.Class()
+	sd.Star = star.Class()
 	worldtypeCode := worldtype.Code()
 	switch worldtypeCode {
 	default:
 		return fmt.Errorf("worldtype code '%v' unknown", worldtypeCode)
 	case "B":
+		sd.IsBelt = true
+		for _, err := range []error{
+			// sd.rollDiameter(dice, size),
+			// sd.rollDesityType(dice, size, atmo, hzVar),
+			// sd.rollDensity(dice),
+			// sd.calculateWorldMass(size),
+			// sd.calculateWorldGravity(size),
+			// sd.rollOrbitalDistance(dice, planetOrbit),
+			// sd.calculatePlanetaryOrbitalPeriod(star, sateliteOrbit),
+			// sd.rollPlanetaryRotationPeriod(dice, star, sateliteOrbit),
+		} {
+			if err != nil {
+				return errmaker.ErrorFrom(err)
+			}
+		}
 		return fmt.Errorf("worldtype code '%v' (planetoid) unimplemented", worldtypeCode)
 	case "K", "L", "M":
 		return fmt.Errorf("worldtype code '%v' (gigants) unimplemented", worldtypeCode)
@@ -104,6 +128,8 @@ func (sd *sizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile
 				return errmaker.ErrorFrom(err)
 			}
 		}
+		sd.AxialTilt = rollAxialTilt(dice)
+		sd.OrbitalEccentricity = rollOrbitalEccentricity(dice)
 		return nil
 	}
 
@@ -111,15 +137,15 @@ func (sd *sizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile
 
 var ErrNoData = fmt.Errorf("profile have no data")
 
-func (sd *sizeDetails) rollDiameter(dice *dice.Dicepool, size ehex.Ehex) error {
+func (sd *SizeDetails) rollDiameter(dice *dice.Dicepool, size ehex.Ehex) error {
 	r1 := dice.Sroll("2d6-7")
 	r2 := dice.Sroll("2d6-7")
 	r3 := dice.Sroll("2d6-7")
-	sd.diameter = size.Value()*1000 + (r1 * 100) + (r2 * 10) + (r3)
-	for sd.diameter <= 0 {
-		sd.diameter += 100
+	sd.Diameter = size.Value()*1000 + (r1 * 100) + (r2 * 10) + (r3)
+	for sd.Diameter <= 0 {
+		sd.Diameter += 100
 	}
-	sd.diameter = (sd.diameter * 16) / 10
+	sd.Diameter = (sd.Diameter * 16) / 10
 	return nil
 }
 
@@ -130,7 +156,7 @@ const (
 	DENSITY_ICY_BODY    = "Icy Body"
 )
 
-func (sd *sizeDetails) rollDesityType(dice *dice.Dicepool, size, atmo, hzVar ehex.Ehex) error {
+func (sd *SizeDetails) rollDesityType(dice *dice.Dicepool, size, atmo, hzVar ehex.Ehex) error {
 	dm := 0
 	s := size.Value()
 	a := atmo.Value()
@@ -153,23 +179,23 @@ func (sd *sizeDetails) rollDesityType(dice *dice.Dicepool, size, atmo, hzVar ehe
 	r := dice.Sroll("2d6") + dm
 	switch {
 	case r <= 1:
-		sd.dessitytype = DENSITY_HEAVY_CORE
+		sd.Dessitytype = DENSITY_HEAVY_CORE
 	case r >= 2 && r <= 10:
-		sd.dessitytype = DENSITY_MOLTEN_CORE
+		sd.Dessitytype = DENSITY_MOLTEN_CORE
 	case r >= 11 && r <= 14:
-		sd.dessitytype = DENSITY_ROCKY_BODY
+		sd.Dessitytype = DENSITY_ROCKY_BODY
 	case r >= 15:
-		sd.dessitytype = DENSITY_ICY_BODY
+		sd.Dessitytype = DENSITY_ICY_BODY
 	}
 	return nil
 }
 
-func (sd *sizeDetails) rollDensity(dice *dice.Dicepool) error {
+func (sd *SizeDetails) rollDensity(dice *dice.Dicepool) error {
 	r := dice.Sroll("3d6")
 	densitySl := []float64{}
-	switch sd.dessitytype {
+	switch sd.Dessitytype {
 	default:
-		return errmaker.ErrorFrom(fmt.Errorf("sd.dessitytype invalid"), sd.dessitytype)
+		return errmaker.ErrorFrom(fmt.Errorf("sd.Dessitytype invalid"), sd.Dessitytype)
 	case DENSITY_HEAVY_CORE:
 		densitySl = []float64{1.10, 1.15, 1.20, 1.25, 1.30, 1.35, 1.40, 1.45, 1.50, 1.55, 1.60, 1.70, 1.80, 1.90, 2.00, 2.25}
 	case DENSITY_MOLTEN_CORE:
@@ -179,55 +205,55 @@ func (sd *sizeDetails) rollDensity(dice *dice.Dicepool) error {
 	case DENSITY_ICY_BODY:
 		densitySl = []float64{0.18, 0.20, 0.22, 0.24, 0.26, 0.28, 0.30, 0.32, 0.34, 0.36, 0.38, 0.40, 0.42, 0.44, 0.46, 0.48}
 	}
-	sd.dessity = densitySl[r-3]
+	sd.Dessity = densitySl[r-3]
 	return nil
 }
 
-func (sd *sizeDetails) calculateWorldMass(size ehex.Ehex) error {
-	if sd.dessity <= 0 {
+func (sd *SizeDetails) calculateWorldMass(size ehex.Ehex) error {
+	if sd.Dessity <= 0 {
 		return fmt.Errorf("density is <= 0")
 	}
 	r := float64(size.Value())
-	m := sd.dessity * (math.Pow((r / 8.0), 3))
-	sd.mass = m
-	sd.mass = utils.RoundFloat64(sd.mass, 3)
+	m := sd.Dessity * (math.Pow((r / 8.0), 3))
+	sd.Mass = m
+	sd.Mass = utils.RoundFloat64(sd.Mass, 3)
 	return nil
 }
 
-func (sd *sizeDetails) calculateWorldGravity(size ehex.Ehex) error {
-	if sd.mass <= 0 {
-		return fmt.Errorf("mass is <= 0")
+func (sd *SizeDetails) calculateWorldGravity(size ehex.Ehex) error {
+	if sd.Mass <= 0 {
+		return fmt.Errorf("Mass is <= 0")
 	}
 	r := float64(size.Value())
-	m := sd.mass * (64.0 / (math.Pow((r), 2)))
-	sd.gravity = m
-	sd.gravity = utils.RoundFloat64(sd.gravity, 2)
+	m := sd.Mass * (64.0 / (math.Pow((r), 2)))
+	sd.Gravity = m
+	sd.Gravity = utils.RoundFloat64(sd.Gravity, 2)
 	return nil
 }
 
-func (sd *sizeDetails) rollOrbitalDistance(dice *dice.Dicepool, planetOrbit ehex.Ehex) error {
+func (sd *SizeDetails) rollOrbitalDistance(dice *dice.Dicepool, planetOrbit ehex.Ehex) error {
 	orbit := orbit.NewPlanetOrbit(dice, planetOrbit.Value())
-	sd.orbitalDistance = orbit.Distance()
+	sd.OrbitalDistance = orbit.Distance()
 	return nil
 }
 
-func (sd *sizeDetails) calculatePlanetaryOrbitalPeriod(star star.StarBody, sateliteOrbit ehex.Ehex) error {
+func (sd *SizeDetails) calculatePlanetaryOrbitalPeriod(star star.StarBody, sateliteOrbit ehex.Ehex) error {
 	if sateliteOrbit.Code() != "*" {
 		return nil
 	}
-	d := sd.orbitalDistance
+	d := sd.OrbitalDistance
 	m := star.Mass()
 	p := (math.Sqrt(math.Pow(d, 3) / m)) * 365.25
 	p = utils.RoundFloat64(p, 1)
-	sd.orbitalPeriod = p
+	sd.OrbitalPeriod = p
 	return nil
 }
 
-func (sd *sizeDetails) rollPlanetaryRotationPeriod(dice *dice.Dicepool, star star.StarBody, sateliteOrbit ehex.Ehex) error {
+func (sd *SizeDetails) rollPlanetaryRotationPeriod(dice *dice.Dicepool, star star.StarBody, sateliteOrbit ehex.Ehex) error {
 	if sateliteOrbit.Code() != "*" {
 		return nil
 	}
-	d := sd.orbitalDistance
+	d := sd.OrbitalDistance
 	m := star.Mass()
 	w := float64(dice.Sroll("4d10+5"))
 	p := w + (m / d)
@@ -256,12 +282,12 @@ func (sd *sizeDetails) rollPlanetaryRotationPeriod(dice *dice.Dicepool, star sta
 		case 12:
 			p = float64(dice.Sroll("1d10")*24*20) + float64(dice.Sroll("1d24")-12) + float64(dice.Sroll("1d10")/10)
 		}
-		if p/24 >= sd.orbitalPeriod {
-			p = sd.orbitalPeriod * 24
+		if p/24 >= sd.OrbitalPeriod {
+			p = sd.OrbitalPeriod * 24
 		}
 	}
 	p = utils.RoundFloat64(p, 1)
-	sd.rotationPeriod = p
+	sd.RotationPeriod = p
 	return nil
 }
 
@@ -292,6 +318,70 @@ func rollAxialTilt(dice *dice.Dicepool) int {
 		}
 	}
 	return -1
+}
+
+func rollOrbitalEccentricity(dice *dice.Dicepool) float64 {
+	if dice.Sroll("1d6") < 4 {
+		return 0
+	}
+	oe := 0.0
+	switch dice.Sroll("2d10") {
+	case 2:
+		oe = 0.002
+	case 3:
+		oe = 0.003
+	case 4:
+		oe = 0.004
+	case 5:
+		oe = 0.005
+	case 6:
+		oe = 0.006
+	case 7:
+		oe = 0.007
+	case 8:
+		oe = 0.008
+	case 9:
+		oe = 0.009
+	case 10:
+		oe = 0.010
+	case 11:
+		oe = 0.020
+	case 12:
+		oe = 0.030
+	case 13:
+		oe = 0.040
+	case 14:
+		oe = 0.050
+	case 15:
+		oe = 0.070
+	case 16:
+		oe = 0.100
+	case 17:
+		oe = 0.125
+	case 18:
+		oe = 0.150
+	case 19:
+		oe = 0.200
+	case 20:
+		oe = 0.250
+	}
+	return oe
+}
+
+func (sd *SizeDetails) rollPredominateDiameter(dice *dice.Dicepool) error {
+	r1 := dice.Sroll("2d6")
+	r2 := dice.Sroll("1d6")
+	pbd := []string{
+		"1m",
+		"5m",
+		"10m",
+		"25m",
+		"50m",
+		"100m",
+		"1m",
+	}
+	sd.OrbitalPeriod = p
+	return nil
 }
 
 type SizeRelatedDetails interface {

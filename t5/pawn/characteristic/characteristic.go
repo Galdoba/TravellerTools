@@ -549,45 +549,57 @@ func genePrf(id int) string {
 }
 
 //FromProfile - Создает Frame из данных профайла
-func FromProfile(prf profile.Profile, code int) *Frame {
-	chr := &Frame{}
-
-	geneDice := 0
-	actual := 0
-	name, genePrf, posKey, geneMap := dataByID(code)
-	//fmt.Println(dataByID(code))
-	if val := prf.Data(posKey); val != nil {
-		actual = val.Value()
-	}
-	if gm := prf.Data(geneMap); gm != nil {
-		geneDice = gm.Value()
-	}
-	chr = New(name, geneDice)
-	chr.value = actual
-
-	profiledID := prf.Data(genePrf)
-
-	if profiledID != nil {
-		if profiledID.Value() != code {
-			profiledName, _, _, _ := dataByID(profiledID.Value())
-			actual = chr.ValueAs(profiledName)
+func FromProfile(profile profile.Profile, code int) *Frame {
+	fmt.Println(code, CHAR_STRENGHT, CHAR_PSIONICS)
+	if code >= CHAR_STRENGHT && code <= CHAR_PSIONICS {
+		chr := NewChar(code)
+		fmt.Println(chr.positionCode, "=")
+		val := profile.Data(chr.positionCode)
+		if val != nil {
+			chr.value = profile.Data(chr.positionCode).Value()
 		}
-		chr.value = actual
+		return chr
 	}
-	// switch code {
-	// case C1:
-	// 	genePrf = "C1"
-	// case C2:
-	// 	genePrf = "C2"
-	// case C3:
-	// 	genePrf = "C3"
-	// case C4:
-	// 	genePrf = "C4"
-	// case C5:
-	// 	genePrf = "C5"
-	// case C6:
-	// 	genePrf = "C6"
-	// }
+	genKey := ""
+	gemMapVal := ""
+	switch code {
+	case C1:
+		genKey = genetics.KEY_GENE_PRF_1
+		gemMapVal = genetics.KEY_GENE_MAP_1
+	case C2:
+		genKey = genetics.KEY_GENE_PRF_2
+		gemMapVal = genetics.KEY_GENE_MAP_2
+	case C3:
+		genKey = genetics.KEY_GENE_PRF_3
+		gemMapVal = genetics.KEY_GENE_MAP_3
+	case C4:
+		genKey = genetics.KEY_GENE_PRF_4
+		gemMapVal = genetics.KEY_GENE_MAP_4
+	case C5:
+		genKey = genetics.KEY_GENE_PRF_5
+		gemMapVal = genetics.KEY_GENE_MAP_5
+	case C6:
+		genKey = genetics.KEY_GENE_PRF_6
+		gemMapVal = genetics.KEY_GENE_MAP_6
+	case CS:
+		chr := NewChar(CHAR_SANITY)
+		chr.value = profile.Data(chr.positionCode).Value()
+		chr.generationDice = 2
+		return chr
+	case CP:
+		chr := NewChar(CHAR_PSIONICS)
+		chr.value = profile.Data(chr.positionCode).Value()
+		chr.generationDice = 2
+		return chr
+	default:
+	}
+	genPrf := profile.Data(genKey)
+	if genPrf != nil {
+		code = genPrf.Value()
+	}
+	chr := NewChar(code)
+	chr.value = profile.Data(chr.positionCode).Value()
+	chr.generationDice = profile.Data(gemMapVal).Value()
 	return chr
 }
 
@@ -606,3 +618,240 @@ func (chr *Frame) Check(diff int, dice *dice.Dicepool, mods ...int) bool {
 	}
 	return false
 }
+
+func codeToName(code int) string {
+	switch code {
+	case CHAR_STRENGHT:
+		return Strength
+	case CHAR_DEXTERITY:
+		return Dexterity
+	case CHAR_AGILITY:
+		return Agility
+	case CHAR_GRACE:
+		return Grace
+	case CHAR_ENDURANCE:
+		return Endurance
+	case CHAR_STAMINA:
+		return Stamina
+	case CHAR_VIGOR:
+		return Vigor
+	case CHAR_INTELLIGENCE:
+		return Intelligence
+	case CHAR_EDUCATION:
+		return Education
+	case CHAR_TRAINING:
+		return Training
+	case CHAR_INSTINCT:
+		return Instinct
+	case CHAR_SOCIAL:
+		return SocialStanding
+	case CHAR_CHARISMA:
+		return Charisma
+	case CHAR_CASTE:
+		return Caste
+	case CHAR_SANITY:
+		return Sanity
+	case CHAR_PSIONICS:
+		return Psionics
+	}
+	return PseudoCHR
+}
+
+type characteristic struct {
+	positionCode   string
+	abb            string
+	name           string
+	human          bool //human or analog
+	description    string
+	geneticProfile string
+	charType       string
+	generationDice int //genes
+	value          int
+	geneticValue   int
+	mods           []mod
+	//generationDM   int
+}
+
+func NewChar(code int) *Frame {
+	chr := Frame{}
+	chr.name = codeToName(code)
+	switch chr.name {
+	default:
+		return nil
+	case Strength:
+		chr.positionCode = "C1"
+		chr.abb = "Str"
+		chr.human = true
+		chr.description = "physical power"
+		chr.geneticProfile = "S"
+		chr.charType = TYPE_PHYSICAL
+	case Dexterity:
+		chr.positionCode = "C2"
+		chr.abb = "Dex"
+		chr.human = true
+		chr.description = "hand-eye co-ordination"
+		chr.geneticProfile = "D"
+		chr.charType = TYPE_PHYSICAL
+	case Agility:
+		chr.positionCode = "C2"
+		chr.abb = "Agi"
+		chr.human = false
+		chr.description = "body co-ordination"
+		chr.geneticProfile = "A"
+		chr.charType = TYPE_PHYSICAL
+	case Grace:
+		chr.positionCode = "C2"
+		chr.abb = "Gra"
+		chr.human = false
+		chr.description = "body-limb co-ordination"
+		chr.geneticProfile = "G"
+		chr.charType = TYPE_PHYSICAL
+	case Endurance:
+		chr.positionCode = "C3"
+		chr.abb = "End"
+		chr.human = true
+		chr.description = "resistance to fatigue"
+		chr.geneticProfile = "E"
+		chr.charType = TYPE_PHYSICAL
+	case Stamina:
+		chr.positionCode = "C3"
+		chr.abb = "Sta"
+		chr.human = false
+		chr.description = "long-term task persistence"
+		chr.geneticProfile = "S"
+		chr.charType = TYPE_PHYSICAL
+	case Vigor:
+		chr.positionCode = "C3"
+		chr.abb = "Vig"
+		chr.human = false
+		chr.description = "short-term fatigue resistance"
+		chr.geneticProfile = "V"
+		chr.charType = TYPE_PHYSICAL
+	case Intelligence:
+		chr.positionCode = "C4"
+		chr.abb = "Int"
+		chr.human = true
+		chr.description = "ability to think and reason"
+		chr.geneticProfile = "I"
+		chr.charType = TYPE_MENTAL
+	case Education:
+		chr.positionCode = "C5"
+		chr.abb = "Edu"
+		chr.human = true
+		chr.description = "achievement level in school"
+		chr.geneticProfile = "E"
+		chr.charType = TYPE_MENTAL
+	case Training:
+		chr.positionCode = "C5"
+		chr.abb = "Tra"
+		chr.human = false
+		chr.description = "based on cultural heritage"
+		chr.geneticProfile = "T"
+		chr.charType = TYPE_MENTAL
+	case Instinct:
+		chr.positionCode = "C5"
+		chr.abb = "Ins"
+		chr.human = false
+		chr.description = "based on genetic heritage"
+		chr.geneticProfile = "I"
+		chr.charType = TYPE_MENTAL
+	case SocialStanding:
+		chr.positionCode = "C6"
+		chr.abb = "Soc"
+		chr.human = true
+		chr.description = "large group hierarchy"
+		chr.geneticProfile = "S"
+		chr.charType = TYPE_SOCICAL
+	case Charisma:
+		chr.positionCode = "C6"
+		chr.abb = "Cha"
+		chr.human = false
+		chr.description = "small group hierarchy"
+		chr.geneticProfile = "C"
+		chr.charType = TYPE_SOCICAL
+	case Caste:
+		chr.positionCode = "C6"
+		chr.abb = "Cas"
+		chr.human = false
+		chr.description = "genetic group hierarchy"
+		chr.geneticProfile = "K"
+		chr.charType = SocialStanding
+	case Sanity:
+		chr.positionCode = "CS"
+		chr.abb = "San"
+		chr.human = true
+		chr.description = "mental health and stability"
+		chr.geneticProfile = "S"
+		chr.charType = TYPE_OBSCURE
+	case Psionics:
+		chr.positionCode = "SP"
+		chr.abb = "Psi"
+		chr.human = true
+		chr.description = "extra-sensory mental power"
+		chr.geneticProfile = "P"
+		chr.charType = TYPE_OBSCURE
+	case PseudoCHR:
+		chr.positionCode = ""
+		chr.abb = ""
+		chr.human = true
+		chr.description = "Pseudo characteristic"
+		chr.geneticProfile = "?"
+		chr.charType = TYPE_OBSCURE
+		chr.generationDice = 0
+		chr.value = 7
+	}
+	return &chr
+}
+
+func (chr *characteristic) SetMapValue(mv int) {
+	chr.geneticValue = mv
+}
+
+// func From(profile profile.Profile, code int) *characteristic {
+// 	if code >= CHAR_STRENGHT && code <= CHAR_PSIONICS {
+// 		chr := NewChar(code)
+// 		chr.value = profile.Data(chr.positionCode).Value()
+// 		return chr
+// 	}
+// 	genKey := ""
+// 	gemMapVal := ""
+// 	switch code {
+// 	case C1:
+// 		genKey = genetics.KEY_GENE_PRF_1
+// 		gemMapVal = genetics.KEY_GENE_MAP_1
+// 	case C2:
+// 		genKey = genetics.KEY_GENE_PRF_2
+// 		gemMapVal = genetics.KEY_GENE_MAP_2
+// 	case C3:
+// 		genKey = genetics.KEY_GENE_PRF_3
+// 		gemMapVal = genetics.KEY_GENE_MAP_3
+// 	case C4:
+// 		genKey = genetics.KEY_GENE_PRF_4
+// 		gemMapVal = genetics.KEY_GENE_MAP_4
+// 	case C5:
+// 		genKey = genetics.KEY_GENE_PRF_5
+// 		gemMapVal = genetics.KEY_GENE_MAP_5
+// 	case C6:
+// 		genKey = genetics.KEY_GENE_PRF_6
+// 		gemMapVal = genetics.KEY_GENE_MAP_6
+// 	case CS:
+// 		chr := NewChar(CHAR_SANITY)
+// 		chr.value = profile.Data(chr.positionCode).Value()
+// 		chr.SetMapValue(2)
+// 		return chr
+// 	case CP:
+// 		chr := NewChar(CHAR_PSIONICS)
+// 		chr.value = profile.Data(chr.positionCode).Value()
+// 		chr.SetMapValue(2)
+// 		return chr
+// 	default:
+// 	}
+// 	genPrf := profile.Data(genKey)
+// 	if genPrf != nil {
+// 		code = genPrf.Value()
+// 	}
+// 	chr := NewChar(code)
+// 	chr.value = profile.Data(chr.positionCode).Value()
+// 	chr.SetMapValue(profile.Data(gemMapVal).Value())
+// 	return chr
+// }

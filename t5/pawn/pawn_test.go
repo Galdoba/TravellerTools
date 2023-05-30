@@ -46,7 +46,7 @@ func TestPawn(t *testing.T) {
 		fmt.Println(chr2)
 
 		fmt.Println(chr2.CheckCharacteristic(CheckAverage, CHAR_TRAINING))
-		for i := CHAR_STRENGHT; i < 18; i++ {
+		for i := CHAR_STRENGHT; i <= CHAR_PSIONICS; i++ {
 			fmt.Println(characteristic.FromProfile(chr2.profile, i))
 		}
 		for _, ev := range chr2.generationEvents {
@@ -54,6 +54,9 @@ func TestPawn(t *testing.T) {
 		}
 		fmt.Println(chr2.profile)
 		time.Sleep(time.Millisecond * 100)
+
+		chrTest := characteristic.FromProfile(chr2.Profile(), C2)
+		fmt.Println(chrTest)
 
 	}
 

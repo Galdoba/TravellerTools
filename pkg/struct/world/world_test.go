@@ -7,6 +7,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/classifications"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/struct/world/details/sizerelated"
+	"github.com/Galdoba/TravellerTools/t5/genetics"
 )
 
 func TestGenome(t *testing.T) {
@@ -34,6 +35,8 @@ func TestGenome(t *testing.T) {
 			t.Errorf(err.Error())
 		}
 		fmt.Printf("testing world %v: %v	%v           \n", i, wrld, sDetails)
+		gen := genetics.FromProfile(wrld.profile)
+		fmt.Println(gen)
 	}
 	fmt.Println("")
 }
