@@ -105,12 +105,15 @@ func (sd *SizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile
 			// sd.rollOrbitalDistance(dice, planetOrbit),
 			// sd.calculatePlanetaryOrbitalPeriod(star, sateliteOrbit),
 			// sd.rollPlanetaryRotationPeriod(dice, star, sateliteOrbit),
+			sd.rollPredominateDiameter(dice),
+			sd.rollBeltZones(dice, hzVar),
+			sd.rollBeltWidth(dice, planetOrbit),
 		} {
 			if err != nil {
 				return errmaker.ErrorFrom(err)
 			}
 		}
-		return fmt.Errorf("worldtype code '%v' (planetoid) unimplemented", worldtypeCode)
+		return nil
 	case "K", "L", "M":
 		return fmt.Errorf("worldtype code '%v' (gigants) unimplemented", worldtypeCode)
 	case "A", "C", "D", "E", "F", "G", "H", "J":
@@ -369,18 +372,95 @@ func rollOrbitalEccentricity(dice *dice.Dicepool) float64 {
 }
 
 func (sd *SizeDetails) rollPredominateDiameter(dice *dice.Dicepool) error {
-	r1 := dice.Sroll("2d6")
-	r2 := dice.Sroll("1d6")
-	pbd := []string{
-		"1m",
-		"5m",
-		"10m",
-		"25m",
-		"50m",
-		"100m",
-		"1m",
+	r1 := dice.Sroll("2d6") - 2
+	r2 := dice.Sroll("1d6") - 1
+	pbd := []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.3, 1, 5, 50, 500}
+	mpd := []float64{0, 0, 1, 10, 100, 1000}
+	bd := pbd[r1]
+	bdm := mpd[r2]
+	sd.PredominatePlanetoidDiameter = fmt.Sprintf("%vkm", int(bd))
+	if bd < 0 {
+		sd.PredominatePlanetoidDiameter = fmt.Sprintf("%vm", int(1000.0*bd))
 	}
-	sd.OrbitalPeriod = p
+	sd.MaximumPlanetoidDiameter = fmt.Sprintf("%vkm", int(bdm))
+	if bdm == 0 {
+		sd.MaximumPlanetoidDiameter = ""
+	}
+	if bd < bdm {
+		sd.PredominatePlanetoidDiameter, sd.MaximumPlanetoidDiameter = sd.MaximumPlanetoidDiameter, sd.PredominatePlanetoidDiameter
+	}
+	return nil
+}
+
+func (sd *SizeDetails) rollBeltZones(dice *dice.Dicepool, hzVar ehex.Ehex) error {
+	dm := 0
+	if hzVar.Value() < 9 {
+		dm = -4
+	}
+	if hzVar.Value() > 11 {
+		dm = 2
+	}
+	r1 := dice.Sroll("2d6") + dm
+	switch r1 {
+	default:
+		return fmt.Errorf("invalid r1 = %v", r1)
+	case -2, -1, 0, 1, 2, 3, 4:
+		sd.PredominateBeltZone = "N"
+	case 5, 6, 7, 8:
+		sd.PredominateBeltZone = "M"
+	case 9, 10, 11, 12, 13, 14:
+		sd.PredominateBeltZone = "C"
+	}
+	r2 := dice.Sroll("2d6") - 2
+	nAr := []int{}
+	mAr := []int{}
+	cAr := []int{}
+	switch sd.PredominateBeltZone {
+	case "N":
+		nAr = []int{40, 40, 40, 40, 40, 50, 50, 50, 50, 60, 60}
+		mAr = []int{30, 40, 40, 40, 40, 40, 40, 40, 30, 50, 40}
+		cAr = []int{30, 20, 20, 20, 20, 10, 10, 10, 20, 10, 20}
+	case "M":
+		nAr = []int{20, 30, 20, 20, 30, 20, 10, 10, 10, 0, 0}
+		mAr = []int{50, 50, 60, 60, 60, 70, 70, 80, 80, 80, 90}
+		cAr = []int{30, 20, 20, 20, 10, 10, 20, 10, 10, 20, 10}
+	case "C":
+		nAr = []int{20, 20, 20, 10, 10, 10, 10, 10, 0, 0, 0}
+		mAr = []int{30, 30, 30, 30, 30, 20, 20, 10, 10, 10, 20}
+		cAr = []int{50, 50, 50, 60, 60, 70, 70, 80, 80, 80, 80}
+	}
+	sd.NZone = nAr[r2]
+	sd.MZone = mAr[r2]
+	sd.CZone = cAr[r2]
+	sd.NZone += dice.Flux()
+	sd.MZone += dice.Flux()
+	if sd.NZone < 0 {
+		sd.NZone = 0
+	}
+	sd.CZone = 100 - sd.MZone - sd.NZone
+	return nil
+}
+
+func (sd *SizeDetails) rollBeltWidth(dice *dice.Dicepool, planetOrbit ehex.Ehex) error {
+	dm := 0
+	switch planetOrbit.Value() {
+	case 0, 1, 2, 3, 4:
+		dm = -3
+	case 5, 6, 7, 8:
+		dm = -1
+	case 9, 10, 11, 12:
+		dm = 1
+	default:
+		dm = 2
+	}
+	r1 := dice.Sroll("2d6") + dm - 2
+	if r1 < 0 {
+		r1 = 0
+	}
+	if r1 > 10 {
+		r1 = 10
+	}
+	sd.BeltOrbitWidth = []float64{0.01, 0.05, 0.1, 0.1, 0.5, 0.5, 1.0, 1.5, 2.0, 5.0, 10.0}[r1]
 	return nil
 }
 

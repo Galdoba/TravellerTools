@@ -34,6 +34,10 @@ func TestGenome(t *testing.T) {
 		if err != nil {
 			t.Errorf(err.Error())
 		}
+		err = aDetails.GenerateDetails(dice, wrld.Profile(), wrld.HomeStar)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
 		fmt.Printf("testing world %v: %v	%v           \n", i, wrld, sDetails)
 		gen := genetics.FromProfile(wrld.profile)
 		fmt.Println(gen)
