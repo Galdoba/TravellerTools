@@ -6,7 +6,6 @@ import (
 
 	"github.com/Galdoba/TravellerTools/pkg/classifications"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
-	"github.com/Galdoba/TravellerTools/pkg/struct/world/details/sizerelated"
 	"github.com/Galdoba/TravellerTools/t5/genetics"
 )
 
@@ -18,7 +17,7 @@ func TestGenome(t *testing.T) {
 		//KnownData(Primary, "G2 V"),
 		)
 		dice := dice.New().SetSeed(fmt.Sprintf("%v", i))
-		err = wrld.GenerateBasic(dice)
+		err = wrld.GenerateFull(dice)
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -29,16 +28,17 @@ func TestGenome(t *testing.T) {
 		// fmt.Println(wrld.profile)
 		// fmt.Println(wrld.UWP())
 		wrld.classifications = classifications.Evaluate(wrld)
-		sDetails := sizerelated.New()
-		err = sDetails.GenerateDetails(dice, wrld.Profile(), wrld.HomeStar)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-		err = aDetails.GenerateDetails(dice, wrld.Profile(), wrld.HomeStar)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-		fmt.Printf("testing world %v: %v	%v           \n", i, wrld, sDetails)
+		// sDetails := sizerelated.New()
+		// err = sDetails.GenerateDetails(dice, wrld.Profile(), wrld.HomeStar)
+		// if err != nil {
+		// 	t.Errorf(err.Error())
+		// }
+		// aDetails := atmorelated.New()
+		// err = aDetails.GenerateDetails(dice, wrld.Profile(), sDetails, wrld.HomeStar)
+		// if err != nil {
+		// 	t.Errorf(err.Error())
+		// }
+		fmt.Printf("testing world %v: %v	%v	%v           \n", i, wrld, wrld.SizeDetails, wrld.AtmoDetails)
 		gen := genetics.FromProfile(wrld.profile)
 		fmt.Println(gen)
 	}

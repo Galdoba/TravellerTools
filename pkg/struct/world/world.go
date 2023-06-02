@@ -11,6 +11,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/generation/star"
 	"github.com/Galdoba/TravellerTools/pkg/generation/stellar"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
+	atmorelated "github.com/Galdoba/TravellerTools/pkg/struct/world/details/atmo"
 	"github.com/Galdoba/TravellerTools/pkg/struct/world/details/sizerelated"
 	"github.com/Galdoba/TravellerTools/t5/genetics"
 	"github.com/Galdoba/devtools/errmaker"
@@ -61,6 +62,7 @@ type World struct {
 	Flag            map[string]bool
 	classifications []int
 	SizeDetails     *sizerelated.SizeDetails
+	AtmoDetails     *atmorelated.AtmoDetails
 }
 
 func (w *World) String() string {
@@ -324,6 +326,10 @@ func (w *World) GenerateFull(dice *dice.Dicepool) error {
 		return ErrFullyGenerated
 	}
 	w.classifications = classifications.Evaluate(w)
+	w.SizeDetails = sizerelated.New()
+	w.SizeDetails.GenerateDetails(dice, w.profile, w.HomeStar)
+	w.AtmoDetails = atmorelated.New()
+	w.AtmoDetails.GenerateDetails(dice, w.profile, w.SizeDetails, w.HomeStar)
 	return nil
 }
 
@@ -472,7 +478,7 @@ func (w *World) generateDominantLife(dice *dice.Dicepool) error {
 	if habzone == nil {
 		return fmt.Errorf("profile.KEY_HABITABLE_ZONE_VAR undefined")
 	}
-	life := planets.GenerateDominantLife(dice, atmo, hydr, habzone, w.prim)
+	life := planets.GenerateNativeLife(dice, atmo, hydr, habzone, w.prim)
 	w.profile.Inject(profile.KEY_LIFE_FACTOR, life)
 
 	return nil

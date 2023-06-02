@@ -1,6 +1,7 @@
 package planets
 
 import (
+	"fmt"
 	"math"
 	"strings"
 
@@ -68,4 +69,56 @@ func GenerateDominantLife(dice *dice.Dicepool, atmo ehex.Ehex, hydr ehex.Ehex, h
 		return ehex.New().Set(10)
 	}
 
+}
+
+func GenerateNativeLife(dice *dice.Dicepool, atmo ehex.Ehex, hydr ehex.Ehex, hz ehex.Ehex, star string) ehex.Ehex {
+	atmoDM := 0
+	switch atmo.Value() {
+	case 0:
+		atmoDM = -3
+	case 1:
+		atmoDM = -2
+	case 6, 7:
+		atmoDM = 2
+	case 4, 5, 8, 9:
+		atmoDM = 1
+	case 2, 3, 13, 14:
+		atmoDM = -1
+	}
+	hydrDM := 0
+	switch hydr.Value() {
+	case 0:
+		hydrDM = -2
+	case 1, 2:
+		hydrDM = -1
+	case 3, 4, 10:
+		hydrDM = 0
+	case 5, 6, 7, 8, 9:
+		hydrDM = 1
+	}
+	tempDM := 0 - int(math.Abs(float64(hz.Value()-10))*1)
+	starDM := 0
+	if strings.Contains(star, "G") || strings.Contains(star, "K") {
+		starDM += 1
+	}
+	if strings.Contains(star, "F") || strings.Contains(star, "A") || strings.Contains(star, "B") {
+		starDM -= 1
+	}
+
+	rollDM := atmoDM + hydrDM + tempDM + starDM
+
+	r := dice.Sroll("2d6") + rollDM - 10
+	fmt.Println("Roll1:", r-rollDM+10, "rollDM:", rollDM, atmoDM, hydrDM, tempDM, starDM)
+	if r <= 0 {
+		return ehex.New().Set(0)
+	}
+	r2 := dice.Sroll("2d6-2") + atmoDM + hydrDM + tempDM
+	fmt.Println("Roll2:", r2-atmoDM-hydrDM-tempDM, "rollDM:", atmoDM, hydrDM, tempDM)
+	if r2 < 0 {
+		r2 = 0
+	}
+	if r2 > 10 {
+		r2 = 10
+	}
+	return ehex.New().Set(r2)
 }
