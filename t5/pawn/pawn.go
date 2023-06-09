@@ -146,6 +146,27 @@ func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {
 		}
 	}
 	///////////EDUCATION
+
+	/*
+		Basic Education
+			ED5 (no time required)
+			Trade School (Major, Honors)
+		//Basic Training
+		//	Apprenticeship (before age 18;)
+		//	Mentor (+2 to Tra)
+		//	Training Course (Major; Honors)
+		Advanced Education
+			College (4 years, Major + Minor)
+			University (4 years, Major + Minor)
+			Academy (4 years, Major + Minor)
+				Honors Program
+					OTC/NOTC
+						Flight School
+					Medical School
+					Law School
+				Masters Program
+					Professors Program
+	*/
 	p.age = 18
 	if p.HasRequsite("Edu 4-") {
 		p.StartEducationProgram(education.BasicSchoolED5)

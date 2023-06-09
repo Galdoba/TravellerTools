@@ -25,13 +25,18 @@ const (
 type career struct {
 	rank         string
 	title        string
-	toBeginTest  []string
+	toBeginTest  []beginTest
 	controlChars []string
 	name         string
 	descr        string
 	ID           int
 	forbidden    bool
 	haveRetry    bool
+}
+
+type beginTest struct {
+	rank    string
+	require string
 }
 
 type careerHistory struct {

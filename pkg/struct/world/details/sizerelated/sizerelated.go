@@ -14,19 +14,19 @@ import (
 )
 
 type SizeDetails struct {
-	Star                string
-	Complete            bool
-	Diameter            int
-	Dessitytype         string
-	Dessity             float64
-	Mass                float64
-	Gravity             float64
-	OrbitalDistance     float64
-	OrbitalPeriod       float64
-	RotationPeriod      float64
-	AxialTilt           int
-	OrbitalEccentricity float64
-	//SeismicStressFactor int не могу расчитать без данных о спутниках
+	Star                         string
+	Complete                     bool
+	Diameter                     int
+	Dessitytype                  string
+	Dessity                      float64
+	Mass                         float64
+	Gravity                      float64
+	OrbitalDistance              float64
+	OrbitalPeriod                float64
+	RotationPeriod               float64
+	AxialTilt                    int
+	OrbitalEccentricity          float64
+	SeismicStressFactor          int
 	IsBelt                       bool
 	PredominatePlanetoidDiameter string
 	MaximumPlanetoidDiameter     string
@@ -126,6 +126,7 @@ func (sd *SizeDetails) GenerateDetails(dice *dice.Dicepool, prfl profile.Profile
 			sd.rollOrbitalDistance(dice, planetOrbit),
 			sd.calculatePlanetaryOrbitalPeriod(star, sateliteOrbit),
 			sd.rollPlanetaryRotationPeriod(dice, star, sateliteOrbit),
+			sd.rollStressFactor(dice, star),
 		} {
 			if err != nil {
 				return errmaker.ErrorFrom(err)
@@ -369,6 +370,23 @@ func rollOrbitalEccentricity(dice *dice.Dicepool) float64 {
 		oe = 0.250
 	}
 	return oe
+}
+
+func (sd *SizeDetails) rollStressFactor(dice *dice.Dicepool, star star.StarBody) error {
+	x := dice.Sroll("1d6-3")
+	p := 0
+	switch sd.Dessitytype {
+	case DENSITY_HEAVY_CORE:
+		p = dice.Sroll("1d6-2")
+	case DENSITY_MOLTEN_CORE:
+		p = dice.Sroll("1d6-3")
+	}
+	s := int(star.Luminocity() / sd.OrbitalDistance)
+	sd.SeismicStressFactor = x + p + s
+	if sd.SeismicStressFactor < 1 {
+		sd.SeismicStressFactor = 1
+	}
+	return nil
 }
 
 func (sd *SizeDetails) rollPredominateDiameter(dice *dice.Dicepool) error {
