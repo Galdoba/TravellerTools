@@ -1,8 +1,6 @@
 package worldmap
 
 import (
-	"fmt"
-
 	"github.com/Galdoba/TravellerTools/pkg/astrogation/hexagon"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/pkg/struct/world"
@@ -75,13 +73,16 @@ type WorldCoords struct {
 func New(world *world.World) *worldmap {
 	wm := worldmap{}
 	size := world.Profile().Data(profile.KEY_SIZE).Value()
-	newGrid(size)
-	wm.WorldHex = make(map[coordinates]*WorldHex)
 
+	wm.WorldHex = make(map[coordinates]*WorldHex)
+	wm.WorldHex = newGrid(size)
 	return &wm
 }
 
 func newGrid(size int) map[coordinates]*WorldHex {
+	if size == 0 {
+		return nil
+	}
 	grid := make(map[coordinates]*WorldHex)
 	topRows := []int{}
 	middleRows := []int{}
@@ -100,9 +101,38 @@ func newGrid(size int) map[coordinates]*WorldHex {
 		bottomRows = append(bottomRows, row)
 		row++
 	}
-	fmt.Println(topRows, middleRows, bottomRows)
+	//fmt.Println(topRows, middleRows, bottomRows)
 	switch size {
-	// case 1:
+	case 1:
+		grid[newCoords(0, 0)] = newWorldHex(0, 0, []coordinates{
+			newCoords(0, 1), newCoords(1, 1), newCoords(2, 1), newCoords(3, 1), newCoords(4, 1)})
+		for i := 0; i < 5; i++ {
+			r := i + 1
+			l := i - 1
+			if r == 5 {
+				r = 0
+			}
+			if l == -1 {
+				l = 4
+			}
+			grid[newCoords(i, 1)] = newWorldHex(i, 1, []coordinates{
+				newCoords(0, 0), newCoords(r, 1), newCoords(l, 1), newCoords(i, 2), newCoords(r, 2)})
+		}
+		for i := 0; i < 5; i++ {
+			r := i + 1
+			l := i - 1
+			if r == 5 {
+				r = 0
+			}
+			if l == -1 {
+				l = 4
+			}
+			grid[newCoords(i, 2)] = newWorldHex(i, 2, []coordinates{
+				newCoords(0, 3), newCoords(l, 1), newCoords(i, 1), newCoords(r, 2), newCoords(l, 2)})
+		}
+		grid[newCoords(0, 3)] = newWorldHex(0, 3, []coordinates{
+			newCoords(0, 3), newCoords(1, 3), newCoords(2, 3), newCoords(3, 3), newCoords(4, 3)})
+
 	// 	grid[newCoords(0, 0)] = newWorldHex(0, 0, []coordinates{
 	// 		newCoords(0, 1), newCoords(1, 1), newCoords(2, 1), newCoords(3, 1), newCoords(4, 1)})
 	// 	grid[newCoords(0, 1)] = newWorldHex(0, 1, []coordinates{
@@ -126,13 +156,20 @@ func newGrid(size int) map[coordinates]*WorldHex {
 			for x := 0; x < width; x++ {
 				coord := newCoords(x, i)
 				nb := defineNeibours(coord, topRows, middleRows, bottomRows)
-				fmt.Println("+", nb, coord, "------", len(nb))
+				//fmt.Println("+", nb, coord, "------", len(nb))
+				grid[coord] = newWorldHex(coord.x, coord.y, nb)
 			}
 
 		}
 
 	}
 	return grid
+}
+
+func addNeibbour(neib []coordinates, coords coordinates, newNeib coordinates) []coordinates {
+
+	neib = append(neib, newNeib)
+	return neib
 }
 
 func defineNeibours(coord coordinates, top, mid, bot []int) []coordinates {
@@ -144,12 +181,30 @@ func defineNeibours(coord coordinates, top, mid, bot []int) []coordinates {
 	for _, v := range top {
 		reverseTop = append(reverseTop, v)
 	}
-	allWid := append(top, mid...)
+	allWid := append([]int{}, top...)
+	for i := range mid {
+		k := i + 2
+		k++
+		allWid = append(allWid, mid[0])
+	}
+
 	for i, j := 0, len(reverseTop)-1; i < j; i, j = i+1, j-1 {
 		reverseTop[i], reverseTop[j] = reverseTop[j], reverseTop[i]
 	}
+	for i := range reverseTop {
+		reverseTop[i] = reverseTop[i] * -1
+	}
 	allWid = append(allWid, reverseTop...)
 	maxWidth := top[len(top)-1] * 5
+	// track := false
+	// if coord.x == 2 && coord.y == 5 {
+	// 	fmt.Println(allWid, upperRow, currentRow, lowerRow, coord)
+	// 	track = true
+	// }
+	// if coord.x == 3 && coord.y == 5 {
+	// 	fmt.Println(allWid, upperRow, currentRow, lowerRow, coord)
+	// 	track = true
+	// }
 	switch currentRow {
 	case "NP":
 		for i := 0; i < 5; i++ {
@@ -195,18 +250,27 @@ func defineNeibours(coord coordinates, top, mid, bot []int) []coordinates {
 					thisOffset = maxOffset/2 + coord.x
 				}
 				want := rowNodes(coord.y - 1)[thisNode] + thisOffset
+
+				want2 := -999
+				switch {
+
+				case coord.y%2 == 1:
+					// if track {
+					// 	fmt.Println("ROW odd", coord.y)
+					// }
+					want--
+					want2 = want + 1
+				case coord.y%2 == 0:
+					want2 = want - 1
+					// if track {
+					// 	fmt.Println("ROW even", coord.y)
+					// }
+				}
 				if want > rowLen(coord.y-1)-1 {
 					want -= rowLen(coord.y - 1)
 				}
 				if want < 0 {
 					want += rowLen(coord.y - 1)
-				}
-				want2 := -999
-				switch coord.y % 2 {
-				case 1:
-					want2 = want + 1
-				case 0:
-					want2 = want - 1
 				}
 				if want2 > rowLen(coord.y-1)-1 {
 					want2 -= rowLen(coord.y - 1)
@@ -214,6 +278,7 @@ func defineNeibours(coord coordinates, top, mid, bot []int) []coordinates {
 				if want2 < 0 {
 					want2 += rowLen(coord.y - 1)
 				}
+
 				neib = append(neib, newCoords(want, coord.y-1))
 				neib = append(neib, newCoords(want2, coord.y-1))
 			}
@@ -229,6 +294,7 @@ func defineNeibours(coord coordinates, top, mid, bot []int) []coordinates {
 		}
 		neib = append(neib, newCoords(rX, coord.y))
 		neib = append(neib, newCoords(lX, coord.y))
+
 		///////////////////
 		switch lowerRow {
 		case "top":
@@ -241,25 +307,65 @@ func defineNeibours(coord coordinates, top, mid, bot []int) []coordinates {
 						break
 					}
 				}
-				want := rowNodes(coord.y + 1)[thisNode]
-				neib = append(neib, newCoords(want-1, coord.y+1))
-				neib = append(neib, newCoords(want, coord.y+1))
-				neib = append(neib, newCoords(want+1, coord.y+1))
-			case false:
-				nodes := rowNodes(coord.y)
-				offset := 0
-				for _, n := range nodes {
-					if coord.x > n {
-						offset++
-					}
-				}
-				for _, add := range []int{-1, 0} {
-					want := coord.x + offset + add
+				want0 := rowNodes(coord.y + 1)[thisNode]
+				for _, off := range []int{-1, 0, 1} {
+					want := want0 + off
 					if want < 0 {
 						want += rowLen(coord.y + 1)
 					}
+					if want > rowLen(coord.y+1)-1 {
+						want -= rowLen(coord.y + 1)
+					}
 					neib = append(neib, newCoords(want, coord.y+1))
+
+					//neib = append(neib, newCoords(want+1, coord.y+1))
 				}
+
+			case false:
+				nodes := rowNodes(allWid[coord.y])
+				maxOffset := nodes[1] - nodes[0]
+				thisNode := -1
+				thisOffset := -1
+				for n, node := range nodes {
+					for of := 0; of < maxOffset; of++ {
+						if node+of == coord.x {
+							thisNode = n
+							thisOffset = of
+						}
+					}
+				}
+				if thisNode == -1 {
+					thisNode = 4
+					thisOffset = maxOffset/2 + coord.x
+				}
+				lowerNode := rowNodes(allWid[coord.y+1])
+				want := lowerNode[thisNode] + thisOffset
+				if want < 0 {
+					want += rowLen(allWid[coord.y+1])
+				}
+				if want > rowLen(allWid[coord.y+1])-1 {
+					want -= rowLen(allWid[coord.y+1])
+				}
+				want2 := want + 1
+				if want2 > rowLen(allWid[coord.y+1])-1 {
+					want2 -= rowLen(allWid[coord.y+1])
+				}
+
+				neib = append(neib, newCoords(want, coord.y+1))
+				neib = append(neib, newCoords(want2, coord.y+1))
+				// for _, add := range []int{0, 1} {
+				// 	want := coord.x + offset + add
+				// 	if want < 0 {
+				// 		want += rowLen(coord.y + 1)
+				// 	}
+				// 	if want > rowLen(coord.y+1)-1 {
+				// 		want -= rowLen(coord.y + 1)
+				// 	}
+				// 	if track {
+				// 		fmt.Println("ADD BOT", newCoords(want, coord.y+1))
+				// 	}
+				// 	neib = append(neib, newCoords(want, coord.y+1))
+				// }
 			}
 		case "mid":
 			for _, offset := range []int{0, -1} {
@@ -271,122 +377,142 @@ func defineNeibours(coord coordinates, top, mid, bot []int) []coordinates {
 			}
 		}
 	case "mid":
-		for n := range []int{-1, 0, 1} {
+		for _, n := range []int{-1, 0, 1} {
 			rX := coord.x + 1
-			if n != 0 {
-				rX--
-			}
+
 			if rX > (maxWidth)-1 { //    rowLen(top[len(top)])-1 {
 				rX -= maxWidth // rowLen(top[len(top)])
 			}
-			lX := coord.x - 1
+			lX := coord.x
+			if n == 0 {
+				lX--
+			}
+
 			if lX < 0 {
 				lX += maxWidth //rowLen(top[len(top)])
 			}
+
 			neib = append(neib, newCoords(rX, coord.y+n))
 			neib = append(neib, newCoords(lX, coord.y+n))
 		}
 	case "bot":
-		fmt.Println()
 		isNode := false
-		for _, nodeVal := range rowNodes(coord.y) {
+		for _, nodeVal := range rowNodes(allWid[coord.y]) {
 			if nodeVal == coord.x {
 				isNode = true
 			}
 		}
 		switch upperRow {
 		case "mid":
-
-			fmt.Print("top = 2")
-			///urX := coord.x
-			ulX := coord.x + 1
-			if ulX > maxWidth-1 {
-				ulX -= maxWidth
+			urX := coord.x
+			ulX := coord.x - 1
+			if ulX < 0 {
+				ulX += maxWidth
 			}
-			//neib = append(neib, newCoords(urX, coord.y-1))
-			//neib = append(neib, newCoords(ulX, coord.y-1))
+			neib = append(neib, newCoords(urX, coord.y-1))
+			neib = append(neib, newCoords(ulX, coord.y-1))
+
 			///////////////
 
 		case "bot":
-			switch isNode {
-			case true:
-				fmt.Print("top = 3")
-			case false:
-				fmt.Print("top = 2")
-			}
-
-			nMap := mapTopNeibB(allWid[coord.y])
-			for k, v := range nMap {
-				if k == coord.x {
-					off := []int{0, -1}
-					if v <= 0 {
-						v = v * -1
-						off = append(off, -2)
-					}
-					for _, offset := range off {
-						drX := v + offset
-						if drX < 0 {
-							drX += rowLen(allWid[coord.y-1])
-						}
-
-						//neib = append(neib, newCoords(drX, coord.y-1))
+			nodes := rowNodes(allWid[coord.y])
+			maxOffset := nodes[1] - nodes[0]
+			thisNode := -1
+			thisOffset := -1
+			for n, node := range nodes {
+				for of := 0; of < maxOffset; of++ {
+					if node+of == coord.x {
+						thisNode = n
+						thisOffset = of
 					}
 				}
 			}
+			upperNodes := rowNodes(allWid[coord.y-1])
+			switch isNode {
+			case true:
+				want2 := upperNodes[thisNode]
+				want3 := want2 + 1
+				want := want2 - 1
+				if want < 0 {
+					want += rowLen(allWid[coord.y-1])
+				}
+				if want3 > rowLen(allWid[coord.y-1])-1 {
+					want3 -= rowLen(allWid[coord.y-1])
+				}
+				neib = append(neib, newCoords(want, coord.y-1))
+				neib = append(neib, newCoords(want2, coord.y-1))
+				neib = append(neib, newCoords(want3, coord.y-1))
+			case false:
+				//fmt.Print("top = 2")
+				want := upperNodes[thisNode] + thisOffset
+				want2 := want + 1
+				if want2 > rowLen(allWid[coord.y-1])-1 {
+					want2 -= rowLen(allWid[coord.y-1])
+				}
+				neib = append(neib, newCoords(want, coord.y-1))
+				neib = append(neib, newCoords(want2, coord.y-1))
+			}
 		}
-		fmt.Print(" mid = 2")
+
 		switch lowerRow {
 		case "SP":
-			fmt.Print(" bot = 1")
-			//neib = append(neib, newCoords(0, coord.y+1))
+			//fmt.Print(" bot = 1")
+			neib = append(neib, newCoords(0, coord.y+1))
 
 		case "bot":
 			switch isNode {
 			case true:
-				fmt.Print(" bot = 1")
 				thisNode := -1
-				for i, n := range rowNodes(allWid[coord.y+1]) {
+				for i, n := range rowNodes(allWid[coord.y]) {
 					if n == coord.x {
 						thisNode = i
 						break
 					}
 				}
-				if thisNode == -1 {
-					fmt.Println(coord)
-					panic(0)
-				}
 				want := rowNodes(allWid[coord.y+1])[thisNode]
-				fmt.Println("====WANT", newCoords(want, coord.y+1))
-				//neib = append(neib, newCoords(want, coord.y-1))
+				neib = append(neib, newCoords(want, coord.y+1))
 			case false:
-				fmt.Print(" bot = 2")
-			}
-			nMap := mapTopNeibC(allWid[coord.y])
-			for k, v := range nMap {
-				if k == coord.x {
-					off := []int{0}
-					if v <= 0 {
-						v = v * -1
-						//off = append(off, 1)
-					} else {
-						off = append(off, 1)
-					}
-					for _, offset := range off {
-						drX := v + offset
-						if drX > rowLen(allWid[coord.y+1])-1 {
-							//fmt.Println("had", drX, rowLen(allWid[coord.y+1])-1)
-							drX -= rowLen(allWid[coord.y+1])
-							//fmt.Println("fix", offset, drX)
+				nodes := rowNodes(allWid[coord.y])
+				maxOffset := nodes[1] - nodes[0]
+				thisNode := -1
+				thisOffset := -1
+				for n, node := range nodes {
+					for of := 0; of < maxOffset; of++ {
+						if node+of == coord.x {
+							thisNode = n
+							thisOffset = of
 						}
-						//fmt.Println("Add Bottob", newCoords(drX, coord.y+1))
-						//neib = append(neib, newCoords(drX, coord.y+1))
 					}
 				}
-			}
+				lowerNode := rowNodes(allWid[coord.y+1])
 
+				want := lowerNode[thisNode] + thisOffset
+				if want > rowLen(allWid[coord.y+1])-1 {
+					want -= rowLen(allWid[coord.y+1])
+				}
+				if want < 0 {
+					want += rowLen(allWid[coord.y+1])
+				}
+				if thisNode == -1 {
+					thisNode = 4
+					thisOffset = maxOffset/2 + coord.x
+				}
+				if want > rowLen(allWid[coord.y+1])-1 {
+					want -= rowLen(allWid[coord.y+1])
+				}
+				if want < 0 {
+					want += rowLen(allWid[coord.y+1])
+				}
+				want2 := want - 1
+				if want2 < 0 {
+					want2 += rowLen(allWid[coord.y+1])
+				}
+
+				neib = append(neib, newCoords(want, coord.y+1))
+				neib = append(neib, newCoords(want2, coord.y+1))
+			}
 		}
 		rX := coord.x + 1
-		//fmt.Println(rowLen(allWid[coord.y]), allWid[coord.y], coord.y)
 		if rX > rowLen(allWid[coord.y])-1 {
 			rX -= rowLen(allWid[coord.y])
 		}
@@ -394,63 +520,67 @@ func defineNeibours(coord coordinates, top, mid, bot []int) []coordinates {
 		if lX < 0 {
 			lX += rowLen(allWid[coord.y])
 		}
-		//neib = append(neib, newCoords(rX, coord.y))
-		//neib = append(neib, newCoords(lX, coord.y))
-		fmt.Println()
+		neib = append(neib, newCoords(rX, coord.y))
+		neib = append(neib, newCoords(lX, coord.y))
+
 	case "SP":
 		for i := 0; i < 5; i++ {
 			neib = append(neib, newCoords(i, coord.y-1))
 		}
 	}
+	// if track {
+	// 	fmt.Println(neib)
+	// 	fmt.Println("------")
+	// }
 
 	return neib
 }
 
-func mapTopNeibB(currentWidth int) map[int]int {
-	width := currentWidth * 5
-	nMap := make(map[int]int)
-	nodes := []int{}
-	for i := 0; i < 5; i++ {
-		nodes = append(nodes, currentWidth*i)
-	}
-	off := -1
+// func mapTopNeibB(currentWidth int) map[int]int {
+// 	width := currentWidth * 5
+// 	nMap := make(map[int]int)
+// 	nodes := []int{}
+// 	for i := 0; i < 5; i++ {
+// 		nodes = append(nodes, currentWidth*i)
+// 	}
+// 	off := -1
 
-	for i := 0; i < width; i++ {
-		node := false
-		if i/currentWidth != off || i == 0 {
-			off = i / currentWidth
-			node = true
-		}
-		nMap[i] = i + off
-		if node {
-			nMap[i] = nMap[i] * -1
-		}
-	}
-	return nMap
-}
+// 	for i := 0; i < width; i++ {
+// 		node := false
+// 		if i/currentWidth != off || i == 0 {
+// 			off = i / currentWidth
+// 			node = true
+// 		}
+// 		nMap[i] = i + off
+// 		if node {
+// 			nMap[i] = nMap[i] * -1
+// 		}
+// 	}
+// 	return nMap
+// }
 
-func mapTopNeibC(currentWidth int) map[int]int {
-	width := currentWidth * 5
-	nMap := make(map[int]int)
-	nodes := []int{}
-	for i := 0; i < 5; i++ {
-		nodes = append(nodes, currentWidth*i)
-	}
-	off := -1
+// func mapTopNeibC(currentWidth int) map[int]int {
+// 	width := currentWidth * 5
+// 	nMap := make(map[int]int)
+// 	nodes := []int{}
+// 	for i := 0; i < 5; i++ {
+// 		nodes = append(nodes, currentWidth*i)
+// 	}
+// 	off := -1
 
-	for i := 0; i < width; i++ {
-		node := false
-		if i/currentWidth != off || i == 0 {
-			off = i / currentWidth
-			node = true
-		}
-		nMap[i] = i - off
-		if node {
-			nMap[i] = nMap[i] * -1
-		}
-	}
-	return nMap
-}
+// 	for i := 0; i < width; i++ {
+// 		node := false
+// 		if i/currentWidth != off || i == 0 {
+// 			off = i / currentWidth
+// 			node = true
+// 		}
+// 		nMap[i] = i - off
+// 		if node {
+// 			nMap[i] = nMap[i] * -1
+// 		}
+// 	}
+// 	return nMap
+// }
 
 func reverseMap(originalMap map[int]int) map[int]int {
 	newmap := make(map[int]int)
@@ -492,8 +622,18 @@ func defineRow(row int, top, mid, bot []int) string {
 }
 
 func rowNodes(r int) []int {
-	nodes := append([]int{}, r/2)
-	return append(nodes, nodes[0]+r, nodes[0]+r+r, nodes[0]+r+r+r, nodes[0]+r+r+r+r)
+	nodes := []int{}
+	switch r <= 0 {
+	case false:
+		nodes = append([]int{}, r/2)
+		nodes = append(nodes, nodes[0]+r, nodes[0]+r+r, nodes[0]+r+r+r, nodes[0]+r+r+r+r)
+	case true:
+		r = r * -1
+		nodes = append(nodes, 0)
+		nodes = append(nodes, nodes[0]+r, nodes[0]+r+r, nodes[0]+r+r+r, nodes[0]+r+r+r+r)
+	}
+
+	return nodes
 }
 
 func rowLen(r int) int {
@@ -501,73 +641,76 @@ func rowLen(r int) int {
 	case 0:
 		return 1
 	default:
+		if r < 0 {
+			r = r * -1
+		}
 		return r * 5
 	}
 }
 
-func mapTopNeib(current int) map[int]int {
-	nMap := make(map[int]int)
-	switch current {
-	case 1:
-		for i := 0; i < rowLen(current); i++ {
-			nMap[i] = 0
-		}
-		return nMap
-	case 2:
-		for i := 0; i < rowLen(current); i++ {
-			n := i / 2
-			for n >= 5 {
-				n -= 5
-			}
-			nMap[i] = n
-		}
-	default:
-		topRow := []int{}
-		for i := 0; i < rowLen(current-1); i++ {
-			topRow = append(topRow, -1)
-		}
-		topNodes := rowNodes(current - 1)
-		//topRow[len(topRow)-1] = 0
-		thisNodes := rowNodes(current)
-		for i := 0; i < rowLen(current); i++ {
-			nodeNum, off := minNode(thisNodes, i)
-			n := -999
-			if nodeNum < 0 {
-				nodeNum = 4
-				off = (current/2 - i - 1) * -1
-				switch current % 2 {
-				case 0:
-					off--
-				case 1:
-				}
-				n = thisNodes[0] + off
-			} else {
-				n = topNodes[nodeNum] + off
-			}
-			if n >= rowLen(current-1) {
-				n -= rowLen(current - 1)
-			}
-			nMap[i] = n
-		}
-	}
-	return nMap
-}
+// func mapTopNeib(current int) map[int]int {
+// 	nMap := make(map[int]int)
+// 	switch current {
+// 	case 1:
+// 		for i := 0; i < rowLen(current); i++ {
+// 			nMap[i] = 0
+// 		}
+// 		return nMap
+// 	case 2:
+// 		for i := 0; i < rowLen(current); i++ {
+// 			n := i / 2
+// 			for n >= 5 {
+// 				n -= 5
+// 			}
+// 			nMap[i] = n
+// 		}
+// 	default:
+// 		topRow := []int{}
+// 		for i := 0; i < rowLen(current-1); i++ {
+// 			topRow = append(topRow, -1)
+// 		}
+// 		topNodes := rowNodes(current - 1)
+// 		//topRow[len(topRow)-1] = 0
+// 		thisNodes := rowNodes(current)
+// 		for i := 0; i < rowLen(current); i++ {
+// 			nodeNum, off := minNode(thisNodes, i)
+// 			n := -999
+// 			if nodeNum < 0 {
+// 				nodeNum = 4
+// 				off = (current/2 - i - 1) * -1
+// 				switch current % 2 {
+// 				case 0:
+// 					off--
+// 				case 1:
+// 				}
+// 				n = thisNodes[0] + off
+// 			} else {
+// 				n = topNodes[nodeNum] + off
+// 			}
+// 			if n >= rowLen(current-1) {
+// 				n -= rowLen(current - 1)
+// 			}
+// 			nMap[i] = n
+// 		}
+// 	}
+// 	return nMap
+// }
 
-func minNode(nodes []int, x int) (nodeNum int, offset int) {
-	nodeNum = -1
-	for i, n := range nodes {
-		if x < n {
-			continue
-		}
-		nodeNum = i
-		offset = x - n
-	}
-	if nodeNum == -1 {
-		nm := nodes[0] - (nodes[1] - nodes[0])
-		offset = x + nm
-	}
-	return nodeNum, offset
-}
+// func minNode(nodes []int, x int) (nodeNum int, offset int) {
+// 	nodeNum = -1
+// 	for i, n := range nodes {
+// 		if x < n {
+// 			continue
+// 		}
+// 		nodeNum = i
+// 		offset = x - n
+// 	}
+// 	if nodeNum == -1 {
+// 		nm := nodes[0] - (nodes[1] - nodes[0])
+// 		offset = x + nm
+// 	}
+// 	return nodeNum, offset
+// }
 
 /*
 GENERATING THE WORLD MAP
