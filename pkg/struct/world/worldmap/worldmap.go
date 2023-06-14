@@ -12,7 +12,7 @@ type worldmap struct {
 	seismoStress int
 	worldX       int
 	worldY       int
-	WorldHex     map[coordinates]*WorldHex
+	WorldHex     map[int]*WorldHex
 }
 
 type coordinates struct {
@@ -41,8 +41,10 @@ type coords interface {
 }
 
 type WorldHex struct {
+	ID             int
 	wx             int
 	wy             int
+	coords         coordinates
 	overallTerrain []int
 	neiboirs       []coordinates
 }
@@ -57,10 +59,11 @@ func presentOnMap(wm *worldmap, hex hexagon.Hexagon) bool {
 	return true
 }
 
-func newWorldHex(x, y int, neib []coordinates) *WorldHex {
+func newWorldHex(current coordinates, neib []coordinates) *WorldHex {
 	wh := WorldHex{}
-	wh.wx = x
-	wh.wy = y
+	wh.coords = current
+	wh.wx = current.x
+	wh.wy = current.y
 	wh.neiboirs = neib
 	return &wh
 }
@@ -74,16 +77,16 @@ func New(world *world.World) *worldmap {
 	wm := worldmap{}
 	size := world.Profile().Data(profile.KEY_SIZE).Value()
 
-	wm.WorldHex = make(map[coordinates]*WorldHex)
+	wm.WorldHex = make(map[int]*WorldHex)
 	wm.WorldHex = newGrid(size)
 	return &wm
 }
 
-func newGrid(size int) map[coordinates]*WorldHex {
+func newGrid(size int) map[int]*WorldHex {
 	if size == 0 {
 		return nil
 	}
-	grid := make(map[coordinates]*WorldHex)
+	grid := make(map[int]*WorldHex)
 	topRows := []int{}
 	middleRows := []int{}
 	bottomRows := []int{}
@@ -104,7 +107,7 @@ func newGrid(size int) map[coordinates]*WorldHex {
 	//fmt.Println(topRows, middleRows, bottomRows)
 	switch size {
 	case 1:
-		grid[newCoords(0, 0)] = newWorldHex(0, 0, []coordinates{
+		grid[0] = newWorldHex(newCoords(0, 0), []coordinates{
 			newCoords(0, 1), newCoords(1, 1), newCoords(2, 1), newCoords(3, 1), newCoords(4, 1)})
 		for i := 0; i < 5; i++ {
 			r := i + 1
@@ -115,7 +118,7 @@ func newGrid(size int) map[coordinates]*WorldHex {
 			if l == -1 {
 				l = 4
 			}
-			grid[newCoords(i, 1)] = newWorldHex(i, 1, []coordinates{
+			grid[i+1] = newWorldHex(newCoords(i, 1), []coordinates{
 				newCoords(0, 0), newCoords(r, 1), newCoords(l, 1), newCoords(i, 2), newCoords(r, 2)})
 		}
 		for i := 0; i < 5; i++ {
@@ -127,28 +130,17 @@ func newGrid(size int) map[coordinates]*WorldHex {
 			if l == -1 {
 				l = 4
 			}
-			grid[newCoords(i, 2)] = newWorldHex(i, 2, []coordinates{
+			grid[i+6] = newWorldHex(newCoords(i, 2), []coordinates{
 				newCoords(0, 3), newCoords(l, 1), newCoords(i, 1), newCoords(r, 2), newCoords(l, 2)})
 		}
-		grid[newCoords(0, 3)] = newWorldHex(0, 3, []coordinates{
+		grid[11] = newWorldHex(newCoords(0, 3), []coordinates{
 			newCoords(0, 3), newCoords(1, 3), newCoords(2, 3), newCoords(3, 3), newCoords(4, 3)})
-
-	// 	grid[newCoords(0, 0)] = newWorldHex(0, 0, []coordinates{
-	// 		newCoords(0, 1), newCoords(1, 1), newCoords(2, 1), newCoords(3, 1), newCoords(4, 1)})
-	// 	grid[newCoords(0, 1)] = newWorldHex(0, 1, []coordinates{
-	// 		newCoords(0, 0), newCoords(1, 1), newCoords(0, 2), newCoords(1, 2), newCoords(4, 1)})
-	// 	grid[newCoords(1, 1)] = newWorldHex(1, 1, []coordinates{
-	// 		newCoords(0, 0), newCoords(0, 1), newCoords(2, 1), newCoords(0, 2), newCoords(2, 2)})
-	// 	grid[newCoords(2, 1)] = newWorldHex(2, 1, []coordinates{
-	// 		newCoords(0, 0), newCoords(1, 1), newCoords(3, 1), newCoords(1, 2), newCoords(2, 2)})
-	// 	grid[newCoords(3, 1)] = newWorldHex(3, 1, []coordinates{
-	// 		newCoords(0, 0), newCoords(2, 1), newCoords(4, 1), newCoords(2, 2), newCoords(3, 2)})
 	default:
+		id := 0
 		for i := 0; i <= 3*size; i++ {
 			width := rowLen(i)
 			if maxWidth < width {
 				width = maxWidth
-
 			}
 			if i > 2*size-1 {
 				width = rowLen((3 * size) - i)
@@ -157,7 +149,9 @@ func newGrid(size int) map[coordinates]*WorldHex {
 				coord := newCoords(x, i)
 				nb := defineNeibours(coord, topRows, middleRows, bottomRows)
 				//fmt.Println("+", nb, coord, "------", len(nb))
-				grid[coord] = newWorldHex(coord.x, coord.y, nb)
+				grid[id] = newWorldHex(coord, nb)
+				grid[id].ID = id
+				id++
 			}
 
 		}
@@ -711,58 +705,3 @@ func rowLen(r int) int {
 // 	}
 // 	return nodeNum, offset
 // }
-
-/*
-GENERATING THE WORLD MAP
-As instructed, mark the specific terrain type in directed World Hexes on the World Map. Within the limits of the instructions, terrain may be placed in any available World Hex. If the specific world is too small for the terrain called for, restrict the number placed to what the specific hex will contain.
-1. Select a blank World Map based on World Size.
-	//2. Resources. Determine Resources from the Economic Extension. Subtract system GG and Belts: place the resulting number of Resource Hexes one per Triangle.
-3. Mountains. Place 1D Mountains in each Triangle.
-4. Chasms. Place World Size x Chasms Sets (1D per Triangle).
-5. Precipices. Place World Size x Precipices one per Triangle.
-If Di
-6. Die-Back. Place 1D Ruins in each Triangle.
-If Va
-7. Vacuum Plain. Place Craters (1D per Triangle).
-If De
-8. Desert. Mark all unmarked hexes Desert.
-9. Oceans.
-Randomly select Hyd x 2 Triangles as Oceans. Consolidate Ocean Triangles that share sides. Enclose Oceans with Shore lines (which may run through any type terrain). Non-Ocean Triangles are Continents (they are not consolidated; treat each Triangle as a separate Continent).
-10. Seas. Randomly select Hyd Continents and place a one-hex Ocean (Sea) in each.
-Surround each with Shore in all adjacent hexes.
-11. Islands. Convert each Mountain Hex in Ocean to Islands.
-12. Ice-Caps. If HZ or greater, mark the top and bottom Hyd/2 rows as Ice Cap (if Hyd less than 2, no Ice Caps).
-If Ic
-13. More Ice Cap. Add 1D rows to each Ice Cap.
-If Fr
-14. Frozen. Mark Ocean as Ice Field and Land as Frozen Lands (except under Ice Cap).
-If Tu
-15. Tundra. Mark a line 1D hexes from each Pole. Between each line and its Pole, mark  Ocean as Ice Field and Land as Frozen lands (except under Ice Cap).
-If Ag
-16. Agricultural. Place 2D Cropland in each Continent.
-If Fa
-17. Farming. Place 1D Cropland in each Continent.
-If Lo
-18. Low Population. Place one Town. Skip to 22.
-If Ni
-19. Non-Industrial. Place one Town. Skip to 22.
-20. Cities. Place Cities equal to Pop, one per Continent.
-If Atm=0-1, A-C, or E+ = Domed if not NIL.
-If Hi
-21. High Population. Place total Pop/2 Arcologies.
-22. Rural. Mark clear hexes within Pop hexes of City as Rural.
-23. Starport. Place the World Starport (or Spaceport).
-If Tz
-24. Create A Twilight Zone. Select one Pole Triangle and draw a vertical line directly down. Shift 2.5 times World
-Size hexes to one side and draw a parallel line: this is the one-World-Hex-wide Twilight Zone.
-If Tz
-25. Create Two Hemispheres For A Twilight World. Mark one side of the Twilight Zone as Baked Lands and the
-other side as Frozen Lands (overlaying existing terrain). Terrain in the Twilight Zone remains as previously
-created. Convert Ocean in Baked Lands to Desert. Convert Ocean in Frozen Lands to Ice Field.
-If Pe
-26. Penal Colony. Mark Pop x Penal (one per Triangle).
-27. Wasteland. If TL>5, mark 1D adjacent hexes in one Triangle Wasteland.
-28. Exotic. Place one Exotic hex in one Triangle.
-29. Noble Lands. Place one Noble Lands estate.
-30. All other terrain remains Clear.
-*/

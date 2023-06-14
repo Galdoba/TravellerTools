@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/pkg/struct/world"
 )
 
@@ -16,8 +17,8 @@ func TestTri(t *testing.T) {
 		dataMap := make(map[string]int)
 		coordMap := make(map[coordinates]int)
 		reverseCoordMap := make(map[int]int)
-		for k, v := range grid {
-			coordMap[k]++
+		for _, v := range grid {
+			//coordMap[k]++
 			//	fmt.Println(k)
 			//	fmt.Println(v.neiboirs)
 			dataMap[fmt.Sprintf("have %v nodes", len(v.neiboirs))]++
@@ -43,8 +44,14 @@ func TestTri(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	wrld, _ := world.NewWorld()
-	wrld.GenerateBasic(dice.New())
+	wrld, _ := world.NewWorld(
+		world.KnownData(profile.KEY_SIZE, "7"),
+		world.KnownData(world.Primary, "G2 V"),
+	)
+	dice := dice.New().SetSeed(777)
+	wrld.GenerateFull(dice)
+	fmt.Println(wrld.String())
 	wm := New(wrld)
-	fmt.Println(wm)
+	//fmt.Println(wm)
+	wm.PopulateWorldHexesT5(wrld, dice)
 }

@@ -1,7 +1,6 @@
 package planets
 
 import (
-	"fmt"
 	"math"
 	"strings"
 
@@ -106,14 +105,12 @@ func GenerateNativeLife(dice *dice.Dicepool, atmo ehex.Ehex, hydr ehex.Ehex, hz 
 	}
 
 	rollDM := atmoDM + hydrDM + tempDM + starDM
-
 	r := dice.Sroll("2d6") + rollDM - 10
-	fmt.Println("Roll1:", r-rollDM+10, "rollDM:", rollDM, atmoDM, hydrDM, tempDM, starDM)
 	if r <= 0 {
 		return ehex.New().Set(0)
 	}
 	r2 := dice.Sroll("2d6-2") + atmoDM + hydrDM + tempDM
-	fmt.Println("Roll2:", r2-atmoDM-hydrDM-tempDM, "rollDM:", atmoDM, hydrDM, tempDM)
+	//	fmt.Println("Roll2:", r2-atmoDM-hydrDM-tempDM, "rollDM:", atmoDM, hydrDM, tempDM)
 	if r2 < 0 {
 		r2 = 0
 	}
