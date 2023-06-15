@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Galdoba/TravellerTools/internal/counter"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/t5/genetics"
@@ -76,10 +77,14 @@ type Pawn struct {
 	profile          profile.Profile
 	major            int
 	minor            int
-	waiversUsed      int
+	waiversUsed      counter.Counter
 	degree           string
 	age              int
 	generationEvents []string
+}
+
+func (p *Pawn) Waiver() counter.Counter {
+	return p.waiversUsed
 }
 
 func (p *Pawn) Profile() profile.Profile {
@@ -87,13 +92,13 @@ func (p *Pawn) Profile() profile.Profile {
 }
 
 func (p *Pawn) EducationState() (int, int, int, string) {
-	return p.major, p.minor, p.waiversUsed, p.degree
+	return p.major, p.minor, p.waiversUsed.Current(), p.degree
 }
 
 func (p *Pawn) SetMajorMinorWaiver(major, minor, waiver int) {
 	p.major = major
 	p.minor = minor
-	p.waiversUsed = waiver
+	p.waiversUsed.Set(waiver)
 }
 
 func (p *Pawn) ControlType() int {
@@ -104,7 +109,7 @@ func (p *Pawn) InjectEducationOutcome(gainedMajor, gainedMinor, yearsPassed, wai
 	p.major = gainedMajor
 	p.minor = gainedMinor
 	p.age += yearsPassed
-	p.waiversUsed += waiversUsed
+	p.waiversUsed.Add(waiversUsed)
 	p.degree = degreeGained
 	for _, skillID := range skillsGained {
 		p.IncreaseSkill(skillID)
@@ -129,7 +134,7 @@ func (p *Pawn) InjectEducationOutcome(gainedMajor, gainedMinor, yearsPassed, wai
 func New(dice *dice.Dicepool, control int, homeworldTC []int) (*Pawn, error) {
 	p := Pawn{}
 	p.degree = ""
-
+	p.waiversUsed = counter.New()
 	p.controlType = control
 	p.profile = profile.New()
 	if err := p.RollCharacteristics(dice); err != nil {

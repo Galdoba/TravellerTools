@@ -54,4 +54,12 @@ func TestMap(t *testing.T) {
 	wm := New(wrld)
 	//fmt.Println(wm)
 	wm.PopulateWorldHexesT5(wrld, dice)
+	terrainMap := make(map[string]int)
+	for _, hex := range wm.WorldHex {
+		if hex.TerrainIs(TERRAIN_Ocean) {
+			terrainMap["Water"]++
+
+		}
+	}
+	fmt.Println("Water", terrainMap["Water"])
 }

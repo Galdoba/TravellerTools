@@ -241,6 +241,33 @@ func (wh *WorldHex) ReplaceTerrain(old, new int) error {
 	return fmt.Errorf("cannot replace")
 }
 
+func (wh *WorldHex) ReplaceTerrainCombined(old []int, new int) error {
+	found := 0
+	keep := []int{}
+	for _, ter := range wh.overallTerrain {
+		thisMatch := false
+		for _, ol := range old {
+			if ter == ol {
+				found++
+				thisMatch = true
+			}
+			if ter == new {
+				return fmt.Errorf("already have")
+			}
+		}
+		if !thisMatch {
+			keep = append(keep, ter)
+		}
+
+	}
+	if found != len(old) {
+		return fmt.Errorf("cannot replace")
+	}
+	keep = append(keep, new)
+	wh.overallTerrain = keep
+	return nil
+}
+
 func (wh *WorldHex) TerrainIs(ter int) bool {
 	for _, has := range wh.overallTerrain {
 		if ter == has {
@@ -289,12 +316,12 @@ func (wm *worldmap) placeChasms(wrld *world.World, dice *dice.Dicepool) error {
 	populated := 0
 	for i := 0; i < csm; i++ {
 		randomID := dice.Sroll(fmt.Sprintf("1d%v-1", hexNum))
-		if wm.WorldHex[randomID].ReplaceTerrain(TERRAIN_Clear, TERRAIN_Chasm) == nil {
+		if wm.WorldHex[randomID].AddTerrain(TERRAIN_Chasm) == nil {
 			populated++
 		}
-		if wm.WorldHex[randomID].ReplaceTerrain(TERRAIN_Mountain, TERRAIN_Clear) == nil {
-			populated++
-		}
+		// if wm.WorldHex[randomID].ReplaceTerrain(TERRAIN_Mountain, TERRAIN_Clear) == nil {
+		// 	populated++
+		// }
 	}
 	fmt.Println(populated, "chasms added")
 	return nil
@@ -360,13 +387,15 @@ func (wm *worldmap) placeOceans(wrld *world.World, dice *dice.Dicepool) error {
 		placed := false
 		for !placed {
 			randomID := dice.Sroll(fmt.Sprintf("1d%v-1", hexNum))
-			if wm.WorldHex[randomID].ReplaceTerrain(TERRAIN_Clear, TERRAIN_Ocean) == nil {
+			if wm.WorldHex[randomID].AddTerrain(TERRAIN_Ocean) == nil {
 				placed = true
 			}
-			if wm.WorldHex[randomID].ReplaceTerrain(TERRAIN_Mountain, TERRAIN_Islands) == nil {
-				placed = true
+			// if wm.WorldHex[randomID].ReplaceTerrain(TERRAIN_Mountain, TERRAIN_Islands) == nil {
+			// 	placed = true
+			// }
+			if placed {
+				wm.WorldHex[randomID].ReplaceTerrain(TERRAIN_Mountain, TERRAIN_Islands)
 			}
-
 		}
 		populated++
 	}

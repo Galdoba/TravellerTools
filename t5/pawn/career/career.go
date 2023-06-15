@@ -1,6 +1,7 @@
 package career
 
 import (
+	"github.com/Galdoba/TravellerTools/internal/counter"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
 	"github.com/Galdoba/TravellerTools/t5/pawn/skill"
 )
@@ -92,6 +93,7 @@ func careerName(i int) string {
 
 type Worker interface {
 	Profile() profile.Profile
+	Waiver() counter.Counter
 }
 
 func careerOptions(wk Worker, ch *careerHistory) []int {
