@@ -1337,3 +1337,17 @@ func FromProfile(prf profile.Profile, id int) *Skill {
 	skl.ValueInt = sklData.Value()
 	return skl
 }
+
+///////
+
+func (skl *Skill) AssetVal(descr string) int {
+	switch descr {
+	case skl.Name, "selfval":
+		return skl.ValueInt
+	}
+	return -999
+}
+
+func (skl *Skill) AssetDescr() []string {
+	return []string{"SKILL", skl.Name}
+}

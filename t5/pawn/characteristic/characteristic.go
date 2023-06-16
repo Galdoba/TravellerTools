@@ -429,7 +429,7 @@ func (chr *Frame) ValueAs(name string) int {
 	case Caste:
 		return 4
 	}
-	return -9999
+	return -999
 }
 
 func nameToCode(name string) string {
@@ -855,3 +855,16 @@ func (chr *characteristic) SetMapValue(mv int) {
 // 	chr.SetMapValue(profile.Data(gemMapVal).Value())
 // 	return chr
 // }
+
+//Asset
+func (chr *Frame) AssetVal(descr string) int {
+	switch descr {
+	case chr.abb, chr.positionCode, chr.name, "selfval":
+		return chr.value
+	}
+	return chr.ValueAs(descr)
+}
+
+func (chr *Frame) AssetDescr() []string {
+	return []string{"CHAR", chr.abb, chr.positionCode}
+}

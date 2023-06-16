@@ -36,7 +36,7 @@ func TestTask(t *testing.T) {
 
 			t.Logf("%v", tsk)
 			t.Logf("\n%v", tsk.toString())
-			fmt.Println(tsk.char)
+			fmt.Println(tsk.charCode)
 		}
 		if err != nil {
 			t.Errorf("func returned error: %v", err.Error())

@@ -112,6 +112,14 @@ func (dp *Dicepool) Sroll(code string) int {
 	return dp.Roll(code).Sum()
 }
 
+func (dp *Dicepool) RollMap(code string) map[int]int {
+	rm := make(map[int]int)
+	for _, r := range dp.Roll(code).Result() {
+		rm[r]++
+	}
+	return rm
+}
+
 func (dp *Dicepool) Result() []int {
 	return dp.result
 }

@@ -6,12 +6,13 @@ import (
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/t5/pawn/skill"
 )
 
 type t5task struct {
 	typeOfTask      string
-	char            string
-	skill           string
+	charCode        string
+	skillID         int
 	mods            []mod
 	duration        taskDurationData
 	specialTypeTask string
@@ -79,15 +80,15 @@ func New(inst ...instruction) (*t5task, error) {
 			}
 			tsk.dieRoll = in.valI
 		case in.key == instKey_Chararteristic:
-			if tsk.char != "" {
+			if tsk.charCode != "" {
 				return &tsk, fmt.Errorf("instruction repeated: Characteristic: %v", in)
 			}
-			tsk.char = in.valS
+			tsk.charCode = in.valS
 		case in.key == instKey_Skill:
-			if tsk.skill != "" {
+			if tsk.skillID != 0 {
 				return &tsk, fmt.Errorf("instruction repeated: Skill: %v", in)
 			}
-			tsk.skill = in.valS
+			tsk.skillID = in.valI
 		case in.key == instKey_Mod:
 			for _, m := range tsk.mods {
 				if strings.Contains(m.text, in.valS) {
@@ -112,11 +113,11 @@ func (tsk *t5task) toString() string {
 		s += fmt.Sprintf(" %v", tsk.duration.describe())
 	}
 	s += fmt.Sprintf("\n  %vD <= (", tsk.dieRoll)
-	if tsk.char != "" {
-		s += tsk.char + " + "
+	if tsk.charCode != "" {
+		s += tsk.charCode + " + "
 	}
-	if tsk.skill != "" {
-		s += tsk.skill + " + "
+	if tsk.skillID != 0 {
+		s += skill.NameByID(tsk.skillID) + " + "
 	}
 
 	s = strings.TrimSuffix(s, " + ")
