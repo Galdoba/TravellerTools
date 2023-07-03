@@ -2,6 +2,8 @@ package profile
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 )
@@ -35,12 +37,13 @@ type universalProfile struct {
 }
 
 type Profile interface {
-	//Profile() []DataPoint
 	Data(string) ehex.Ehex
-	//Format(int) string
 	Inject(string, interface{})
 	Map() map[string]ehex.Ehex
-	Delete(string)
+	//Create(string)            //C
+	//Read(string) ehex.Ehex    //R
+	//Update(string, ehex.Ehex) //U
+	Delete(string) //D
 }
 
 func (up *universalProfile) Data(k string) ehex.Ehex {
@@ -111,10 +114,24 @@ func (up *universalProfile) String() string {
 func New() *universalProfile {
 	up := universalProfile{}
 	up.data = make(map[string]ehex.Ehex)
+	up.comment = "universal"
 	return &up
 }
 
 func Merge(oldPr, newPr Profile) Profile {
+	outPr := New()
+	for k, v := range oldPr.Map() {
+		outPr.data[k] = v
+	}
+	for k, v := range newPr.Map() {
+		if _, ok := outPr.data[k]; !ok {
+			outPr.data[k] = v
+		}
+	}
+	return outPr
+}
+
+func Append(oldPr, newPr Profile) Profile {
 	outPr := New()
 	for k, v := range oldPr.Map() {
 		outPr.data[k] = v
@@ -139,6 +156,61 @@ func (pr *universalProfile) UpdateSafe(newPr Profile) {
 			pr.data[k] = v
 		}
 	}
+}
+
+type prequisite struct {
+	body       string
+	definition string
+	val        int
+	more       bool
+	less       bool
+}
+
+func (pr *universalProfile) PrequisiteMet(preq string) bool {
+	//func preqIsMet(preq string, assets ...Asset) bool {
+	if preq == "" {
+		return true
+	}
+	p := prequisite{}
+	splitter := " "
+	switch {
+	case strings.Contains(preq, "-"):
+		preq = strings.TrimSuffix(preq, "-")
+		p.less = true
+	case strings.Contains(preq, "+"):
+		preq = strings.TrimSuffix(preq, "+")
+		p.more = true
+	case strings.Contains(preq, "="):
+		splitter = "="
+	}
+	prArr := strings.Split(preq, splitter)
+	p.body = prArr[0]
+	if len(prArr) == 1 {
+		prArr = append(prArr, prArr[0])
+	}
+	p.definition = prArr[1]
+	p.val, _ = strconv.Atoi(p.definition)
+	for k, v := range pr.data {
+		if p.body != k {
+			continue
+		}
+		val := v.Value()
+		if p.less {
+			if val <= p.val {
+				return true
+			}
+		}
+		if p.more {
+			if val >= p.val {
+				return true
+			}
+		}
+		if val == p.val {
+			return true
+		}
+		return false
+	}
+	return false
 }
 
 // func validKeys(e string) []string {

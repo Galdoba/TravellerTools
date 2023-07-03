@@ -1,9 +1,11 @@
 package genetics
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
+	"github.com/Galdoba/TravellerTools/pkg/ehex"
 	"github.com/Galdoba/TravellerTools/pkg/profile"
 )
 
@@ -300,6 +302,7 @@ func Variations(gp GeneProfile) string {
 			}
 
 		}
+		ehex.New().Set("X").Encode("Unknown")
 		str += val
 		val = "?"
 	}
@@ -461,4 +464,93 @@ func FromProfile(prf profile.Profile) GeneProfile {
 		gen.Inject(key, data)
 	}
 	return gen
+}
+
+func BlankGenome() GeneProfile {
+	gemoneMap := profile.New()
+	for _, c := range []string{"1", "2", "3", "4", "5", "6", "S", "P"} {
+		gemoneMap.Inject("PRF_C"+fmt.Sprintf("%v", c), ehex.New().Set("X"))
+		gemoneMap.Inject("MAP_C"+fmt.Sprintf("%v", c), ehex.New().Set("X"))
+		gemoneMap.Inject("GENE_C"+fmt.Sprintf("%v", c), ehex.New().Set("X"))
+		gemoneMap.Inject("MUT_C"+fmt.Sprintf("%v", c), ehex.New().Set("X"))
+		gemoneMap.Inject("C"+fmt.Sprintf("%v", c), ehex.New().Set(0))
+	}
+	return gemoneMap
+}
+
+func HumanGeneString() string {
+	return "01478BEF 22222222 0000XXXX BBBBXXXX 00000000"
+	//      01478B 222222 4456XX BGBRBB
+	//      1100100110010000 222222 4456XX BGBRBB" - speceis:individual
+	//      SDEIES 222222 4566XX BGBRBB
+}
+
+//func FillGenomeProfile(gen GeneProfile, geneString string) GeneProfile {
+// 	data := strings.Split(geneString, "")
+// 	codes := charCodes()
+// 	for i, val := range data {
+// 		v := ehex.New().Set(val)
+// 		switch i {
+// 		case 0:
+// //			gen.Inject()
+// 		}
+// 	}
+//}
+
+func charTypes() []string {
+	keys := []string{}
+	for i := 0; i <= 15; i++ {
+		keys = append(keys, fmt.Sprintf("CHRTYPE%v", i))
+	}
+	return keys
+}
+
+func charCodes() []string {
+	keys := []string{"C1", "C2", "C3", "C4", "C5", "C6", "CS", "CP"}
+	return keys
+}
+
+func characteristics() []string {
+	keys := []string{
+		"Strength",
+		"Dexterity",
+		"Agility",
+		"Grace",
+		"Endurance",
+		"Stamina",
+		"Vigor",
+		"Intelligence",
+		"Education",
+		"Training",
+		"Instinct",
+		"Social",
+		"Charisma",
+		"Caste",
+		"Sanity",
+		"Psionics"}
+	return keys
+}
+
+type environmentDM struct {
+	size    ehex.Ehex
+	atmo    ehex.Ehex
+	hydr    ehex.Ehex
+	terrain string
+}
+
+func EnvironmentDM(size, atmo, hydr ehex.Ehex, terrain string) int {
+	dm := 0
+	if atmo.Value() >= 8 {
+		dm = dm - 2
+	}
+	if size.Value() <= 5 {
+		dm = dm - 1
+	}
+	if hydr.Value() >= 6 {
+		dm = dm + 1
+	}
+	if hydr.Value() >= 9 {
+		dm = dm + 1
+	}
+	return dm
 }

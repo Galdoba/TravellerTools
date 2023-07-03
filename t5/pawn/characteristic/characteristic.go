@@ -781,21 +781,21 @@ func NewChar(code int) *Frame {
 		chr.abb = "San"
 		chr.human = true
 		chr.description = "mental health and stability"
-		chr.geneticProfile = "S"
-		chr.charType = TYPE_OBSCURE
+		chr.geneticProfile = ""
+		chr.charType = TYPE_MENTAL
 	case Psionics:
 		chr.positionCode = "SP"
 		chr.abb = "Psi"
 		chr.human = true
 		chr.description = "extra-sensory mental power"
-		chr.geneticProfile = "P"
+		chr.geneticProfile = ""
 		chr.charType = TYPE_OBSCURE
 	case PseudoCHR:
 		chr.positionCode = ""
 		chr.abb = ""
 		chr.human = true
 		chr.description = "Pseudo characteristic"
-		chr.geneticProfile = "?"
+		chr.geneticProfile = ""
 		chr.charType = TYPE_OBSCURE
 		chr.generationDice = 0
 		chr.value = 7

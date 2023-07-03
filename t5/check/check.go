@@ -112,7 +112,7 @@ func preqIsMet(preq string, assets ...Asset) bool {
 	return false
 }
 
-func (chk *task) Prequisite(preq string) *task {
+func (chk *task) WithPrequisite(preq string) *task {
 	chk.prequisite = preq
 	return chk
 }
@@ -164,7 +164,6 @@ func Resolve(chk *task, dice *dice.Dicepool) Resolution {
 		res.Comments = append(res.Comments, fmt.Sprintf("Success"))
 	}
 	res.RollResolved = true
-	fmt.Println("TN", tn)
 	return res
 }
 
