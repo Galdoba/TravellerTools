@@ -104,3 +104,23 @@ func (ehex *ehex) printStruct() string {
 func match(ehex1, ehex2 ehex) bool {
 	return ehex1.printStruct() == ehex2.printStruct()
 }
+
+type testStruct struct {
+	Str string
+	Val int
+}
+
+func TestContained(t *testing.T) {
+
+	eh := New().Set("A")
+	eh.Put(&testStruct{"aaa", 111})
+	fmt.Println("eh", eh)
+	eh.SetContainedValFunc(func() *int {
+		return &eh.Container.(*testStruct).Val
+	})
+	fmt.Println("eh.Value()", eh.Value())
+
+	fmt.Println("eh.ContainedVal()", eh.ContainedVal())
+	fmt.Println("eh.Container.(*testStruct).Val", eh.Container.(*testStruct).Val)
+
+}

@@ -9,16 +9,32 @@ const (
 	SPECIAL   = "special"
 	ULTIMATE  = "ultimate"
 	ANY_VALUE = "any value"
+	UNSET     = "[No Data]"
 )
 
 type ehex struct {
-	value   int
-	code    string
-	comment string
+	value     int
+	code      string
+	comment   string
+	Container interface{}
+	ContVal   func() *int
 }
 
 func New() *ehex {
-	return &ehex{value: 0, code: "*", comment: ANY_VALUE}
+	return &ehex{
+		value:     0,
+		code:      "0",
+		comment:   UNSET,
+		Container: nil,
+		ContVal: func() *int {
+			return nil
+		},
+	}
+}
+
+func (e *ehex) Put(i interface{}) Ehex {
+	e.Container = i
+	return e
 }
 
 func SetValue(data interface{}) *ehex {
@@ -90,6 +106,8 @@ type Ehex interface {
 	Value() int
 	Code() string
 	Meaning() string
+	SetContainedValFunc(func() *int)
+	ContainedVal() int
 }
 
 func (e *ehex) Value() int {
@@ -102,6 +120,17 @@ func (e *ehex) Code() string {
 
 func (e *ehex) Meaning() string {
 	return e.comment
+}
+
+func (e *ehex) ContainedVal() int {
+	if e.ContVal == nil {
+		return e.value
+	}
+	return *e.ContVal()
+}
+
+func (e *ehex) SetContainedValFunc(f func() *int) {
+	e.ContVal = f
 }
 
 func (e *ehex) String() string {
