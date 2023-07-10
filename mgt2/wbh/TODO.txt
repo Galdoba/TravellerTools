@@ -1,0 +1,8 @@
+
+PACKAGE STRUCTURE:
+/wbh
+    /orbits
+    /stars
+    /systemworlds
+        /physical
+        /social
