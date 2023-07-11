@@ -6,3 +6,12 @@ PACKAGE STRUCTURE:
     /systemworlds
         /physical
         /social
+
+
+NewStarSystem():
+    Type1()
+        2   : Type1() + 1
+            Special() || Unusual()
+                11-12: Gigant()
+        3-11: D10
+        12  : Hot()
