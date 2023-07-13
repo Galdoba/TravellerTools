@@ -2,6 +2,7 @@ package stars
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
@@ -21,6 +22,8 @@ const (
 	tableUnusual
 	tableGiants
 	tablePecuilar
+	tableSubtypeNumeric
+	tableSubtypePrimaryM
 
 	starType    = "Star Type"
 	special     = "Special"
@@ -59,9 +62,12 @@ type starsystem struct {
 }
 
 type star struct {
-	sttype  string
-	class   string
-	subtype int
+	sttype      string
+	class       string
+	subtype     string
+	mass        float64
+	temperature int
+	isPrimary   bool
 }
 
 func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) (*starsystem, error) {
@@ -71,37 +77,49 @@ func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) 
 	default:
 		return &ss, fmt.Errorf("starGenerationMethod unknown (%v)", starGenerationMethod)
 	}
-	ss.starGenerationMethod = starGenerationMethod
-	ss.typeTableVariant = tableVariant
-
-	stRoll := rollTable(dice, tableStarTypeUnselected, ss.typeTableVariant, ss.starGenerationMethod)
-	switch stRoll {
-	case typeO, typeB, typeA, typeF, typeG, typeK, typeM:
-		ss.primary.sttype = stRoll
-		ss.primary.class = classV
-	case classIV, classVI, classBD, classD:
-		ss.primary.class = stRoll
-		for !strings.HasPrefix(stRoll, "Type ") {
-			stRoll = rollTable(dice, tableStarTypeUnselected, ss.typeTableVariant, ss.starGenerationMethod)
-		}
-		ss.primary.sttype = stRoll
-	case classIa, classIb, classII, classIII:
-		ss.primary.class = stRoll
-		dm := append([]int{}, 1)
-		for !strings.HasPrefix(stRoll, "Type ") {
-			stRoll = rollTable(dice, tableStarTypeUnselected, ss.typeTableVariant, ss.starGenerationMethod, dm...)
-		}
-		ss.primary.sttype = stRoll
-	case blackHole, pulsar, neutronStar, nebula, protostar, starcluster, anomaly:
-		ss.primary.sttype = stRoll
-	default:
-		panic(stRoll)
+	primary, err := NewStar(dice, tableVariant, starGenerationMethod, true)
+	if err != nil {
+		return &ss, err
 	}
-	switch ss.primary.class {
-	case classBD:
-		ss.primary.sttype = ""
-	}
+	ss.primary = primary
 	return &ss, nil
+}
+
+func NewStar(dice *dice.Dicepool, typeTableVariant, starGenerationMethod int, isPrimary bool) (star, error) {
+	st := star{}
+	st.isPrimary = isPrimary
+	st.sttype, st.class = starTypeAndClass(dice, typeTableVariant, starGenerationMethod)
+	st.subtype = starSubtype(dice, st)
+	st.mass = massOf(st, dice)
+	st.temperature = temperatureOf(st, dice)
+	return st, nil
+}
+
+func shortStarDescription(st star) string {
+	descr := st.sttype + st.subtype + " " + st.class
+	if st.class == classBD {
+		return "BD"
+	}
+	if st.class == classD {
+		return "D"
+	}
+	switch st.sttype {
+	case nebula, protostar, neutronStar, pulsar, blackHole, starcluster, anomaly:
+		return st.sttype
+	}
+	descr = strings.ReplaceAll(descr, "Class ", "")
+	descr = strings.ReplaceAll(descr, "Type ", "")
+	return descr
+}
+
+func subtypeInt(stp string) int {
+	switch stp {
+	default:
+		return -1
+	case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
+		i, _ := strconv.Atoi(stp)
+		return i
+	}
 }
 
 func rollTable(dice *dice.Dicepool, table, typeTableVariant, method int, mods ...int) string {
@@ -154,40 +172,10 @@ func selectTableBy(s string, method, variant int) int {
 	return 0
 }
 
-func StarTypeRoll(dice *dice.Dicepool, method int, mods ...int) string {
-	dm := 0
-	for _, m := range mods {
-		dm += m
-	}
-	r := dice.Sroll("2d6") + dm
-	if r <= 2 {
-		switch method {
-		case GenerationMethodSpecial:
-			return SpecialRoll(dice, mods...)
-		case GenerationMethodUnusual:
-			return UnusualRoll(dice, mods...)
-		}
-
-	}
-	if r <= 6 {
-		return typeM
-	}
-	if r <= 8 {
-		return typeK
-	}
-	if r <= 10 {
-		return typeG
-	}
-	if r <= 11 {
-		return typeF
-	}
-	return HotRoll(dice, mods...)
-}
-
 func determinationTable(table int) []string {
 	switch table {
 	default:
-		fmt.Println(table)
+		panic(fmt.Sprintf("table with key %v was not provided", table))
 		return []string{}
 	case tableStarTypeTraditional:
 		return []string{special, typeM, typeM, typeM, typeM, typeK, typeK, typeG, typeG, typeF, hot}
@@ -203,118 +191,9 @@ func determinationTable(table int) []string {
 		return []string{classIII, classIII, classIII, classIII, classIII, classIII, classIII, classII, classII, classIb, classIa}
 	case tablePecuilar:
 		return []string{blackHole, pulsar, neutronStar, nebula, nebula, protostar, protostar, protostar, starcluster, anomaly, anomaly}
+	case tableSubtypeNumeric:
+		return []string{"0", "1", "3", "5", "7", "9", "8", "6", "4", "2", "0"}
+	case tableSubtypePrimaryM:
+		return []string{"8", "6", "5", "4", "0", "2", "1", "3", "5", "7", "9"}
 	}
-}
-
-func StarTypeClassDependetRoll(dice *dice.Dicepool, class string, mods ...int) string {
-	dm := 0
-	for _, m := range mods {
-		dm += m
-	}
-	r := dice.Sroll("2d6") + dm
-	stType := ""
-	for r <= 2 {
-		dm++
-		r = dice.Sroll("2d6") + dm
-	}
-	if class == classIV && r >= 3 && r <= 8 {
-		r = r + 5
-	}
-	if r <= 8 {
-		stType = typeK
-	}
-	if r <= 10 {
-		stType = typeG
-	}
-	if r <= 11 {
-		stType = typeF
-	}
-	if r >= 12 {
-		stType = HotRoll(dice, mods...)
-	}
-	if class == classIV && stType == typeO {
-		stType = typeB
-	}
-	if class == classVI {
-		switch stType {
-		default:
-		case typeF:
-			stType = typeG
-		case typeA:
-			stType = typeB
-		}
-	}
-	return stType
-}
-
-func HotRoll(dice *dice.Dicepool, mods ...int) string {
-	dm := 0
-	for _, m := range mods {
-		dm += m
-	}
-	r := dice.Sroll("2d6") + dm
-	if r <= 9 {
-		return typeA
-	}
-	if r <= 11 {
-		return typeB
-	}
-	return typeO
-}
-
-func SpecialRoll(dice *dice.Dicepool, mods ...int) string {
-	dm := 0
-	for _, m := range mods {
-		dm += m
-	}
-	r := dice.Sroll("2d6") + dm
-	if r <= 5 {
-		return "Class VI"
-	}
-	if r <= 8 {
-		return "Class IV"
-	}
-	if r <= 10 {
-		return "Class III"
-	}
-	return GigantsRoll(dice, mods...)
-}
-
-func UnusualRoll(dice *dice.Dicepool, mods ...int) string {
-	dm := 0
-	for _, m := range mods {
-		dm += m
-	}
-	r := dice.Sroll("2d6") + dm
-	if r <= 2 {
-		return "Peculiar"
-	}
-	if r <= 3 {
-		return classVI
-	}
-	if r <= 4 {
-		return classIV
-	}
-	if r <= 7 {
-		return classBD
-	}
-	return GigantsRoll(dice, mods...)
-}
-
-func GigantsRoll(dice *dice.Dicepool, mods ...int) string {
-	dm := 0
-	for _, m := range mods {
-		dm += m
-	}
-	r := dice.Sroll("2d6") + dm
-	if r <= 8 {
-		return classIII
-	}
-	if r <= 10 {
-		return classII
-	}
-	if r <= 11 {
-		return classIb
-	}
-	return classIa
 }
