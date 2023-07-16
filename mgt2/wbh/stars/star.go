@@ -68,6 +68,8 @@ type star struct {
 	mass        float64
 	temperature int
 	isPrimary   bool
+	diameter    float64
+	luminocity  float64
 }
 
 func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) (*starsystem, error) {
@@ -92,6 +94,8 @@ func NewStar(dice *dice.Dicepool, typeTableVariant, starGenerationMethod int, is
 	st.subtype = starSubtype(dice, st)
 	st.mass = massOf(st, dice)
 	st.temperature = temperatureOf(st, dice)
+	st.diameter = diameterOf(st, dice)
+	st.luminocity = luminocityOf(st)
 	return st, nil
 }
 
