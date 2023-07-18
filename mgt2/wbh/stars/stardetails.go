@@ -9,15 +9,32 @@ import (
 )
 
 func massOf(st star, dice *dice.Dicepool) float64 {
-	averageMass := averageMassMap(st)
-	flux := dice.Flux()
-	variance := (averageMass / 100) * (4 * flux)
+	mass := -0.1
 	switch st.class {
-	case classIa, classIb, classII, classIII:
-		flux = (dice.Flux() * 10) + dice.Flux()
-		variance = (averageMass / 100) * flux
+	case classIa, classIb, classII, classIII, classIV, classV, classVI:
+		averageMass := averageMassMap(st)
+		flux := dice.Flux()
+		variance := (averageMass / 100) * (4 * flux)
+		switch st.class {
+		case classIa, classIb, classII, classIII:
+			flux = (dice.Flux() * 10) + dice.Flux()
+			variance = (averageMass / 100) * flux
+		}
+		mass = float64(averageMass+variance) / 1000000
+	case classBD:
+		r1 := float64(dice.Sroll("1d6")) * 0.01
+		r2 := float64(dice.Sroll("4d6-1")) * 0.001
+		r1Int := int(r1 * 100)
+		r1 = float64(r1Int / 100)
+		r2Int := int(r2 * 1000)
+		r2 = float64(r2Int / 1000)
+		mass = r1 + r2
+	case classD:
+		mass = float64((dice.Sroll("2d6")-1)/10) + ((float64(dice.Sroll("1d10"))) / 100)
+		fmt.Println(mass)
 	}
-	return float64(averageMass+variance) / 1000000
+
+	return mass
 }
 
 func temperatureOf(st star, dice *dice.Dicepool) int {
@@ -28,10 +45,21 @@ func temperatureOf(st star, dice *dice.Dicepool) int {
 }
 
 func diameterOf(st star, dice *dice.Dicepool) float64 {
-	diam := averageDiameterMap(st)
-	flux := dice.Flux()
-	variance := (diam / 100) * (4 * flux)
-	return float64(diam+variance) / 1000000
+	diameter := -1.0
+	switch st.class {
+	case classIa, classIb, classII, classIII, classIV, classV, classVI:
+		diam := averageDiameterMap(st)
+		flux := dice.Flux()
+		variance := (diam / 100) * (4 * flux)
+		diameter = float64(diam+variance) / 1000000
+	case classBD:
+		diam := 60000 + (dice.Flux() * 1000)
+		diameter = float64(diam) / 1000000
+	case classD:
+		diameter = 0.017
+	}
+
+	return diameter
 }
 
 func luminocityOf(st star) float64 {
@@ -40,6 +68,101 @@ func luminocityOf(st star) float64 {
 	lum := diamRatio * tempRatio
 	lum = float64(int(lum*1000000)) / 1000000
 	return lum
+}
+
+func ageOf(st star, dice *dice.Dicepool) float64 {
+	age := -0.1
+	switch st.class {
+	case classD:
+		age = smallStarAge(dice)
+	case classV, classBD:
+		switch st.mass <= 0.9 {
+		case true:
+			age = smallStarAge(dice)
+		case false:
+			age = largeStarAge(st.mass, dice)
+		}
+	case classIV:
+		age = mainSeqLifespan(st.mass) + (subGigantLifespan(st.mass) * d100variance(dice))
+	case classIII:
+		age = mainSeqLifespan(st.mass) + subGigantLifespan(st.mass) + (gigantLifespan(st.mass) * d100variance(dice))
+	}
+	switch st.specialcase {
+	case pulsar:
+		age = (0.1/float64(2*dice.Sroll("1d10")) + starFinalAge(st.mass, dice))
+	case neutronStar, blackHole:
+		age = smallStarAge(dice) + starFinalAge(st.mass, dice)
+	case protostar:
+		age = 0.01 / float64(dice.Sroll("2d10"))
+	}
+
+	age = age * 1000
+	ageInt := int(age)
+	age = float64(ageInt) / 1000
+	if age > 13.5 {
+		age = 13.5
+	}
+	return age
+}
+
+func starFinalAge(mass float64, dice *dice.Dicepool) float64 {
+	m := float64(dice.Sroll("1d3")+2) * mass
+	return mainSeqLifespan(m) + subGigantLifespan(m) + gigantLifespan(m)
+}
+
+func mainSeqLifespan(mass float64) float64 {
+	return 10.0 / math.Pow(mass, 2.5)
+}
+
+func subGigantLifespan(mass float64) float64 {
+	return mainSeqLifespan(mass) / (4 + mass)
+}
+
+func gigantLifespan(mass float64) float64 {
+	return mainSeqLifespan(mass) / (10.0 * math.Pow(mass, 3))
+}
+
+func smallStarAge(dice *dice.Dicepool) float64 {
+	return float64((dice.Sroll("1d6")*2)+dice.Sroll("1d3")-2) + (float64(dice.Sroll("1d10")) / 10)
+}
+
+func largeStarAge(mass float64, dice *dice.Dicepool) float64 {
+	return mainSeqLifespan(mass) * d100variance(dice)
+}
+
+func d100variance(dice *dice.Dicepool) float64 {
+	return float64(dice.Sroll("1d100")) / 100.0
+}
+
+func evaluateBDclassData(mass float64) (string, string) {
+	for i, l := range []float64{0.08, 0.076, 0.072, 0.068, 0.064} {
+		if mass >= l {
+			return "L", fmt.Sprintf("%v", i)
+		}
+	}
+	for i, l := range []float64{0.06, 0.058, 0.056, 0.054, 0.052} {
+		if mass >= l {
+			return "L", fmt.Sprintf("%v", i+5)
+		}
+	}
+
+	for i, l := range []float64{0.05, 0.048, 0.046, 0.044, 0.042} {
+		if mass >= l {
+			return "T", fmt.Sprintf("%v", i)
+		}
+	}
+	for i, l := range []float64{0.04, 0.037, 0.034, 0.031, 0.028} {
+		if mass >= l {
+			return "T", fmt.Sprintf("%v", i+5)
+		}
+	}
+	for i, l := range []float64{0.025, 0.0226, 0.0202, 0.0178, 0.0154} {
+		if mass >= l {
+			return "T", fmt.Sprintf("%v", i+5)
+		}
+	}
+	return "Y", "5"
+
 }
 
 func averageDiameterMap(st star) int {
@@ -142,6 +265,13 @@ func averageDiameterMap(st star) int {
 	diameterMap["M0 VI"] = 400000
 	diameterMap["M5 VI"] = 100000
 	diameterMap["M9 VI"] = 80000
+
+	diameterMap["L0"] = 100000
+	diameterMap["L5"] = 80000
+	diameterMap["T0"] = 90000
+	diameterMap["T5"] = 110000
+	diameterMap["Y0"] = 100000
+	diameterMap["Y5"] = 100000
 	diameterMap, err := extrapolate(diameterMap)
 	if err != nil {
 		panic(err.Error())
@@ -249,6 +379,13 @@ func averageMassMap(st star) int {
 	massMap["M0 VI"] = 400000
 	massMap["M5 VI"] = 120000
 	massMap["M9 VI"] = 75000
+
+	massMap["L0"] = 80000
+	massMap["L5"] = 60000
+	massMap["T0"] = 50000
+	massMap["T5"] = 40000
+	massMap["Y0"] = 25000
+	massMap["Y5"] = 13000
 	massMap, err := extrapolate(massMap)
 	if err != nil {
 		panic(err.Error())
@@ -274,6 +411,12 @@ func averageTempMap(st star) int {
 	temperatureMap["M0"] = 3700
 	temperatureMap["M5"] = 3000
 	temperatureMap["M9"] = 2400
+	temperatureMap["L0"] = 2400
+	temperatureMap["L5"] = 1850
+	temperatureMap["T0"] = 1300
+	temperatureMap["T5"] = 900
+	temperatureMap["Y0"] = 550
+	temperatureMap["Y5"] = 300
 
 	temperatureMap["O1"] = temperatureMap["O5"] + ((temperatureMap["O0"] - temperatureMap["O5"]) / 5 * 4)
 	temperatureMap["O2"] = temperatureMap["O5"] + ((temperatureMap["O0"] - temperatureMap["O5"]) / 5 * 3)
@@ -722,6 +865,27 @@ func extrapolate(data map[string]int) (map[string]int, error) {
 	data["M6 VI"] = data["M9 VI"] + ((data["M5 VI"] - data["M9 VI"]) / 4 * 3)
 	data["M7 VI"] = data["M9 VI"] + ((data["M5 VI"] - data["M9 VI"]) / 4 * 2)
 	data["M8 VI"] = data["M9 VI"] + ((data["M5 VI"] - data["M9 VI"]) / 4 * 1)
+
+	data["L1"] = data["L5"] + ((data["L0"] - data["L5"]) / 5 * 4)
+	data["L2"] = data["L5"] + ((data["L0"] - data["L5"]) / 5 * 3)
+	data["L3"] = data["L5"] + ((data["L0"] - data["L5"]) / 5 * 2)
+	data["L4"] = data["L5"] + ((data["L0"] - data["L5"]) / 5 * 1)
+	data["L6"] = data["T0"] + ((data["L5"] - data["T0"]) / 5 * 4)
+	data["L7"] = data["T0"] + ((data["L5"] - data["T0"]) / 5 * 3)
+	data["L8"] = data["T0"] + ((data["L5"] - data["T0"]) / 5 * 2)
+	data["L9"] = data["T0"] + ((data["L5"] - data["T0"]) / 5 * 1)
+	data["T1"] = data["T5"] + ((data["T0"] - data["T5"]) / 5 * 4)
+	data["T2"] = data["T5"] + ((data["T0"] - data["T5"]) / 5 * 3)
+	data["T3"] = data["T5"] + ((data["T0"] - data["T5"]) / 5 * 2)
+	data["T4"] = data["T5"] + ((data["T0"] - data["T5"]) / 5 * 1)
+	data["T6"] = data["Y0"] + ((data["T5"] - data["Y0"]) / 5 * 4)
+	data["T7"] = data["Y0"] + ((data["T5"] - data["Y0"]) / 5 * 3)
+	data["T8"] = data["Y0"] + ((data["T5"] - data["Y0"]) / 5 * 2)
+	data["T9"] = data["Y0"] + ((data["T5"] - data["Y0"]) / 5 * 1)
+	data["Y1"] = data["Y5"] + ((data["Y0"] - data["Y5"]) / 5 * 4)
+	data["Y2"] = data["Y5"] + ((data["Y0"] - data["Y5"]) / 5 * 3)
+	data["Y3"] = data["Y5"] + ((data["Y0"] - data["Y5"]) / 5 * 2)
+	data["Y4"] = data["Y5"] + ((data["Y0"] - data["Y5"]) / 5 * 1)
 
 	return data, nil
 }

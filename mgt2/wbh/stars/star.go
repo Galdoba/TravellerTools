@@ -36,6 +36,7 @@ const (
 	nebula      = "Nebula"
 	protostar   = "Protostar"
 	starcluster = "Star Cluster"
+	primordial  = "Primordial System"
 	anomaly     = "Anomaly"
 	typeO       = "Type O"
 	typeB       = "Type B"
@@ -65,11 +66,13 @@ type star struct {
 	sttype      string
 	class       string
 	subtype     string
+	specialcase string
 	mass        float64
 	temperature int
 	isPrimary   bool
 	diameter    float64
 	luminocity  float64
+	age         float64 //Gyrs
 }
 
 func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) (*starsystem, error) {
@@ -90,12 +93,23 @@ func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) 
 func NewStar(dice *dice.Dicepool, typeTableVariant, starGenerationMethod int, isPrimary bool) (star, error) {
 	st := star{}
 	st.isPrimary = isPrimary
-	st.sttype, st.class = starTypeAndClass(dice, typeTableVariant, starGenerationMethod)
+	st.sttype, st.class, st.specialcase = starTypeAndClass(dice, typeTableVariant, starGenerationMethod)
 	st.subtype = starSubtype(dice, st)
 	st.mass = massOf(st, dice)
+	if st.class == classBD {
+		st.sttype, st.subtype = evaluateBDclassData(st.mass)
+	}
 	st.temperature = temperatureOf(st, dice)
 	st.diameter = diameterOf(st, dice)
 	st.luminocity = luminocityOf(st)
+	st.age = ageOf(st, dice)
+	if st.age < 0.1 {
+		st.specialcase = primordial
+	}
+	if st.mass < 4.7 && st.age < 0.01 {
+		st.specialcase = protostar
+	}
+
 	return st, nil
 }
 
@@ -180,7 +194,6 @@ func determinationTable(table int) []string {
 	switch table {
 	default:
 		panic(fmt.Sprintf("table with key %v was not provided", table))
-		return []string{}
 	case tableStarTypeTraditional:
 		return []string{special, typeM, typeM, typeM, typeM, typeK, typeK, typeG, typeG, typeF, hot}
 	case tableStarTypeRealistic:

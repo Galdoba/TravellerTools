@@ -6,8 +6,8 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
-func starTypeAndClass(dice *dice.Dicepool, typeTableVariant, starGenerationMethod int) (string, string) {
-	sttype, class := "", ""
+func starTypeAndClass(dice *dice.Dicepool, typeTableVariant, starGenerationMethod int) (string, string, string) {
+	sttype, class, sscase := "", "", ""
 	stRoll := rollTable(dice, tableStarTypeUnselected, typeTableVariant, starGenerationMethod)
 	switch stRoll {
 	case typeO, typeB, typeA, typeF, typeG, typeK, typeM:
@@ -43,7 +43,7 @@ func starTypeAndClass(dice *dice.Dicepool, typeTableVariant, starGenerationMetho
 		}
 		sttype = stRoll
 	case blackHole, pulsar, neutronStar, nebula, protostar, starcluster, anomaly:
-		sttype = stRoll
+		sscase = stRoll
 	default:
 		panic(stRoll)
 	}
@@ -52,7 +52,7 @@ func starTypeAndClass(dice *dice.Dicepool, typeTableVariant, starGenerationMetho
 		sttype = ""
 
 	}
-	return sttype, class
+	return sttype, class, sscase
 }
 
 func starSubtype(dice *dice.Dicepool, st star) string {
