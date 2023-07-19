@@ -36,7 +36,7 @@ func TestOrbitn2AU_correct(t *testing.T) {
 	}
 	for testNum, testData := range data {
 		orb, _ := NewOrbit(testData.input, dice.New())
-		result := OR2MKM(orb.orbN)
+		result := OR2MKM(orb.OrbN)
 		if result != testData.output {
 			t.Errorf("test %v:\n have =%v, expected =%v from input =%v", testNum, result, testData.output, testData.input)
 		}
@@ -53,7 +53,7 @@ func TestOrbitn2AU_incorrect(t *testing.T) {
 	}
 	for testNum, testData := range data {
 		orb, _ := NewOrbit(testData.input, dice.New())
-		result := OR2MKM(orb.orbN)
+		result := OR2MKM(orb.OrbN)
 		if result == testData.output {
 			t.Errorf("test %v:\n have =%v, expected other than =%v from input =%v", testNum, result, testData.output, testData.input)
 		}
@@ -68,6 +68,6 @@ func TestMap(t *testing.T) {
 		if err != nil {
 			t.Errorf("fl = %v: %v", fl, err.Error())
 		}
-		fmt.Println(fl, orb.distanse)
+		fmt.Println(fl, orb.Distanse)
 	}
 }

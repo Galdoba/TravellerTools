@@ -1,23 +1,48 @@
 package stars
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
 func TestStarType(t *testing.T) {
-	primMap := make(map[string]int)
-	for i := 0; i < 10000; i++ {
+
+	for i := 1; i < 1000000; i++ {
 		dice := dice.New().SetSeed(i)
 		ss, err := NewStarSystem(dice, GenerationMethodUnusual, TypeVariantTraditional)
 		if err != nil {
 			t.Errorf("roll %v: primary: %v", i, ss.primary)
 		}
 
-		if ss.primary.class != classBD && ss.primary.class != classD {
-			continue
+		// for k, v := range ss.star {
+		// 	fmt.Println(k, v)
+		// }
+		//l := 0
+		//for _, desig := range []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"} {
+		//if st, ok := ss.star[desig]; ok {
+		//fmt.Println(i, l, desig, st)
+		//	l++
+		//}
+		//}
+		// if ss.primary.class != classBD && ss.primary.class != classD {
+		// 	continue
+		// }
+		st := ss.primary
+		switch ss.primary.class {
+		case classIa, classIb, classII, classIII, classIV, classV, classVI, classBD, classD:
+			if st.age < 0 {
+				t.Errorf("star has negative age %v", st)
+			}
+			if st.sttype == "" {
+				t.Errorf("star type not defined %v", st)
+			}
+			if st.subtype == "dwarf" {
+				t.Errorf("star subtype not defined %v", st)
+			}
+			if st.diameter <= 0 {
+				t.Errorf("star diameter not defined %v", st)
+			}
 		}
 
 		short := shortStarDescription(ss.primary)
@@ -35,9 +60,6 @@ func TestStarType(t *testing.T) {
 		case "F0 VI", "F1 VI", "F2 VI", "F3 VI", "F4 VI", "F5 VI", "F6 VI", "F7 VI", "F8 VI", "F9 VI":
 			t.Errorf("invalid class %v", short)
 		}
-		primMap[short]++
-
-		fmt.Printf("%v %v\n", i, ss.primary)
 
 	}
 

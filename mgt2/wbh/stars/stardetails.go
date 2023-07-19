@@ -31,7 +31,6 @@ func massOf(st star, dice *dice.Dicepool) float64 {
 		mass = r1 + r2
 	case classD:
 		mass = float64((dice.Sroll("2d6")-1)/10) + ((float64(dice.Sroll("1d10"))) / 100)
-		fmt.Println(mass)
 	}
 
 	return mass
@@ -41,7 +40,40 @@ func temperatureOf(st star, dice *dice.Dicepool) int {
 	temp := averageTempMap(st)
 	flux := dice.Flux()
 	variance := (temp / 200) * flux
+	t := temp + variance
+	if t <= -1 && st.class == classD {
+		temp = wdTemp(st.age)
+	}
 	return temp + variance
+}
+
+func wdTemp(age float64) int {
+	ageTempMap := make(map[float64]int)
+	ageTempMap[0] = 100000
+	ageTempMap[0.1] = 25000
+	ageTempMap[0.5] = 10000
+	ageTempMap[1] = 8000
+	ageTempMap[1.5] = 7000
+	ageTempMap[2.5] = 5500
+	ageTempMap[5] = 5000
+	ageTempMap[10] = 4000
+	ageTempMap[13] = 3800
+	ageTempMap[13.8] = 3725
+	ageLow := -1.0
+	ageHigh := 20.0
+	for k, _ := range ageTempMap {
+		if k >= ageLow && k < age {
+			ageLow = k
+		}
+		if k <= ageHigh && k > age {
+			ageHigh = k
+		}
+	}
+	// fmt.Println(ageLow, "|", age, "|", ageHigh)
+	tDiff := ageTempMap[ageHigh] - ageTempMap[ageLow]
+	aDiff := age / ageHigh
+	// fmt.Println(ageTempMap[ageHigh], tDiff, aDiff)
+	return ageTempMap[ageLow] + int(float64(tDiff)*aDiff)
 }
 
 func diameterOf(st star, dice *dice.Dicepool) float64 {
@@ -73,9 +105,12 @@ func luminocityOf(st star) float64 {
 func ageOf(st star, dice *dice.Dicepool) float64 {
 	age := -0.1
 	switch st.class {
+
 	case classD:
-		age = smallStarAge(dice)
-	case classV, classBD:
+		//fullMass := float64(2+dice.Sroll("1d3")) * st.mass
+		age = smallStarAge(dice) + starFinalAge(st.mass, dice)
+	case classV, classBD, classVI, classII, classIb, classIa:
+
 		switch st.mass <= 0.9 {
 		case true:
 			age = smallStarAge(dice)
@@ -137,31 +172,31 @@ func d100variance(dice *dice.Dicepool) float64 {
 func evaluateBDclassData(mass float64) (string, string) {
 	for i, l := range []float64{0.08, 0.076, 0.072, 0.068, 0.064} {
 		if mass >= l {
-			return "L", fmt.Sprintf("%v", i)
+			return typeL, fmt.Sprintf("%v", i)
 		}
 	}
 	for i, l := range []float64{0.06, 0.058, 0.056, 0.054, 0.052} {
 		if mass >= l {
-			return "L", fmt.Sprintf("%v", i+5)
+			return typeL, fmt.Sprintf("%v", i+5)
 		}
 	}
 
 	for i, l := range []float64{0.05, 0.048, 0.046, 0.044, 0.042} {
 		if mass >= l {
-			return "T", fmt.Sprintf("%v", i)
+			return typeT, fmt.Sprintf("%v", i)
 		}
 	}
 	for i, l := range []float64{0.04, 0.037, 0.034, 0.031, 0.028} {
 		if mass >= l {
-			return "T", fmt.Sprintf("%v", i+5)
+			return typeT, fmt.Sprintf("%v", i+5)
 		}
 	}
 	for i, l := range []float64{0.025, 0.0226, 0.0202, 0.0178, 0.0154} {
 		if mass >= l {
-			return "T", fmt.Sprintf("%v", i+5)
+			return typeY, fmt.Sprintf("%v", i)
 		}
 	}
-	return "Y", "5"
+	return typeY, "5"
 
 }
 

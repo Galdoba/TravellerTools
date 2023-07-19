@@ -7,12 +7,12 @@ import (
 )
 
 type orbitn struct {
-	orbN         uint
-	distanse     float64
-	difference   float64
-	eccentricity float64
-	min          float64
-	max          float64
+	OrbN         uint
+	Distanse     float64
+	Difference   float64
+	Eccentricity float64
+	Min          float64
+	Max          float64
 }
 
 func NewOrbit(fl float64, dice *dice.Dicepool) (*orbitn, error) {
@@ -21,8 +21,8 @@ func NewOrbit(fl float64, dice *dice.Dicepool) (*orbitn, error) {
 	if err != nil {
 		return &orb, fmt.Errorf("encodeUINT(%v): %v", fl, err.Error())
 	}
-	orb.orbN = on
-	orb.distanse = OR2MKM(orb.orbN)
+	orb.OrbN = on
+	orb.Distanse = OR2MKM(orb.OrbN)
 	return &orb, nil
 }
 
@@ -43,7 +43,7 @@ func OR2MKM(orbit uint) float64 {
 }
 
 func (o *orbitn) centerpoint() int {
-	return int(o.orbN / 100000000)
+	return int(o.OrbN / 100000000)
 }
 
 func (o *orbitn) AU() float64 {
