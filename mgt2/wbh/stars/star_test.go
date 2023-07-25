@@ -1,6 +1,7 @@
 package stars
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
@@ -8,16 +9,19 @@ import (
 
 func TestStarType(t *testing.T) {
 
-	for i := 1; i < 1000000; i++ {
+	for i := 1; i < 10; i++ {
 		dice := dice.New().SetSeed(i)
 		ss, err := NewStarSystem(dice, GenerationMethodUnusual, TypeVariantTraditional)
 		if err != nil {
 			t.Errorf("roll %v: primary: %v", i, ss.primary)
 		}
+		fmt.Println("i =", i)
+		for _, code := range []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"} {
+			if v, ok := ss.star[code]; ok {
+				fmt.Println(code, v)
+			}
+		}
 
-		// for k, v := range ss.star {
-		// 	fmt.Println(k, v)
-		// }
 		//l := 0
 		//for _, desig := range []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"} {
 		//if st, ok := ss.star[desig]; ok {

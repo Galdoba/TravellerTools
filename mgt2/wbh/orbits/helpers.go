@@ -59,100 +59,115 @@ func encodeUINT(f float64, i ...int) (uint, error) {
 	return rp, nil
 }
 
-//возвращает 1/1000000 (microAU) as
-func tableBaseDistance(i int) int64 {
+func encodeFL2INT(f float64) int {
+	if f < 0 && f >= 20 {
+		return -1
+	}
+	return int(f * 1000)
+}
+func decodeINT2FL(i int) float64 {
+	fl := float64(i)
+	return fl / 1000.0
+}
+
+func decodeINT2FRACK(i int) (int, int) {
+	return i / 1000, i % 1000
+}
+
+//возвращает 1/1000 (milliAU) as
+func tableBaseDistance(i int) int {
 	switch i {
 	default:
 		return -1
 	case 0:
-		return 0.0
+		return 0
 	case 1:
-		return 400000
+		return 400
 	case 2:
-		return 700000
+		return 700
 	case 3:
-		return 1000000
+		return 1000
 	case 4:
-		return 1600000
+		return 1600
 	case 5:
-		return 2800000
+		return 2800
 	case 6:
-		return 5200000
+		return 5200
 	case 7:
-		return 10000000
+		return 10000
 	case 8:
-		return 20000000
+		return 20000
 	case 9:
-		return 40000000
+		return 40000
 	case 10:
-		return 77000000
+		return 77000
 	case 11:
-		return 154000000
+		return 154000
 	case 12:
-		return 308000000
+		return 308000
 	case 13:
-		return 615000000
+		return 615000
 	case 14:
-		return 1230000000
+		return 1230000
 	case 15:
-		return 2500000000
+		return 2500000
 	case 16:
-		return 4900000000
+		return 4900000
 	case 17:
-		return 9800000000
+		return 9800000
 	case 18:
-		return 19500000000
+		return 19500000
 	case 19:
-		return 39500000000
+		return 39500000
 	case 20:
-		return 78700000000
+		return 78700000
 	}
 }
 
-func tableDifference(i int) int64 {
+func tableDifference(i int) int {
 	switch i {
 	default:
 		return -1
 	case 0:
-		return 400000
+		return 400
 	case 1:
-		return 300000
+		return 300
 	case 2:
-		return 300000
+		return 300
 	case 3:
-		return 600000
+		return 600
 	case 4:
-		return 1200000
+		return 1200
 	case 5:
-		return 2400000
+		return 2400
 	case 6:
-		return 4800000
+		return 4800
 	case 7:
-		return 10000000
+		return 10000
 	case 8:
-		return 20000000
+		return 20000
 	case 9:
-		return 37000000
+		return 37000
 	case 10:
-		return 77000000
+		return 77000
 	case 11:
-		return 154000000
+		return 154000
 	case 12:
-		return 307000000
+		return 307000
 	case 13:
-		return 615000000
+		return 615000
 	case 14:
-		return 1270000000
+		return 1270000
 	case 15:
-		return 2400000000
+		return 2400000
 	case 16:
-		return 4900000000
+		return 4900000
 	case 17:
-		return 9700000000
+		return 9700000
 	case 18:
-		return 20000000000
+		return 20000000
 	case 19:
-		return 39200000000
+		return 39200000
 	case 20:
 		return -1
 	}

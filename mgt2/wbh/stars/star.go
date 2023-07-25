@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	orbitns "github.com/Galdoba/TravellerTools/mgt2/wbh/orbits"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
@@ -78,6 +79,7 @@ type starsystem struct {
 	typeTableVariant     int
 	primary              star
 	star                 map[string]star
+	age                  float64
 }
 
 type star struct {
@@ -93,6 +95,7 @@ type star struct {
 	diameter      float64
 	luminocity    float64
 	age           float64 //Gyrs
+	orbit         *orbitns.OrbitN
 }
 
 func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) (*starsystem, error) {
@@ -119,9 +122,21 @@ func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) 
 		if err != nil {
 			return &ss, fmt.Errorf("secondary star %v creation: %v", desig, err.Error())
 		}
+
 		ss.star[desig] = star
 	}
 	ss.ageResetIfRequired(dice)
+	//TODO: dm for eccentricity
+	dm := 0
+	for desig, st := range ss.star {
+		orbN, err := orbitns.DetermineStarOrbit(dice, desig)
+		if err != nil {
+			return &ss, fmt.Errorf("orbitns.DetermineStarOrbit: %v", err.Error())
+		}
+		st.orbit = orbitns.New(orbN)
+		st.orbit.DetermineEccentrisity(dice, dm)
+		ss.star[desig] = st
+	}
 	return &ss, nil
 }
 
@@ -149,6 +164,7 @@ func (ss *starsystem) ageResetIfRequired(dice *dice.Dicepool) {
 			}
 		}
 	}
+	ss.age = ss.star["Aa"].age
 }
 
 func defineStarPresence(st star, dice *dice.Dicepool) []string {

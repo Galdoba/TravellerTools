@@ -3,8 +3,6 @@ package orbitns
 import (
 	"fmt"
 	"testing"
-
-	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
 type testPair struct {
@@ -35,39 +33,20 @@ func TestOrbitn2AU_correct(t *testing.T) {
 		{input: 12.1, output: 338.7},
 	}
 	for testNum, testData := range data {
-		orb, _ := NewOrbit(testData.input, dice.New())
-		result := OR2MKM(orb.OrbN)
+		orb := New(testData.input)
+		result := orn2au(orb.Distance)
 		if result != testData.output {
 			t.Errorf("test %v:\n have =%v, expected =%v from input =%v", testNum, result, testData.output, testData.input)
 		}
 	}
 }
 
-func TestOrbitn2AU_incorrect(t *testing.T) {
-	return
-	data := []testPair{
-		// {input: 4.3, output: 1.96},
-		// {input: 0.09, output: 0.036},
-		// {input: 6.1, output: 5.68},
-		// {input: 12.2, output: 338.7},
-	}
-	for testNum, testData := range data {
-		orb, _ := NewOrbit(testData.input, dice.New())
-		result := OR2MKM(orb.OrbN)
-		if result == testData.output {
-			t.Errorf("test %v:\n have =%v, expected other than =%v from input =%v", testNum, result, testData.output, testData.input)
-		}
-	}
-}
-
 func TestMap(t *testing.T) {
-	dice := dice.New()
-	for f := 0; f <= 200; f++ {
-		fl := float64(f) / 10
-		orb, err := NewOrbit(fl, dice)
-		if err != nil {
-			t.Errorf("fl = %v: %v", fl, err.Error())
-		}
-		fmt.Println(fl, orb.Distanse)
+	//dice := dice.New()
+	for f := 0; f <= 800; f++ {
+		fl := float64(f) / 100
+		orb := New(fl)
+
+		fmt.Println(fl, orb.AU)
 	}
 }
