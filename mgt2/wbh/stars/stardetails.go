@@ -8,20 +8,20 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
-func massOf(st star, dice *dice.Dicepool) float64 {
+func massOf(st Star, dice *dice.Dicepool) float64 {
 	mass := -0.1
-	switch st.class {
-	case classIa, classIb, classII, classIII, classIV, classV, classVI:
+	switch st.Class {
+	case ClassIa, ClassIb, ClassII, ClassIII, ClassIV, ClassV, ClassVI:
 		averageMass := averageMassMap(st)
 		flux := dice.Flux()
 		variance := (averageMass / 100) * (4 * flux)
-		switch st.class {
-		case classIa, classIb, classII, classIII:
+		switch st.Class {
+		case ClassIa, ClassIb, ClassII, ClassIII:
 			flux = (dice.Flux() * 10) + dice.Flux()
 			variance = (averageMass / 100) * flux
 		}
 		mass = float64(averageMass+variance) / 1000000
-	case classBD:
+	case ClassBD:
 		r1 := float64(dice.Sroll("1d6")) * 0.01
 		r2 := float64(dice.Sroll("4d6-1")) * 0.001
 		r1Int := int(r1 * 100)
@@ -29,20 +29,20 @@ func massOf(st star, dice *dice.Dicepool) float64 {
 		r2Int := int(r2 * 1000)
 		r2 = float64(r2Int / 1000)
 		mass = r1 + r2
-	case classD:
+	case ClassD:
 		mass = float64((dice.Sroll("2d6")-1)/10) + ((float64(dice.Sroll("1d10"))) / 100)
 	}
 
 	return mass
 }
 
-func temperatureOf(st star, dice *dice.Dicepool) int {
+func temperatureOf(st Star, dice *dice.Dicepool) int {
 	temp := averageTempMap(st)
 	flux := dice.Flux()
 	variance := (temp / 200) * flux
 	t := temp + variance
-	if t <= -1 && st.class == classD {
-		temp = wdTemp(st.age)
+	if t <= -1 && st.Class == ClassD {
+		temp = wdTemp(st.Age)
 	}
 	return temp + variance
 }
@@ -76,58 +76,58 @@ func wdTemp(age float64) int {
 	return ageTempMap[ageLow] + int(float64(tDiff)*aDiff)
 }
 
-func diameterOf(st star, dice *dice.Dicepool) float64 {
+func diameterOf(st Star, dice *dice.Dicepool) float64 {
 	diameter := -1.0
-	switch st.class {
-	case classIa, classIb, classII, classIII, classIV, classV, classVI:
+	switch st.Class {
+	case ClassIa, ClassIb, ClassII, ClassIII, ClassIV, ClassV, ClassVI:
 		diam := averageDiameterMap(st)
 		flux := dice.Flux()
 		variance := (diam / 100) * (4 * flux)
 		diameter = float64(diam+variance) / 1000000
-	case classBD:
+	case ClassBD:
 		diam := 60000 + (dice.Flux() * 1000)
 		diameter = float64(diam) / 1000000
-	case classD:
+	case ClassD:
 		diameter = 0.017
 	}
 
 	return diameter
 }
 
-func luminocityOf(st star) float64 {
-	diamRatio := st.diameter * st.diameter
-	tempRatio := math.Pow(float64(st.temperature)/5772, 4)
+func luminocityOf(st Star) float64 {
+	diamRatio := st.Diameter * st.Diameter
+	tempRatio := math.Pow(float64(st.Temperature)/5772, 4)
 	lum := diamRatio * tempRatio
 	lum = float64(int(lum*1000000)) / 1000000
 	return lum
 }
 
-func ageOf(st star, dice *dice.Dicepool) float64 {
+func ageOf(st Star, dice *dice.Dicepool) float64 {
 	age := -0.1
-	switch st.class {
+	switch st.Class {
 
-	case classD:
-		//fullMass := float64(2+dice.Sroll("1d3")) * st.mass
-		age = smallStarAge(dice) + starFinalAge(st.mass, dice)
-	case classV, classBD, classVI, classII, classIb, classIa:
+	case ClassD:
+		//fullMass := float64(2+dice.Sroll("1d3")) * st.Mass
+		age = smallStarAge(dice) + starFinalAge(st.Mass, dice)
+	case ClassV, ClassBD, ClassVI, ClassII, ClassIb, ClassIa:
 
-		switch st.mass <= 0.9 {
+		switch st.Mass <= 0.9 {
 		case true:
 			age = smallStarAge(dice)
 		case false:
-			age = largeStarAge(st.mass, dice)
+			age = largeStarAge(st.Mass, dice)
 		}
-	case classIV:
-		age = mainSeqLifespan(st.mass) + (subGigantLifespan(st.mass) * d100variance(dice))
-	case classIII:
-		age = mainSeqLifespan(st.mass) + subGigantLifespan(st.mass) + (gigantLifespan(st.mass) * d100variance(dice))
+	case ClassIV:
+		age = mainSeqLifespan(st.Mass) + (subGigantLifespan(st.Mass) * d100variance(dice))
+	case ClassIII:
+		age = mainSeqLifespan(st.Mass) + subGigantLifespan(st.Mass) + (gigantLifespan(st.Mass) * d100variance(dice))
 	}
-	switch st.specialcase {
-	case pulsar:
-		age = (0.1/float64(2*dice.Sroll("1d10")) + starFinalAge(st.mass, dice))
-	case neutronStar, blackHole:
-		age = smallStarAge(dice) + starFinalAge(st.mass, dice)
-	case protostar:
+	switch st.Specialcase {
+	case Pulsar:
+		age = (0.1/float64(2*dice.Sroll("1d10")) + starFinalAge(st.Mass, dice))
+	case NeutronStar, BlackHole:
+		age = smallStarAge(dice) + starFinalAge(st.Mass, dice)
+	case Protostar:
 		age = 0.01 / float64(dice.Sroll("2d10"))
 	}
 
@@ -169,38 +169,38 @@ func d100variance(dice *dice.Dicepool) float64 {
 	return float64(dice.Sroll("1d100")) / 100.0
 }
 
-func evaluateBDclassData(mass float64) (string, string) {
+func evaluateBDClassData(mass float64) (string, string) {
 	for i, l := range []float64{0.08, 0.076, 0.072, 0.068, 0.064} {
 		if mass >= l {
-			return typeL, fmt.Sprintf("%v", i)
+			return TypeL, fmt.Sprintf("%v", i)
 		}
 	}
 	for i, l := range []float64{0.06, 0.058, 0.056, 0.054, 0.052} {
 		if mass >= l {
-			return typeL, fmt.Sprintf("%v", i+5)
+			return TypeL, fmt.Sprintf("%v", i+5)
 		}
 	}
 
 	for i, l := range []float64{0.05, 0.048, 0.046, 0.044, 0.042} {
 		if mass >= l {
-			return typeT, fmt.Sprintf("%v", i)
+			return TypeT, fmt.Sprintf("%v", i)
 		}
 	}
 	for i, l := range []float64{0.04, 0.037, 0.034, 0.031, 0.028} {
 		if mass >= l {
-			return typeT, fmt.Sprintf("%v", i+5)
+			return TypeT, fmt.Sprintf("%v", i+5)
 		}
 	}
 	for i, l := range []float64{0.025, 0.0226, 0.0202, 0.0178, 0.0154} {
 		if mass >= l {
-			return typeY, fmt.Sprintf("%v", i)
+			return TypeY, fmt.Sprintf("%v", i)
 		}
 	}
-	return typeY, "5"
+	return TypeY, "5"
 
 }
 
-func averageDiameterMap(st star) int {
+func averageDiameterMap(st Star) int {
 	diameterMap := make(map[string]int)
 	//KBIYTT
 	diameterMap["O0 Ia"] = 25000000
@@ -314,7 +314,7 @@ func averageDiameterMap(st star) int {
 	return diameterMap[shortStarDescription(st)]
 }
 
-func averageMassMap(st star) int {
+func averageMassMap(st Star) int {
 	massMap := make(map[string]int)
 	//KBIYTT
 	massMap["O0 Ia"] = 200000000
@@ -428,7 +428,7 @@ func averageMassMap(st star) int {
 	return massMap[shortStarDescription(st)]
 }
 
-func averageTempMap(st star) int {
+func averageTempMap(st Star) int {
 	temperatureMap := make(map[string]int)
 	//KBIYTT
 	temperatureMap["O0"] = 50000
@@ -521,14 +521,14 @@ func averageTempMap(st star) int {
 }
 
 func basicKeys() []string {
-	classes := []string{
-		classIa, classIb, classII, classIII, classV,
+	Classes := []string{
+		ClassIa, ClassIb, ClassII, ClassIII, ClassV,
 	}
-	types := []string{"O0", "O5", "B0", "B5", "A0", "A5", "F0", "F5", "G0", "G5", "K0", "K5", "M0", "M5", "M9"}
+	Types := []string{"O0", "O5", "B0", "B5", "A0", "A5", "F0", "F5", "G0", "G5", "K0", "K5", "M0", "M5", "M9"}
 	keys := []string{}
-	for _, class := range classes {
-		for _, tpe := range types {
-			keys = append(keys, tpe+strings.TrimPrefix(class, "Class"))
+	for _, Class := range Classes {
+		for _, tpe := range Types {
+			keys = append(keys, tpe+strings.TrimPrefix(Class, "Class"))
 		}
 	}
 	for _, cl4 := range []string{"B0", "B5", "A0", "A5", "F0", "F5", "G0", "G5", "K0", "K4"} {

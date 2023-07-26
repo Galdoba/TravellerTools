@@ -23,41 +23,41 @@ const (
 	tableUnusual
 	tableGiants
 	tablePecuilar
-	tableSubtypeNumeric
-	tableSubtypePrimaryM
+	tableSubTypeNumeric
+	tableSubTypePrimaryM
 
 	starType                    = "Star Type"
 	special                     = "Special"
 	hot                         = "Hot"
 	gigants                     = "Gigants"
 	peculiar                    = "Peculiar"
-	blackHole                   = "Black Hole"
-	pulsar                      = "Pulsar"
-	neutronStar                 = "Neutron Star"
-	nebula                      = "Nebula"
-	protostar                   = "Protostar"
-	starcluster                 = "Star Cluster"
+	BlackHole                   = "Black Hole"
+	Pulsar                      = "Pulsar"
+	NeutronStar                 = "Neutron Star"
+	Nebula                      = "Nebula"
+	Protostar                   = "Protostar"
+	Starcluster                 = "Star Cluster"
 	primordial                  = "Primordial System"
 	anomaly                     = "Anomaly"
-	typeO                       = "Type O"
-	typeB                       = "Type B"
-	typeA                       = "Type A"
-	typeF                       = "Type F"
-	typeG                       = "Type G"
-	typeK                       = "Type K"
-	typeM                       = "Type M"
-	typeL                       = "Type L"
-	typeT                       = "Type T"
-	typeY                       = "Type Y"
-	classIa                     = "Class Ia"
-	classIb                     = "Class Ib"
-	classII                     = "Class II"
-	classIII                    = "Class III"
-	classIV                     = "Class IV"
-	classV                      = "Class V"
-	classVI                     = "Class VI"
-	classBD                     = "Class BD"
-	classD                      = "Class D"
+	TypeO                       = "Type O"
+	TypeB                       = "Type B"
+	TypeA                       = "Type A"
+	TypeF                       = "Type F"
+	TypeG                       = "Type G"
+	TypeK                       = "Type K"
+	TypeM                       = "Type M"
+	TypeL                       = "Type L"
+	TypeT                       = "Type T"
+	TypeY                       = "Type Y"
+	ClassIa                     = "Class Ia"
+	ClassIb                     = "Class Ib"
+	ClassII                     = "Class II"
+	ClassIII                    = "Class III"
+	ClassIV                     = "Class IV"
+	ClassV                      = "Class V"
+	ClassVI                     = "Class VI"
+	ClassBD                     = "Class BD"
+	ClassD                      = "Class D"
 	designationPrimary          = "Aa"
 	designationPrimaryCompanion = "Ab"
 	designationClose            = "Ba"
@@ -74,114 +74,37 @@ const (
 	determinationOther          = "Other"
 )
 
-type starsystem struct {
-	starGenerationMethod int
-	typeTableVariant     int
-	primary              star
-	star                 map[string]star
-	age                  float64
+type Star struct {
+	StType        string
+	Class         string
+	SubType       string
+	Specialcase   string
+	Designation   string
+	Determination string
+	Mass          float64
+	Temperature   int
+	IsPrimary     bool
+	Diameter      float64
+	Luminocity    float64
+	Age           float64 //Gyrs
+	Orbit         *orbitns.OrbitN
 }
 
-type star struct {
-	sttype        string
-	class         string
-	subtype       string
-	specialcase   string
-	designation   string
-	determination string
-	mass          float64
-	temperature   int
-	isPrimary     bool
-	diameter      float64
-	luminocity    float64
-	age           float64 //Gyrs
-	orbit         *orbitns.OrbitN
-}
-
-func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) (*starsystem, error) {
-	ss := starsystem{}
-	switch starGenerationMethod {
-	case GenerationMethodUnusual, GenerationMethodSpecial:
-	default:
-		return &ss, fmt.Errorf("starGenerationMethod unknown (%v)", starGenerationMethod)
-	}
-	ss.star = make(map[string]star)
-
-	primary, err := NewStar(dice, tableVariant, starGenerationMethod, designationPrimary, determinationPrimary)
-	if err != nil {
-		return &ss, err
-	}
-	ss.star[designationPrimary] = primary
-	designations := defineStarPresence(ss.star[designationPrimary], dice)
-	for _, desig := range designations {
-		if _, ok := ss.star[desig]; ok {
-			continue
-		}
-		determ, context := defineStarDetermination(primary, desig, dice)
-		star, err := NewStar(dice, tableVariant, starGenerationMethod, desig, determ, ss.star[context])
-		if err != nil {
-			return &ss, fmt.Errorf("secondary star %v creation: %v", desig, err.Error())
-		}
-
-		ss.star[desig] = star
-	}
-	ss.ageResetIfRequired(dice)
-	//TODO: dm for eccentricity
+func defineStarPresence(st Star, dice *dice.Dicepool) []string {
 	dm := 0
-	for desig, st := range ss.star {
-		orbN, err := orbitns.DetermineStarOrbit(dice, desig)
-		if err != nil {
-			return &ss, fmt.Errorf("orbitns.DetermineStarOrbit: %v", err.Error())
-		}
-		st.orbit = orbitns.New(orbN)
-		st.orbit.DetermineEccentrisity(dice, dm)
-		ss.star[desig] = st
-	}
-	return &ss, nil
-}
-
-func (ss *starsystem) ageResetIfRequired(dice *dice.Dicepool) {
-	switch ss.star["Aa"].class {
-	case classIa, classIb, classII, classIII, classIV, classV, classVI, classBD:
-		for _, v := range ss.star {
-			switch v.class {
-			case classD, pulsar, neutronStar, blackHole:
-				primary := ss.star["Aa"]
-				primary.age = v.age
-				ss.star["Aa"] = primary
-
-				// primary.age = starFinalAge(v.mass, dice)
-				// if primary.age < was {
-				// 	fmt.Println("set new age")
-				// 	primary.age = was
-				// }
-				// if primary.age > 13.5 {
-				// 	fmt.Println("set age border", primary)
-
-				// 	primary.age = 13.5
-				// }
-				// ss.star["Aa"] = primary
-			}
-		}
-	}
-	ss.age = ss.star["Aa"].age
-}
-
-func defineStarPresence(st star, dice *dice.Dicepool) []string {
-	dm := 0
-	switch st.class {
-	case classIa, classIb, classII, classIII, classIV:
+	switch st.Class {
+	case ClassIa, ClassIb, ClassII, ClassIII, ClassIV:
 		dm++
-	case classV, classVI:
-		switch st.sttype {
-		case typeO, typeB, typeA, typeF:
+	case ClassV, ClassVI:
+		switch st.StType {
+		case TypeO, TypeB, TypeA, TypeF:
 			dm++
-		case typeM:
+		case TypeM:
 			dm--
 		}
-	case classBD, classD:
+	case ClassBD, ClassD:
 		dm--
-	case pulsar, neutronStar, blackHole:
+	case Pulsar, NeutronStar, BlackHole:
 		dm--
 	}
 	defined := []string{"A"}
@@ -200,18 +123,18 @@ func defineStarPresence(st star, dice *dice.Dicepool) []string {
 	return result
 }
 
-func defineStarDetermination(primary star, targetDesig string, dice *dice.Dicepool) (string, string) {
+func defineStarDetermination(primary Star, targetDesig string, dice *dice.Dicepool) (string, string) {
 	dm := 0
-	switch primary.class {
-	case classIII, classIV:
+	switch primary.Class {
+	case ClassIII, ClassIV:
 		dm--
-	case classBD:
+	case ClassBD:
 		return determinationSibling, "Aa"
 	}
 	secondary := []string{determinationOther, determinationOther, determinationRandom, determinationRandom, determinationRandom, determinationLesser, determinationLesser, determinationSibling, determinationSibling, determinationTwin, determinationTwin}
 	companion := []string{determinationOther, determinationOther, determinationRandom, determinationRandom, determinationLesser, determinationLesser, determinationSibling, determinationSibling, determinationTwin, determinationTwin, determinationTwin}
 	poststellar := []string{determinationOther, determinationOther, determinationRandom, determinationRandom, determinationRandom, determinationRandom, determinationRandom, determinationLesser, determinationLesser, determinationTwin, determinationTwin}
-	other := []string{neutronStar, classD, classD, classD, classD, classD, classBD, classBD, classBD, classBD, classBD}
+	other := []string{NeutronStar, ClassD, ClassD, ClassD, ClassD, ClassD, ClassBD, ClassBD, ClassBD, ClassBD, ClassBD}
 	r := dice.Sroll("2d6") - 2 + dm
 	if r < 0 {
 		r = 0
@@ -226,8 +149,8 @@ func defineStarDetermination(primary star, targetDesig string, dice *dice.Dicepo
 		result = companion[r]
 		design = strings.ReplaceAll(targetDesig, "b", "a")
 	}
-	switch primary.class {
-	case classD, pulsar, neutronStar, blackHole:
+	switch primary.Class {
+	case ClassD, Pulsar, NeutronStar, BlackHole:
 		result = poststellar[r]
 		design = "Aa"
 	}
@@ -241,133 +164,133 @@ func defineStarDetermination(primary star, targetDesig string, dice *dice.Dicepo
 	return result, design
 }
 
-func NewStar(dice *dice.Dicepool, typeTableVariant, starGenerationMethod int, designationCode, determination string, contextStars ...star) (star, error) {
-	st := star{}
+func NewStar(dice *dice.Dicepool, TypeTableVariant, starGenerationMethod int, designationCode, determination string, contextStars ...Star) (Star, error) {
+	st := Star{}
 	if determination != determinationPrimary && len(contextStars) < 1 {
 		return st, fmt.Errorf("can not create non primary star without context")
 	}
 	switch determination {
 	default:
-		st.sttype = determination
+		st.StType = determination
 	case determinationPrimary:
-		st.sttype, st.class, st.specialcase = starTypeAndClass(dice, typeTableVariant, starGenerationMethod)
-		st.subtype = starSubtype(dice, st)
+		st.StType, st.Class, st.Specialcase = starTypeAndClass(dice, TypeTableVariant, starGenerationMethod)
+		st.SubType = starSubtype(dice, st)
 	case determinationTwin:
-		st.sttype = contextStars[0].sttype
-		st.class = contextStars[0].class
-		st.subtype = contextStars[0].subtype
+		st.StType = contextStars[0].StType
+		st.Class = contextStars[0].Class
+		st.SubType = contextStars[0].SubType
 	case determinationSibling:
-		st.sttype = contextStars[0].sttype
-		st.class = contextStars[0].class
-		st.subtype = contextStars[0].subtype
-		st.sttype, st.subtype, st.class = makeSibling(st, dice)
+		st.StType = contextStars[0].StType
+		st.Class = contextStars[0].Class
+		st.SubType = contextStars[0].SubType
+		st.StType, st.SubType, st.Class = makeSibling(st, dice)
 	case determinationLesser:
-		st.sttype = lowerType(contextStars[0].sttype)
-		st.class = contextStars[0].class
-		st.subtype = starSubtype(dice, st)
+		st.StType = lowerType(contextStars[0].StType)
+		st.Class = contextStars[0].Class
+		st.SubType = starSubtype(dice, st)
 	case determinationRandom:
-		st.sttype, st.class, st.specialcase = starTypeAndClass(dice, typeTableVariant, starGenerationMethod)
-		st.subtype = starSubtype(dice, st)
+		st.StType, st.Class, st.Specialcase = starTypeAndClass(dice, TypeTableVariant, starGenerationMethod)
+		st.SubType = starSubtype(dice, st)
 		if valOfStar(st) >= valOfStar(contextStars[0]) {
-			st.sttype = lowerType(contextStars[0].sttype)
-			st.class = contextStars[0].class
-			st.subtype = starSubtype(dice, st)
+			st.StType = lowerType(contextStars[0].StType)
+			st.Class = contextStars[0].Class
+			st.SubType = starSubtype(dice, st)
 		}
-	case classBD, classD:
-		for st.class != determination {
-			st.sttype, st.class, st.specialcase = starTypeAndClass(dice, typeTableVariant, starGenerationMethod)
-			st.subtype = starSubtype(dice, st)
+	case ClassBD, ClassD:
+		for st.Class != determination {
+			st.StType, st.Class, st.Specialcase = starTypeAndClass(dice, TypeTableVariant, starGenerationMethod)
+			st.SubType = starSubtype(dice, st)
 		}
 	}
-	st.mass = massOf(st, dice)
-	if st.class == classBD {
-		st.sttype, st.subtype = evaluateBDclassData(st.mass)
+	st.Mass = massOf(st, dice)
+	if st.Class == ClassBD {
+		st.StType, st.SubType = evaluateBDClassData(st.Mass)
 	}
 
-	st.age = ageOf(st, dice)
-	if st.age < 0.1 {
-		st.specialcase = primordial
+	st.Age = ageOf(st, dice)
+	if st.Age < 0.1 {
+		st.Specialcase = primordial
 	}
-	if st.mass < 4.7 && st.age < 0.01 {
-		st.specialcase = protostar
+	if st.Mass < 4.7 && st.Age < 0.01 {
+		st.Specialcase = Protostar
 	}
-	st.temperature = temperatureOf(st, dice)
-	st.diameter = diameterOf(st, dice)
-	st.luminocity = luminocityOf(st)
+	st.Temperature = temperatureOf(st, dice)
+	st.Diameter = diameterOf(st, dice)
+	st.Luminocity = luminocityOf(st)
 
 	return st, nil
 }
 
-func makeSibling(st star, dice *dice.Dicepool) (string, string, string) {
-	stype, subType, class := st.sttype, st.subtype, st.class
-	switch class {
-	case classD, pulsar, neutronStar, blackHole:
-		return stype, subType, class
+func makeSibling(st Star, dice *dice.Dicepool) (string, string, string) {
+	sType, subType, Class := st.StType, st.SubType, st.Class
+	switch Class {
+	case ClassD, Pulsar, NeutronStar, BlackHole:
+		return sType, subType, Class
 	}
 	subInt, _ := strconv.Atoi(subType)
 
 	subInt = subInt + dice.Sroll("1d6")
 	if subInt > 9 {
-		stype = lowerType(stype)
+		sType = lowerType(sType)
 		subInt = subInt - 10
 	}
 	subType = fmt.Sprintf("%v", subInt)
-	return stype, subType, class
+	return sType, subType, Class
 }
 
-func lowerType(stype string) string {
-	switch stype {
+func lowerType(sType string) string {
+	switch sType {
 	default:
-		panic("not a class:" + stype)
+		panic("not a Class:" + sType)
 	case "":
 		return ""
-	case typeO:
-		return typeB
-	case typeB:
-		return typeA
-	case typeA:
-		return typeF
-	case typeF:
-		return typeG
-	case typeG:
-		return typeK
-	case typeK:
-		return typeM
-	case typeM:
-		return typeM
-	case typeL:
-		return typeT
-	case typeT:
-		return typeY
-	case typeY:
-		return typeY
-	case blackHole:
-		return neutronStar
-	case neutronStar:
-		return classD
-	case classD:
-		return classBD
+	case TypeO:
+		return TypeB
+	case TypeB:
+		return TypeA
+	case TypeA:
+		return TypeF
+	case TypeF:
+		return TypeG
+	case TypeG:
+		return TypeK
+	case TypeK:
+		return TypeM
+	case TypeM:
+		return TypeM
+	case TypeL:
+		return TypeT
+	case TypeT:
+		return TypeY
+	case TypeY:
+		return TypeY
+	case BlackHole:
+		return NeutronStar
+	case NeutronStar:
+		return ClassD
+	case ClassD:
+		return ClassBD
 	}
 }
 
-func shortStarDescription(st star) string {
-	descr := st.sttype + st.subtype + " " + st.class
-	if st.class == classBD {
-		descr = st.sttype + st.subtype
+func shortStarDescription(st Star) string {
+	descr := st.StType + st.SubType + " " + st.Class
+	if st.Class == ClassBD {
+		descr = st.StType + st.SubType
 	}
-	if st.class == classD {
-		descr = st.class + st.sttype
+	if st.Class == ClassD {
+		descr = st.Class + st.StType
 	}
-	switch st.sttype {
-	case nebula, protostar, neutronStar, pulsar, blackHole, starcluster, anomaly:
-		return st.sttype
+	switch st.StType {
+	case Nebula, Protostar, NeutronStar, Pulsar, BlackHole, Starcluster, anomaly:
+		return st.StType
 	}
 	descr = strings.ReplaceAll(descr, "Class ", "")
 	descr = strings.ReplaceAll(descr, "Type ", "")
 	return descr
 }
 
-func subtypeInt(stp string) int {
+func subTypeInt(stp string) int {
 	switch stp {
 	default:
 		return -1
@@ -377,7 +300,7 @@ func subtypeInt(stp string) int {
 	}
 }
 
-func rollTable(dice *dice.Dicepool, table, typeTableVariant, method int, mods ...int) string {
+func rollTable(dice *dice.Dicepool, table, TypeTableVariant, method int, mods ...int) string {
 	dm := 0
 	for _, m := range mods {
 		dm += m
@@ -390,12 +313,12 @@ func rollTable(dice *dice.Dicepool, table, typeTableVariant, method int, mods ..
 		r = 12
 	}
 	if table == tableStarTypeUnselected {
-		table = selectTableBy(starType, method, typeTableVariant)
+		table = selectTableBy(starType, method, TypeTableVariant)
 	}
 	tableRollResult := determinationTable(table)[r-2]
 	switch tableRollResult {
 	case starType, hot, special, gigants, peculiar:
-		return rollTable(dice, selectTableBy(tableRollResult, method, typeTableVariant), typeTableVariant, method, mods...)
+		return rollTable(dice, selectTableBy(tableRollResult, method, TypeTableVariant), TypeTableVariant, method, mods...)
 	}
 	return tableRollResult
 }
@@ -432,78 +355,105 @@ func determinationTable(table int) []string {
 	default:
 		panic(fmt.Sprintf("table with key %v was not provided", table))
 	case tableStarTypeTraditional:
-		return []string{special, typeM, typeM, typeM, typeM, typeK, typeK, typeG, typeG, typeF, hot}
+		return []string{special, TypeM, TypeM, TypeM, TypeM, TypeK, TypeK, TypeG, TypeG, TypeF, hot}
 	case tableStarTypeRealistic:
-		return []string{special, typeM, typeM, typeM, typeM, typeM, typeM, typeK, typeG, typeF, hot}
+		return []string{special, TypeM, TypeM, TypeM, TypeM, TypeM, TypeM, TypeK, TypeG, TypeF, hot}
 	case tableHot:
-		return []string{typeA, typeA, typeA, typeA, typeA, typeA, typeA, typeA, typeB, typeB, typeO}
+		return []string{TypeA, TypeA, TypeA, TypeA, TypeA, TypeA, TypeA, TypeA, TypeB, TypeB, TypeO}
 	case tableSpecial:
-		return []string{classIV, classIV, classIV, classIV, classVI, classVI, classVI, classIII, classIII, gigants, gigants}
+		return []string{ClassIV, ClassIV, ClassIV, ClassIV, ClassVI, ClassVI, ClassVI, ClassIII, ClassIII, gigants, gigants}
 	case tableUnusual:
-		return []string{peculiar, classVI, classIV, classBD, classBD, classBD, classD, classD, classD, classIII, gigants}
+		return []string{peculiar, ClassVI, ClassIV, ClassBD, ClassBD, ClassBD, ClassD, ClassD, ClassD, ClassIII, gigants}
 	case tableGiants:
-		return []string{classIII, classIII, classIII, classIII, classIII, classIII, classIII, classII, classII, classIb, classIa}
+		return []string{ClassIII, ClassIII, ClassIII, ClassIII, ClassIII, ClassIII, ClassIII, ClassII, ClassII, ClassIb, ClassIa}
 	case tablePecuilar:
-		return []string{blackHole, pulsar, neutronStar, nebula, nebula, protostar, protostar, protostar, starcluster, anomaly, anomaly}
-	case tableSubtypeNumeric:
+		return []string{BlackHole, Pulsar, NeutronStar, Nebula, Nebula, Protostar, Protostar, Protostar, Starcluster, anomaly, anomaly}
+	case tableSubTypeNumeric:
 		return []string{"0", "1", "3", "5", "7", "9", "8", "6", "4", "2", "0"}
-	case tableSubtypePrimaryM:
+	case tableSubTypePrimaryM:
 		return []string{"8", "6", "5", "4", "0", "2", "1", "3", "5", "7", "9"}
 	}
 }
 
-func hotter(a, b star) star {
+func hotter(a, b Star) Star {
 	if valOfStar(a) > valOfStar(b) {
 		return a
 	}
 	return b
 }
 
-func valOfStar(s star) int {
+func valOfStar(s Star) int {
 	val := 0
-	switch s.class {
-	case classIa:
+	switch s.Class {
+	case ClassIa:
 		val += 9000
-	case classIb:
+	case ClassIb:
 		val += 8000
-	case classII:
+	case ClassII:
 		val += 7000
-	case classIII:
+	case ClassIII:
 		val += 6000
-	case classIV:
+	case ClassIV:
 		val += 5000
-	case classV:
+	case ClassV:
 		val += 4000
-	case classVI:
+	case ClassVI:
 		val += 3000
-	case classBD:
+	case ClassBD:
 		val += 2000
-	case classD:
+	case ClassD:
 		val += 1000
 	}
-	switch s.sttype {
-	case typeO:
+	switch s.StType {
+	case TypeO:
 		val += 100
-	case typeB:
+	case TypeB:
 		val += 90
-	case typeA:
+	case TypeA:
 		val += 80
-	case typeF:
+	case TypeF:
 		val += 70
-	case typeG:
+	case TypeG:
 		val += 60
-	case typeK:
+	case TypeK:
 		val += 50
-	case typeM:
+	case TypeM:
 		val += 40
-	case typeL:
+	case TypeL:
 		val += 30
-	case typeT:
+	case TypeT:
 		val += 20
-	case typeY:
+	case TypeY:
 		val += 10
 	}
-	v, _ := strconv.Atoi(s.subtype)
+	v, _ := strconv.Atoi(s.SubType)
 	val += v
 	return val
+}
+
+func designationCodes() []string {
+	return []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"}
+}
+
+func (st *Star) normalizeValues() {
+	switch st.Class {
+	default:
+		st.Class = "????????" + st.Class + "??????????"
+		panic(st.Class)
+	case ClassIa, ClassIb, ClassII, ClassIII, ClassIV, ClassV, ClassVI, ClassBD, ClassD:
+		st.Class = strings.ReplaceAll(st.Class, "Class ", "")
+	}
+	st.StType = strings.ReplaceAll(st.StType, "Type ", "")
+	st.Mass = float64(int(st.Mass*1000)) / 1000
+	st.Diameter = float64(int(st.Diameter*1000)) / 1000
+	st.Luminocity = float64(int(st.Luminocity*1000)) / 1000
+	st.Age = float64(int(st.Age*1000)) / 1000
+
+}
+
+func AUof(st Star) float64 {
+	if st.Orbit == nil {
+		return 0
+	}
+	return st.Orbit.AU
 }

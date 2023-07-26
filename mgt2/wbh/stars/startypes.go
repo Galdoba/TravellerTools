@@ -6,77 +6,77 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
-func starTypeAndClass(dice *dice.Dicepool, typeTableVariant, starGenerationMethod int) (string, string, string) {
-	sttype, class, sscase := "", "", ""
-	stRoll := rollTable(dice, tableStarTypeUnselected, typeTableVariant, starGenerationMethod)
+func starTypeAndClass(dice *dice.Dicepool, TypeTableVariant, starGenerationMethod int) (string, string, string) {
+	stType, Class, sscase := "", "", ""
+	stRoll := rollTable(dice, tableStarTypeUnselected, TypeTableVariant, starGenerationMethod)
 	switch stRoll {
-	case typeO, typeB, typeA, typeF, typeG, typeK, typeM:
-		sttype = stRoll
-		class = classV
-	case classBD, classD:
-		class = stRoll
+	case TypeO, TypeB, TypeA, TypeF, TypeG, TypeK, TypeM:
+		stType = stRoll
+		Class = ClassV
+	case ClassBD, ClassD:
+		Class = stRoll
 		for !strings.HasPrefix(stRoll, "Type ") {
-			stRoll = rollTable(dice, tableStarTypeUnselected, typeTableVariant, starGenerationMethod)
+			stRoll = rollTable(dice, tableStarTypeUnselected, TypeTableVariant, starGenerationMethod)
 		}
-		sttype = stRoll
-	case classIa, classIb, classII, classIII, classIV, classVI:
-		class = stRoll
+		stType = stRoll
+	case ClassIa, ClassIb, ClassII, ClassIII, ClassIV, ClassVI:
+		Class = stRoll
 		dm := append([]int{}, 1)
 		for !strings.HasPrefix(stRoll, "Type ") {
-			stRoll = rollTable(dice, tableStarTypeUnselected, typeTableVariant, starGenerationMethod, dm...)
-			switch class {
-			case classIV:
-				if stRoll == typeO {
-					stRoll = typeB
+			stRoll = rollTable(dice, tableStarTypeUnselected, TypeTableVariant, starGenerationMethod, dm...)
+			switch Class {
+			case ClassIV:
+				if stRoll == TypeO {
+					stRoll = TypeB
 				}
-				if stRoll == typeM {
+				if stRoll == TypeM {
 					stRoll = "rejected"
 				}
-			case classVI:
-				if stRoll == typeF {
-					stRoll = typeG
+			case ClassVI:
+				if stRoll == TypeF {
+					stRoll = TypeG
 				}
-				if stRoll == typeA {
-					stRoll = typeB
+				if stRoll == TypeA {
+					stRoll = TypeB
 				}
 			}
 		}
-		sttype = stRoll
-	case blackHole, pulsar, neutronStar, nebula, protostar, starcluster, anomaly:
+		stType = stRoll
+	case BlackHole, Pulsar, NeutronStar, Nebula, Protostar, Starcluster, anomaly:
 		sscase = stRoll
 	default:
 		panic(stRoll)
 	}
-	switch class {
-	case classBD:
-		sttype = ""
+	switch Class {
+	case ClassBD:
+		stType = ""
 
 	}
-	return sttype, class, sscase
+	return stType, Class, sscase
 }
 
-func starSubtype(dice *dice.Dicepool, st star) string {
-	table := tableSubtypeNumeric
-	if st.isPrimary && st.sttype == typeM {
-		table = tableSubtypePrimaryM
+func starSubtype(dice *dice.Dicepool, st Star) string {
+	table := tableSubTypeNumeric
+	if st.IsPrimary && st.StType == TypeM {
+		table = tableSubTypePrimaryM
 	}
-	subtype := ""
+	subType := ""
 	specialCaseResolved := false
 	for !specialCaseResolved {
-		subtypeRollResult := determinationTable(table)[dice.Sroll("2d6")-2]
-		switch st.class {
+		subTypeRollResult := determinationTable(table)[dice.Sroll("2d6")-2]
+		switch st.Class {
 		default:
 			specialCaseResolved = true
-			subtype = subtypeRollResult
-		case classIV:
-			if st.sttype == typeK && subtypeInt(subtypeRollResult) >= 5 {
+			subType = subTypeRollResult
+		case ClassIV:
+			if st.StType == TypeK && subTypeInt(subTypeRollResult) >= 5 {
 				continue
 			}
-		case classBD, classD:
+		case ClassBD, ClassD:
 			return ""
 		}
 		specialCaseResolved = true
-		subtype = subtypeRollResult
+		subType = subTypeRollResult
 	}
-	return subtype
+	return subType
 }
