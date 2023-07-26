@@ -1,4 +1,4 @@
-package stars
+package star
 
 import (
 	"fmt"
@@ -311,7 +311,7 @@ func averageDiameterMap(st Star) int {
 	if err != nil {
 		panic(err.Error())
 	}
-	return diameterMap[shortStarDescription(st)]
+	return diameterMap[ShortStarDescription(st)]
 }
 
 func averageMassMap(st Star) int {
@@ -425,7 +425,7 @@ func averageMassMap(st Star) int {
 	if err != nil {
 		panic(err.Error())
 	}
-	return massMap[shortStarDescription(st)]
+	return massMap[ShortStarDescription(st)]
 }
 
 func averageTempMap(st Star) int {
@@ -509,7 +509,7 @@ func averageTempMap(st Star) int {
 	temperatureMap["M6"] = temperatureMap["M9"] + ((temperatureMap["M5"] - temperatureMap["M9"]) / 4 * 3)
 	temperatureMap["M7"] = temperatureMap["M9"] + ((temperatureMap["M5"] - temperatureMap["M9"]) / 4 * 2)
 	temperatureMap["M8"] = temperatureMap["M9"] + ((temperatureMap["M5"] - temperatureMap["M9"]) / 4 * 1)
-	short := shortStarDescription(st)
+	short := ShortStarDescription(st)
 	temp := -1
 	for k, v := range temperatureMap {
 		if !strings.HasPrefix(short, k) {

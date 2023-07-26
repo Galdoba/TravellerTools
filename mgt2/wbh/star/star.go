@@ -1,4 +1,4 @@
-package stars
+package star
 
 import (
 	"fmt"
@@ -37,7 +37,7 @@ const (
 	Nebula                      = "Nebula"
 	Protostar                   = "Protostar"
 	Starcluster                 = "Star Cluster"
-	primordial                  = "Primordial System"
+	Primordial                  = "Primordial System"
 	anomaly                     = "Anomaly"
 	TypeO                       = "Type O"
 	TypeB                       = "Type B"
@@ -90,7 +90,7 @@ type Star struct {
 	Orbit         *orbitns.OrbitN
 }
 
-func defineStarPresence(st Star, dice *dice.Dicepool) []string {
+func DefineStarPresence(st Star, dice *dice.Dicepool) []string {
 	dm := 0
 	switch st.Class {
 	case ClassIa, ClassIb, ClassII, ClassIII, ClassIV:
@@ -123,7 +123,7 @@ func defineStarPresence(st Star, dice *dice.Dicepool) []string {
 	return result
 }
 
-func defineStarDetermination(primary Star, targetDesig string, dice *dice.Dicepool) (string, string) {
+func DefineStarDetermination(primary Star, targetDesig string, dice *dice.Dicepool) (string, string) {
 	dm := 0
 	switch primary.Class {
 	case ClassIII, ClassIV:
@@ -164,7 +164,7 @@ func defineStarDetermination(primary Star, targetDesig string, dice *dice.Dicepo
 	return result, design
 }
 
-func NewStar(dice *dice.Dicepool, TypeTableVariant, starGenerationMethod int, designationCode, determination string, contextStars ...Star) (Star, error) {
+func New(dice *dice.Dicepool, TypeTableVariant, starGenerationMethod int, designationCode, determination string, contextStars ...Star) (Star, error) {
 	st := Star{}
 	if determination != determinationPrimary && len(contextStars) < 1 {
 		return st, fmt.Errorf("can not create non primary star without context")
@@ -209,7 +209,7 @@ func NewStar(dice *dice.Dicepool, TypeTableVariant, starGenerationMethod int, de
 
 	st.Age = ageOf(st, dice)
 	if st.Age < 0.1 {
-		st.Specialcase = primordial
+		st.Specialcase = Primordial
 	}
 	if st.Mass < 4.7 && st.Age < 0.01 {
 		st.Specialcase = Protostar
@@ -273,7 +273,7 @@ func lowerType(sType string) string {
 	}
 }
 
-func shortStarDescription(st Star) string {
+func ShortStarDescription(st Star) string {
 	descr := st.StType + st.SubType + " " + st.Class
 	if st.Class == ClassBD {
 		descr = st.StType + st.SubType
@@ -431,7 +431,7 @@ func valOfStar(s Star) int {
 	return val
 }
 
-func designationCodes() []string {
+func DesignationCodes() []string {
 	return []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"}
 }
 

@@ -1,4 +1,4 @@
-package stars
+package wbh
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 
 func TestStarType(t *testing.T) {
 
-	for i := 1; i < 100; i++ {
+	for i := 1; i < 20; i++ {
 		dice := dice.New().SetSeed(i)
 		ss, err := NewStarSystem(dice, GenerationMethodUnusual, TypeVariantTraditional)
 		if err != nil {
@@ -21,7 +21,7 @@ func TestStarType(t *testing.T) {
 		//		fmt.Println(code, v)
 		//}
 		//}
-		fmt.Println(ss.String())
+		fmt.Printf("[%v]	%v\n", i, ss.String())
 		//l := 0
 		//for _, desig := range []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"} {
 		//if st, ok := ss.star[desig]; ok {

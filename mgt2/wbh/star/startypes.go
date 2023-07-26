@@ -1,4 +1,4 @@
-package stars
+package star
 
 import (
 	"strings"
