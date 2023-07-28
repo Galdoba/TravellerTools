@@ -75,19 +75,21 @@ const (
 )
 
 type Star struct {
-	StType        string
-	Class         string
-	SubType       string
-	Specialcase   string
-	Designation   string
-	Determination string
-	Mass          float64
-	Temperature   int
-	IsPrimary     bool
-	Diameter      float64
-	Luminocity    float64
-	Age           float64 //Gyrs
-	Orbit         *orbitns.OrbitN
+	StType          string
+	Class           string
+	SubType         string
+	Specialcase     string
+	Designation     string
+	Determination   string
+	Mass            float64
+	Temperature     int
+	IsPrimary       bool
+	Diameter        float64
+	Luminocity      float64
+	Age             float64 //Gyrs
+	Orbit           *orbitns.OrbitN
+	MAO             float64 //Minimum Allowable Orbit
+	AvailableOrbits []float64
 }
 
 func DefineStarPresence(st Star, dice *dice.Dicepool) []string {
@@ -217,7 +219,7 @@ func New(dice *dice.Dicepool, TypeTableVariant, starGenerationMethod int, design
 	st.Temperature = temperatureOf(st, dice)
 	st.Diameter = diameterOf(st, dice)
 	st.Luminocity = luminocityOf(st)
-
+	st.MAO = maoOf(st)
 	return st, nil
 }
 

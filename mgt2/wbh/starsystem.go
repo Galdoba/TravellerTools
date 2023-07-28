@@ -166,7 +166,7 @@ func (ss *StarSystem) String() string {
 				prf += "-" + fmt.Sprintf("%v", st.Mass)
 				prf += "-" + fmt.Sprintf("%v", st.Diameter)
 				prf += "-" + fmt.Sprintf("%v", st.Luminocity)
-				//prf += "&" + fmt.Sprintf("%v", star.Orbit.Period)
+				prf += "&" + fmt.Sprintf("%v", st.MAO)
 			}
 		}
 	}

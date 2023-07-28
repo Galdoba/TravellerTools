@@ -924,3 +924,131 @@ func extrapolate(data map[string]int) (map[string]int, error) {
 
 	return data, nil
 }
+
+func maoOf(st Star) float64 {
+	mao := -0.1
+	switch st.Class {
+	case ClassIa, ClassIb, ClassII, ClassIII, ClassIV, ClassV, ClassVI:
+		averageMAO := averageMAOMap(st)
+		mao = float64(averageMAO) / 1000
+	case ClassBD:
+		mao = 0.005
+	case ClassD, BlackHole, NeutronStar, Pulsar:
+		mao = 0.001
+	}
+	return mao
+}
+
+func averageMAOMap(st Star) int {
+	massMap := make(map[string]int)
+	//KBIYTT
+	massMap["O0 Ia"] = 630
+	massMap["O5 Ia"] = 550
+	massMap["B0 Ia"] = 500
+	massMap["B5 Ia"] = 1670
+	massMap["A0 Ia"] = 3340
+	massMap["A5 Ia"] = 4170
+	massMap["F0 Ia"] = 4420
+	massMap["F5 Ia"] = 5000
+	massMap["G0 Ia"] = 5210
+	massMap["G5 Ia"] = 5340
+	massMap["K0 Ia"] = 5590
+	massMap["K5 Ia"] = 6170
+	massMap["M0 Ia"] = 6800
+	massMap["M5 Ia"] = 7200
+	massMap["M9 Ia"] = 7800
+	massMap["O0 Ib"] = 600
+	massMap["O5 Ib"] = 500
+	massMap["B0 Ib"] = 350
+	massMap["B5 Ib"] = 630
+	massMap["A0 Ib"] = 1400
+	massMap["A5 Ib"] = 2170
+	massMap["F0 Ib"] = 2500
+	massMap["F5 Ib"] = 3250
+	massMap["G0 Ib"] = 3590
+	massMap["G5 Ib"] = 3840
+	massMap["K0 Ib"] = 4170
+	massMap["K5 Ib"] = 4840
+	massMap["M0 Ib"] = 5420
+	massMap["M5 Ib"] = 6170
+	massMap["M9 Ib"] = 6590
+	massMap["O0 II"] = 550
+	massMap["O5 II"] = 450
+	massMap["B0 II"] = 300
+	massMap["B5 II"] = 350
+	massMap["A0 II"] = 750
+	massMap["A5 II"] = 1170
+	massMap["F0 II"] = 1330
+	massMap["F5 II"] = 1870
+	massMap["G0 II"] = 2240
+	massMap["G5 II"] = 2670
+	massMap["K0 II"] = 3170
+	massMap["K5 II"] = 4000
+	massMap["M0 II"] = 4590
+	massMap["M5 II"] = 5300
+	massMap["M9 II"] = 5920
+	massMap["O0 III"] = 530
+	massMap["O5 III"] = 380
+	massMap["B0 III"] = 250
+	massMap["B5 III"] = 150
+	massMap["A0 III"] = 130
+	massMap["A5 III"] = 130
+	massMap["F0 III"] = 130
+	massMap["F5 III"] = 130
+	massMap["G0 III"] = 250
+	massMap["G5 III"] = 380
+	massMap["K0 III"] = 500
+	massMap["K5 III"] = 1000
+	massMap["M0 III"] = 1680
+	massMap["M5 III"] = 3000
+	massMap["M9 III"] = 4340
+	massMap["O0 V"] = 500
+	massMap["O5 V"] = 300
+	massMap["B0 V"] = 180
+	massMap["B5 V"] = 90
+	massMap["A0 V"] = 60
+	massMap["A5 V"] = 50
+	massMap["F0 V"] = 40
+	massMap["F5 V"] = 30
+	massMap["G0 V"] = 30
+	massMap["G5 V"] = 20
+	massMap["K0 V"] = 20
+	massMap["K5 V"] = 20
+	massMap["M0 V"] = 20
+	massMap["M5 V"] = 10
+	massMap["M9 V"] = 10
+	massMap["B0 IV"] = 200
+	massMap["B5 IV"] = 130
+	massMap["A0 IV"] = 100
+	massMap["A5 IV"] = 70
+	massMap["F0 IV"] = 70
+	massMap["F5 IV"] = 60
+	massMap["G0 IV"] = 70
+	massMap["G5 IV"] = 100
+	massMap["K0 IV"] = 150
+	massMap["K4 IV"] = 200
+	massMap["O0 VI"] = 10
+	massMap["O5 VI"] = 10
+	massMap["B0 VI"] = 10
+	massMap["B5 VI"] = 10
+	massMap["B9 VI"] = 10
+	massMap["G0 VI"] = 20
+	massMap["G5 VI"] = 20
+	massMap["K0 VI"] = 20
+	massMap["K5 VI"] = 10
+	massMap["M0 VI"] = 10
+	massMap["M5 VI"] = 10
+	massMap["M9 VI"] = 10
+
+	massMap["L0"] = 1
+	massMap["L5"] = 1
+	massMap["T0"] = 1
+	massMap["T5"] = 1
+	massMap["Y0"] = 1
+	massMap["Y5"] = 1
+	massMap, err := extrapolate(massMap)
+	if err != nil {
+		panic(err.Error())
+	}
+	return massMap[ShortStarDescription(st)]
+}
