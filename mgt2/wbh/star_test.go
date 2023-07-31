@@ -25,6 +25,9 @@ func TestStarType(t *testing.T) {
 		// 	continue
 		// }
 		fmt.Printf("[%v]	%v %v\n", i, ss.String(), ss.Star["Aa"].MAO)
+		for k, v := range ss.Star {
+			fmt.Println(k, v)
+		}
 		//l := 0
 		//for _, desig := range []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"} {
 		//if st, ok := ss.star[desig]; ok {

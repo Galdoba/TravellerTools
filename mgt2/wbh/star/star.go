@@ -89,7 +89,7 @@ type Star struct {
 	Age             float64 //Gyrs
 	Orbit           *orbitns.OrbitN
 	MAO             float64 //Minimum Allowable Orbit
-	AvailableOrbits []float64
+	AvailableOrbits allowance
 }
 
 func DefineStarPresence(st Star, dice *dice.Dicepool) []string {
@@ -458,4 +458,309 @@ func AUof(st Star) float64 {
 		return 0
 	}
 	return st.Orbit.AU
+}
+
+type allowance struct {
+	interuption []segment
+}
+type segment struct {
+	start float64
+	end   float64
+}
+
+func CalculateAllowableOrbits(starMap map[string]Star) map[string]Star {
+	//make Pair Objects
+	//go by conditions
+	//2
+
+	starMap = condition1(starMap)
+	starMap = condition2(starMap)
+	starMap = condition3(starMap)
+	starMap = condition4(starMap)
+	starMap = conditions567(starMap)
+	starMap = condition8(starMap)
+	starMap = condition9(starMap)
+	starMap = condition10(starMap)
+	starMap = condition11(starMap)
+	for k, v := range starMap {
+		allow := normalizeAllowance(v.AvailableOrbits)
+		v.AvailableOrbits = allow
+		starMap[k] = v
+	}
+
+	return starMap
+}
+
+func normalizeAllowance(al allowance) allowance {
+	segments := al.interuption
+	newSegment := []segment{}
+	flMap := make(map[float64]float64)
+
+	for i, s := range segments {
+		segments[i].start = float64(int(s.start*1000)) / 1000
+		segments[i].end = float64(int(s.end*1000)) / 1000
+
+		if v, ok := flMap[segments[i].start]; ok {
+			//			fmt.Println(segments, newSegment, "????????")
+			// if segments[i].start == 20.0 {
+			// 	panic(20)
+			// }
+			flMap[segments[i].start] = segments[i].end
+			if v > flMap[segments[i].start] {
+				flMap[segments[i].start] = v
+			}
+
+		} else {
+
+			flMap[segments[i].start] = segments[i].end
+		}
+
+	}
+	for i := 0; i < 20001; i++ {
+		if v, ok := flMap[float64(i)/1000]; ok {
+			//fmt.Println(segments, newSegment, "------------")
+			newSegment = append(newSegment, segment{float64(i) / 1000, v})
+		}
+	}
+	// for i, s := range segments {
+	// 	if i == 0 {
+	// 		newSegment = append(newSegment, s)
+	// 		continue
+	// 	}
+	// 	for _, s2 := range segments {
+	// 		if s.end > s2.start && s.end < s2.end {
+	// 			//s2.start = s.start
+	// 			s.end = s2.end
+	// 		}
+	// 	}
+	// 	newSegment = append(newSegment, s)
+	// }
+	fmt.Println(segments, newSegment, "++++++++")
+	return allowance{newSegment}
+}
+
+func condition1(starMap map[string]Star) map[string]Star {
+	for k, v := range starMap {
+		segm := segment{0, v.MAO}
+		v.AvailableOrbits.interuption = append(v.AvailableOrbits.interuption, segm)
+		starMap[k] = v
+	}
+	return starMap
+}
+
+func condition2(starMap map[string]Star) map[string]Star {
+	for _, starCode := range []string{"Aa", "Ba", "Ca", "Da"} {
+		if star, ok := starMap[starCode]; ok {
+			compCode := strings.TrimSuffix(starCode, "a") + "b"
+			if companion, ok := starMap[compCode]; ok {
+				segm := segment{}
+				segm.end = companion.Orbit.OrbitNum + 0.5
+				star.AvailableOrbits.interuption = append(star.AvailableOrbits.interuption, segm)
+				starMap[starCode] = star
+			}
+		}
+	}
+	return starMap
+}
+
+func condition3(starMap map[string]Star) map[string]Star {
+	for k, v := range starMap {
+		segm := segment{20, 200}
+		v.AvailableOrbits.interuption = append(v.AvailableOrbits.interuption, segm)
+		starMap[k] = v
+	}
+	return starMap
+}
+
+func condition4(starMap map[string]Star) map[string]Star {
+	for _, compCode := range []string{"Ab", "Bb", "Cb", "Db"} {
+		if companion, ok := starMap[compCode]; ok {
+			starCode := strings.TrimSuffix(compCode, "b") + "a"
+			star := starMap[starCode]
+			companion.AvailableOrbits = star.AvailableOrbits
+		}
+	}
+	return starMap
+}
+
+func conditions567(starMap map[string]Star) map[string]Star {
+	primary := starMap["Aa"]
+	for _, secondaryCode := range []string{"Ba", "Ca", "Da"} {
+		if secondary, ok := starMap[secondaryCode]; ok {
+			segment := segment{secondary.Orbit.OrbitNum - 1, secondary.Orbit.OrbitNum + 1}
+			if secondary.Orbit.Eccentricity > 0.2 {
+				segment.start = segment.start - 1
+				segment.end = segment.end + 1
+			}
+			if secondaryCode != "Da" && secondary.Orbit.Eccentricity > 0.5 {
+				segment.start = segment.start - 1
+				segment.end = segment.end + 1
+			}
+			if segment.start < secondary.MAO {
+				segment.start = secondary.MAO
+			}
+			if segment.end > 20 {
+				segment.end = 20
+			}
+
+			primary.AvailableOrbits.interuption = append(primary.AvailableOrbits.interuption, segment)
+		}
+	}
+	starMap["Aa"] = primary
+	return starMap
+}
+
+func condition8(starMap map[string]Star) map[string]Star {
+	for _, secondaryCode := range []string{"Ba", "Ca", "Da"} {
+		if secondary, ok := starMap[secondaryCode]; ok {
+			for i, interuptio := range secondary.AvailableOrbits.interuption {
+				if interuptio.end == 200 {
+					secondary.AvailableOrbits.interuption[i].start = secondary.Orbit.OrbitNum - 3
+					if secondary.AvailableOrbits.interuption[i].start < 0 {
+						secondary.AvailableOrbits.interuption[i].start = 0
+					}
+				}
+
+			}
+			starMap[secondaryCode] = secondary
+		}
+	}
+	st1 := 0
+	for _, v := range starMap {
+		for _, orb := range v.AvailableOrbits.interuption {
+			if orb.start == 0 {
+				st1 = 1
+				continue
+			}
+			if orb.start == 0 && st1 > 0 {
+				fmt.Println(orb)
+				panic("step 8")
+			}
+		}
+	}
+	return starMap
+}
+
+func condition9(starMap map[string]Star) map[string]Star {
+	reduceList := make(map[string]bool)
+	_, cOk := starMap["Ba"]
+	_, nOk := starMap["Ca"]
+	_, fOk := starMap["Da"]
+	if cOk && nOk {
+		reduceList["Ba"] = true
+		reduceList["Ca"] = true
+	}
+	if fOk && nOk {
+		reduceList["Ca"] = true
+		reduceList["Da"] = true
+	}
+	for key, v := range reduceList {
+		secondary := starMap[key]
+		if v {
+			for i, interuptio := range secondary.AvailableOrbits.interuption {
+				if interuptio.start == 200 {
+					secondary.AvailableOrbits.interuption[i].start = secondary.AvailableOrbits.interuption[i].start - 1
+					if interuptio.start < 0 {
+						secondary.AvailableOrbits.interuption[i].start = 0
+					}
+				}
+
+			}
+		}
+	}
+	st1 := 0
+	for _, v := range starMap {
+		for _, orb := range v.AvailableOrbits.interuption {
+			if orb.start == 0 {
+				st1 = 1
+				continue
+			}
+			if orb.start == 0 && st1 > 0 {
+				fmt.Println(orb)
+				panic("step 9")
+			}
+		}
+	}
+	return starMap
+}
+
+func condition10(starMap map[string]Star) map[string]Star {
+	reduceList := make(map[string]bool)
+	_, cOk := starMap["Ba"]
+	_, nOk := starMap["Ca"]
+	_, fOk := starMap["Da"]
+	close := starMap["Ba"]
+	near := starMap["Ca"]
+	far := starMap["Da"]
+	if (cOk && nOk) && (close.Orbit != nil && near.Orbit != nil) && (close.Orbit.Eccentricity > 0.2 || near.Orbit.Eccentricity > 0.2) {
+		reduceList["Ba"] = true
+		reduceList["Ca"] = true
+	}
+	if (fOk && nOk) && (near.Orbit != nil && far.Orbit != nil) && (near.Orbit.Eccentricity > 0.2 || far.Orbit.Eccentricity > 0.2) {
+		reduceList["Ca"] = true
+		reduceList["Da"] = true
+	}
+	for key, v := range reduceList {
+		secondary := starMap[key]
+		if v {
+			for i, interuptio := range secondary.AvailableOrbits.interuption {
+				if interuptio.start == 200 {
+					secondary.AvailableOrbits.interuption[i].start = secondary.AvailableOrbits.interuption[i].start - 1
+
+					if interuptio.start < 0 {
+						secondary.AvailableOrbits.interuption[i].start = 0
+					}
+				}
+
+			}
+		}
+	}
+	st1 := 0
+	for _, v := range starMap {
+		for _, orb := range v.AvailableOrbits.interuption {
+			if orb.start == 0 {
+				st1 = 1
+				continue
+			}
+			if orb.start == 0 && st1 > 0 {
+				fmt.Println(orb)
+				panic("step 10")
+			}
+		}
+	}
+	return starMap
+}
+
+func condition11(starMap map[string]Star) map[string]Star {
+	for _, secondaryCode := range []string{"Ba", "Ca", "Da"} {
+		if secondary, ok := starMap[secondaryCode]; ok {
+			if secondary.Orbit.Eccentricity <= 0.5 {
+				continue
+			}
+			for i, interuptio := range secondary.AvailableOrbits.interuption {
+				if interuptio.end == 200 {
+					secondary.AvailableOrbits.interuption[i].start = secondary.Orbit.OrbitNum - 3
+					if interuptio.start < 0 {
+						secondary.AvailableOrbits.interuption[i].start = 0
+					}
+				}
+
+			}
+			starMap[secondaryCode] = secondary
+		}
+	}
+	st1 := 0
+	for _, v := range starMap {
+		for _, orb := range v.AvailableOrbits.interuption {
+			if orb.start == 0 {
+				st1 = 1
+				continue
+			}
+			if orb.start == 0 && st1 > 0 {
+				fmt.Println(orb)
+				panic("step 11")
+			}
+		}
+	}
+	return starMap
 }

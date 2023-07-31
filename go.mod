@@ -11,10 +11,17 @@ require (
 )
 
 require (
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	golang.org/x/image v0.5.0 // indirect
+)
+
+require (
 	github.com/Galdoba/convert v0.0.0-20190624041132-29cce9aaf367 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/fogleman/gg v1.3.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/llgcode/draw2d v0.0.0-20230723155556-e595d7c7e75e
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect

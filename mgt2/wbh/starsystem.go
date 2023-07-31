@@ -82,6 +82,8 @@ func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) 
 		ss.Star[desig] = st
 	}
 	ss.CalculateOP()
+	ss.Star = star.CalculateAllowableOrbits(ss.Star)
+
 	return &ss, nil
 }
 
