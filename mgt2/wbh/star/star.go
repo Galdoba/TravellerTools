@@ -487,6 +487,13 @@ func CalculateAllowableOrbits(starMap map[string]Star) map[string]Star {
 		v.AvailableOrbits = allow
 		starMap[k] = v
 	}
+	for _, code := range []string{"A", "B", "C", "D"} {
+		if companion, ok := starMap[code+"b"]; ok {
+			companion.AvailableOrbits = starMap[code+"a"].AvailableOrbits
+			starMap[code+"b"] = companion
+
+		}
+	}
 
 	return starMap
 }
@@ -501,41 +508,19 @@ func normalizeAllowance(al allowance) allowance {
 		segments[i].end = float64(int(s.end*1000)) / 1000
 
 		if v, ok := flMap[segments[i].start]; ok {
-			//			fmt.Println(segments, newSegment, "????????")
-			// if segments[i].start == 20.0 {
-			// 	panic(20)
-			// }
 			flMap[segments[i].start] = segments[i].end
 			if v > flMap[segments[i].start] {
 				flMap[segments[i].start] = v
 			}
-
 		} else {
-
 			flMap[segments[i].start] = segments[i].end
 		}
-
 	}
 	for i := 0; i < 20001; i++ {
 		if v, ok := flMap[float64(i)/1000]; ok {
-			//fmt.Println(segments, newSegment, "------------")
 			newSegment = append(newSegment, segment{float64(i) / 1000, v})
 		}
 	}
-	// for i, s := range segments {
-	// 	if i == 0 {
-	// 		newSegment = append(newSegment, s)
-	// 		continue
-	// 	}
-	// 	for _, s2 := range segments {
-	// 		if s.end > s2.start && s.end < s2.end {
-	// 			//s2.start = s.start
-	// 			s.end = s2.end
-	// 		}
-	// 	}
-	// 	newSegment = append(newSegment, s)
-	// }
-	fmt.Println(segments, newSegment, "++++++++")
 	return allowance{newSegment}
 }
 

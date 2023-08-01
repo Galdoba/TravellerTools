@@ -71,7 +71,11 @@ func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) 
 
 	//TODO: dm for eccentricity
 	dm := 0
-	for desig, st := range ss.Star {
+	for _, desig := range star.DesignationCodes() {
+		if _, ok := ss.Star[desig]; !ok {
+			continue
+		}
+		st := ss.Star[desig]
 		orbN, err := orbitns.DetermineStarOrbit(dice, desig)
 		if err != nil {
 			return &ss, fmt.Errorf("orbitns.DetermineStarOrbit: %v", err.Error())
@@ -85,6 +89,16 @@ func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) 
 	ss.Star = star.CalculateAllowableOrbits(ss.Star)
 
 	return &ss, nil
+}
+
+func systemStars(ss *StarSystem) []star.Star {
+	stars := []star.Star{}
+	for _, desig := range star.DesignationCodes() {
+		if st, ok := ss.Star[desig]; ok {
+			stars = append(stars, st)
+		}
+	}
+	return stars
 }
 
 func (ss *StarSystem) CalculateOP() {
@@ -168,7 +182,7 @@ func (ss *StarSystem) String() string {
 				prf += "-" + fmt.Sprintf("%v", st.Mass)
 				prf += "-" + fmt.Sprintf("%v", st.Diameter)
 				prf += "-" + fmt.Sprintf("%v", st.Luminocity)
-				prf += "&" + fmt.Sprintf("%v", st.MAO)
+				//prf += "&" + fmt.Sprintf("%v", st.MAO)
 			}
 		}
 	}

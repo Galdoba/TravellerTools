@@ -24,9 +24,10 @@ func TestStarType(t *testing.T) {
 		// if len(ss.Star) != 1 {
 		// 	continue
 		// }
-		fmt.Printf("[%v]	%v %v\n", i, ss.String(), ss.Star["Aa"].MAO)
+		fmt.Printf("[%v]	%v\n", i, ss.String())
 		for k, v := range ss.Star {
-			fmt.Println(k, v)
+			fmt.Println(k, v.AvailableOrbits)
+
 		}
 		//l := 0
 		//for _, desig := range []string{"Aa", "Ab", "Ba", "Bb", "Ca", "Cb", "Da", "Db"} {

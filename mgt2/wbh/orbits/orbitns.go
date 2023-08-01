@@ -128,8 +128,10 @@ func DetermineStarOrbit(dice *dice.Dicepool, orbCode string) (float64, error) {
 	flux1 := float64(dice.Flux()) / 10
 	flux2 := float64(dice.Flux() / 100)
 	if dm == -99 {
-		panic("---")
 		return 0, fmt.Errorf("incorrect orbit code '%v'", orbCode)
+	}
+	if r+flux1+flux2 < 0 {
+		return 0.01, nil
 	}
 	return r + flux1 + flux2, nil
 }
