@@ -2,6 +2,7 @@ package star
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -90,6 +91,8 @@ type Star struct {
 	Orbit           *orbitns.OrbitN
 	MAO             float64 //Minimum Allowable Orbit
 	AvailableOrbits allowance
+	HZCO            float64 //Habitable Zone Center Orbit
+	AllowedWorlds   int
 }
 
 func DefineStarPresence(st Star, dice *dice.Dicepool) []string {
@@ -502,20 +505,25 @@ func normalizeAllowance(al allowance) allowance {
 	segments := al.interuption
 	newSegment := []segment{}
 	flMap := make(map[float64]float64)
-
+	lastSegmNum := len(segments) - 1
 	for i, s := range segments {
 		segments[i].start = float64(int(s.start*1000)) / 1000
 		segments[i].end = float64(int(s.end*1000)) / 1000
 
 		if v, ok := flMap[segments[i].start]; ok {
 			flMap[segments[i].start] = segments[i].end
-			if v > flMap[segments[i].start] {
+			next := i + 1
+			if i == lastSegmNum {
+				next = i
+			}
+			if v > flMap[segments[next].start] {
 				flMap[segments[i].start] = v
 			}
 		} else {
 			flMap[segments[i].start] = segments[i].end
 		}
 	}
+
 	for i := 0; i < 20001; i++ {
 		if v, ok := flMap[float64(i)/1000]; ok {
 			newSegment = append(newSegment, segment{float64(i) / 1000, v})
@@ -748,4 +756,88 @@ func condition11(starMap map[string]Star) map[string]Star {
 		}
 	}
 	return starMap
+}
+
+func DefineHZCO(Stars map[string]Star) map[string]Star {
+	hzcoArr := []float64{}
+	for _, code := range []string{"A", "B", "C", "D"} {
+		prime := code + "a"
+		secondary := code + "b"
+		luma := 0.0
+		if primary, ok := Stars[prime]; ok {
+			luma += primary.Luminocity
+		}
+		if companion, ok := Stars[secondary]; ok {
+			luma += companion.Luminocity
+		}
+
+		//	hzcoArr = append(hzcoArr, 0)
+
+		hzco := math.Sqrt(luma)
+		hzco = float64(int(hzco*1000)) / 1000
+		hzcoArr = append(hzcoArr, hzco)
+	}
+	for i, code := range []string{"A", "B", "C", "D"} {
+		prime := code + "a"
+		secondary := code + "b"
+		if primeStar, ok := Stars[prime]; ok {
+			primeStar.HZCO = hzcoArr[i]
+			Stars[prime] = primeStar
+		}
+		if companionStar, ok := Stars[secondary]; ok {
+			companionStar.HZCO = hzcoArr[i]
+			Stars[prime] = companionStar
+		}
+	}
+	return Stars
+}
+
+func (st *Star) AllowanceOrbits() float64 {
+
+	if st.Class+st.StType+st.SubType == "" {
+		return 1.0
+	}
+	allowance := 200.0
+	for _, segm := range st.AvailableOrbits.interuption {
+		allowance -= (segm.end - segm.start)
+	}
+	return allowance
+}
+
+func AllocateWorldlimitsByStars(totalWorlds int, stars map[string]Star) []int {
+	allowed := []int{}
+	totalSystemOrbits := 0.0
+	for _, desig := range []string{"A", "B", "C", "D"} {
+		primeStar := stars[desig+"a"]
+		companion := stars[desig+"b"]
+		if _, ok := stars[desig+"a"]; ok {
+			totalSystemOrbits += primeStar.AllowanceOrbits() + companion.AllowanceOrbits()
+		}
+	}
+	worldsLeft := totalWorlds
+	up := true
+	lastStar := 0
+	for i, desig := range []string{"A", "B", "C", "D"} {
+		//primeStar := stars[desig+"a"]
+		//companion := stars[desig+"b"]
+		lastStar = i
+		if primeStar, ok := stars[desig+"a"]; ok {
+			starN := int(primeStar.AllowanceOrbits())
+			if _, ok := stars[desig+"b"]; !ok {
+				starN++
+			}
+			if up {
+				starN++
+				up = false
+			}
+			allowedWorlds := (totalWorlds * starN) / int(totalSystemOrbits)
+			worldsLeft -= allowedWorlds
+			allowed = append(allowed, allowedWorlds)
+		} else {
+			allowed = append(allowed, 0)
+		}
+	}
+	allowed[lastStar] += worldsLeft
+
+	return allowed
 }

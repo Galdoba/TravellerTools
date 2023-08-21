@@ -6,6 +6,7 @@ import (
 
 	orbitns "github.com/Galdoba/TravellerTools/mgt2/wbh/orbits"
 	"github.com/Galdoba/TravellerTools/mgt2/wbh/star"
+	"github.com/Galdoba/TravellerTools/mgt2/wbh/worlds"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
@@ -86,7 +87,7 @@ func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant int) 
 		ss.Star[desig] = st
 	}
 	ss.CalculateOP()
-	ss.Star = star.CalculateAllowableOrbits(ss.Star)
+	ss.PlaceWorlds(dice)
 
 	return &ss, nil
 }
@@ -188,4 +189,68 @@ func (ss *StarSystem) String() string {
 	}
 	prf = strings.TrimPrefix(prf, "1-")
 	return prf
+}
+
+func (ss *StarSystem) PlaceWorlds(dice *dice.Dicepool) {
+	gasGigantsNum := worlds.GasGigantsQuantity(dice, ss.Star)
+	beltsNum := worlds.PlanetoidBeltsQuantity(dice, ss.Star, gasGigantsNum)
+	rockyWorldsNum := worlds.TerrestialPlanetsQuantity(dice, ss.Star)
+	totalWorlds := gasGigantsNum + beltsNum + rockyWorldsNum
+	////
+	fmt.Println("total Worlds:", totalWorlds)
+	ss.Star = star.CalculateAllowableOrbits(ss.Star)
+	ss.Star = star.DefineHZCO(ss.Star)
+	allowed := star.AllocateWorldlimitsByStars(totalWorlds, ss.Star)
+
+	sstmBaseNmbr := systemBaseNumber(ss, dice, totalWorlds)
+	fmt.Println(sstmBaseNmbr, allowed)
+	panic("STOPPED HERE")
+	//determineBaselineOrbit
+	//	a) BN > 1 && BN < totalWorlds
+	//	b) BN < 1
+	//	c) BN > totalWorlds
+	//EmptyOrbits
+	//SystemSpread
+	//PlaceOrbits
+	//AddAnomalousPlanets
+	//PlaceWorlds
+	//DetermineEccentricity
+}
+
+func systemBaseNumber(syst *StarSystem, dice *dice.Dicepool, totalWorlds int) int {
+	r := dice.Sroll("2d6")
+	if _, ok := syst.Star["Ab"]; !ok {
+		r = r - 2
+	}
+	primary := syst.Star["Aa"]
+	switch primary.Class {
+	case star.ClassIa, star.ClassIb, star.ClassII:
+		r = r + 3
+	case star.ClassIII:
+		r = r + 2
+	case star.ClassIV:
+		r = r + 1
+	case star.ClassVI:
+		r = r - 1
+	case star.ClassD, star.Pulsar, star.NeutronStar, star.BlackHole:
+		r = r - 2
+	}
+	switch totalWorlds {
+	default:
+		if totalWorlds < 6 {
+			r = r - 4
+		}
+		if totalWorlds > 20 {
+			r = r + 2
+		}
+	case 6, 7, 8, 9:
+		r = r - 3
+	case 10, 11, 12:
+		r = r - 2
+	case 13, 14, 15:
+		r = r - 1
+	case 18, 19, 20:
+		r = r + 1
+	}
+	return r
 }
