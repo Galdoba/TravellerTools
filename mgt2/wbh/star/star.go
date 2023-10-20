@@ -14,6 +14,8 @@ const (
 	defauiltVal = iota
 	GenerationMethodSpecial
 	GenerationMethodUnusual
+	GenerationMethodExtended
+	GenerationMethodContinius
 	TypeVariantTraditional
 	TypeVariantRealistic
 	tableStarTypeUnselected
@@ -90,9 +92,10 @@ type Star struct {
 	Age             float64 //Gyrs
 	Orbit           *orbitns.OrbitN
 	MAO             float64 //Minimum Allowable Orbit
-	AvailableOrbits allowance
+	AvailableOrbits *Allowance
 	HZCO            float64 //Habitable Zone Center Orbit
 	AllowedWorlds   int
+	ChildOrbit      map[float64]*orbitns.OrbitN
 }
 
 func DefineStarPresence(st Star, dice *dice.Dicepool) []string {
@@ -223,6 +226,7 @@ func New(dice *dice.Dicepool, TypeTableVariant, starGenerationMethod int, design
 	st.Diameter = diameterOf(st, dice)
 	st.Luminocity = luminocityOf(st)
 	st.MAO = maoOf(st)
+	st.ChildOrbit = make(map[float64]*orbitns.OrbitN)
 	return st, nil
 }
 
@@ -463,12 +467,31 @@ func AUof(st Star) float64 {
 	return st.Orbit.AU
 }
 
-type allowance struct {
+type Allowance struct {
 	interuption []segment
+	total       float64
+	outermost   float64
 }
 type segment struct {
 	start float64
 	end   float64
+}
+
+func (al *Allowance) Sum() float64 {
+	return al.total
+}
+
+func (al *Allowance) OutermostOrbit() float64 {
+	return al.outermost
+}
+
+func (al *Allowance) Approve(orbit float64) bool {
+	for _, segment := range al.interuption {
+		if orbit >= segment.start && orbit <= segment.end {
+			return false
+		}
+	}
+	return true
 }
 
 func CalculateAllowableOrbits(starMap map[string]Star) map[string]Star {
@@ -486,8 +509,8 @@ func CalculateAllowableOrbits(starMap map[string]Star) map[string]Star {
 	starMap = condition10(starMap)
 	starMap = condition11(starMap)
 	for k, v := range starMap {
-		allow := normalizeAllowance(v.AvailableOrbits)
-		v.AvailableOrbits = allow
+		v.AvailableOrbits.normalize()
+		//	v.AvailableOrbits = allow
 		starMap[k] = v
 	}
 	for _, code := range []string{"A", "B", "C", "D"} {
@@ -501,11 +524,12 @@ func CalculateAllowableOrbits(starMap map[string]Star) map[string]Star {
 	return starMap
 }
 
-func normalizeAllowance(al allowance) allowance {
+func (al *Allowance) normalize() {
 	segments := al.interuption
 	newSegment := []segment{}
 	flMap := make(map[float64]float64)
 	lastSegmNum := len(segments) - 1
+	al.total = 20.0
 	for i, s := range segments {
 		segments[i].start = float64(int(s.start*1000)) / 1000
 		segments[i].end = float64(int(s.end*1000)) / 1000
@@ -525,16 +549,22 @@ func normalizeAllowance(al allowance) allowance {
 	}
 
 	for i := 0; i < 20001; i++ {
-		if v, ok := flMap[float64(i)/1000]; ok {
-			newSegment = append(newSegment, segment{float64(i) / 1000, v})
+		orbNum := float64(i) / 1000
+		if v, ok := flMap[orbNum]; ok {
+			newSegment = append(newSegment, segment{orbNum, v})
+			al.total -= 0.001
+			al.outermost = orbNum
 		}
 	}
-	return allowance{newSegment}
+	al.interuption = newSegment
+	al.total = float64(int(al.total*1000)) / 1000
 }
 
 func condition1(starMap map[string]Star) map[string]Star {
 	for k, v := range starMap {
-		segm := segment{0, v.MAO}
+		v.AvailableOrbits = &Allowance{}
+
+		segm := segment{0.0, v.MAO}
 		v.AvailableOrbits.interuption = append(v.AvailableOrbits.interuption, segm)
 		starMap[k] = v
 	}
@@ -820,7 +850,6 @@ func AllocateWorldlimitsByStars(totalWorlds int, stars map[string]Star) []int {
 	for i, desig := range []string{"A", "B", "C", "D"} {
 		//primeStar := stars[desig+"a"]
 		//companion := stars[desig+"b"]
-		lastStar = i
 		if primeStar, ok := stars[desig+"a"]; ok {
 			starN := int(primeStar.AllowanceOrbits())
 			if _, ok := stars[desig+"b"]; !ok {
@@ -833,6 +862,7 @@ func AllocateWorldlimitsByStars(totalWorlds int, stars map[string]Star) []int {
 			allowedWorlds := (totalWorlds * starN) / int(totalSystemOrbits)
 			worldsLeft -= allowedWorlds
 			allowed = append(allowed, allowedWorlds)
+			lastStar = i
 		} else {
 			allowed = append(allowed, 0)
 		}
@@ -840,4 +870,10 @@ func AllocateWorldlimitsByStars(totalWorlds int, stars map[string]Star) []int {
 	allowed[lastStar] += worldsLeft
 
 	return allowed
+}
+
+func (st *Star) AddApproved(orbit float64) {
+	if st.AvailableOrbits.Approve(orbit) {
+		st.ChildOrbit[orbit] = orbitns.New(orbit)
+	}
 }

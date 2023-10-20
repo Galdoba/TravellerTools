@@ -35,6 +35,7 @@ type OrbitN struct {
 	MinSeparation float64
 	MaxSeparation float64
 	Period        string
+	AsignedBody   string
 }
 
 func New(fl float64) *OrbitN {
