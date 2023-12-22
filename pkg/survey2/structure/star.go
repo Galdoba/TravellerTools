@@ -1,4 +1,4 @@
-package star2
+package structure
 
 import (
 	"fmt"
@@ -216,21 +216,6 @@ func designations() []string {
 
 //5-G7 V-0.929-0.967-0.738-6.336:Ab-0.09-0.11-G8 V-0.907-0.957-0.681:B-6.1-0.08-K8 V-0.626-0.777-0.136:Ca-12.1-0.47-M0 V-0.510-0.728-0.0895:Cb-0.21-0.24-D-0.490-0.017-0.000525
 //#-T# C-M    -D    -L    -A    :D -O   -E   -T# C-M    -D    -L    :D-O   -E  -T# C-M    -D    -L...
-
-func NewPrimary(nomena string) (*star, error) {
-	// dice := dice.New().SetSeed(nomena)
-	st := star{}
-	// class := ""
-	// i := dice.Sroll("2d6")
-	// dm := 0
-	// done := false
-	// for !done {
-
-	// }
-
-	// //rollClass
-	return &st, nil
-}
 
 func determine(table []string, i int, dm int) string {
 	r := i + dm - 2
