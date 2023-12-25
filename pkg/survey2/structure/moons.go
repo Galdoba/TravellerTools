@@ -28,7 +28,7 @@ func MoonsQuantity(parentSize string, dice *dice.Dicepool, dmPerDice int) (int, 
 		diceNum = 4
 		dm = -6
 	}
-	diceCode := fmt.Sprintf("%vd6")
+	diceCode := fmt.Sprintf("%vd6", diceNum)
 	totalDM = (diceNum * dmPerDice) + dm
 	rSize := dice.Sroll(diceCode) + totalDM
 	rings := false
@@ -53,5 +53,5 @@ func MoonsQuantity(parentSize string, dice *dice.Dicepool, dmPerDice int) (int, 
 	// if rSize == 0 {
 	// 	fmt.Println("Rings Present")
 	// }
-	return 0 //rSize
+	return 0, false //rSize
 }

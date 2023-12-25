@@ -1,6 +1,7 @@
 package orbitns
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -27,16 +28,24 @@ import (
 */
 
 type OrbitN struct {
-	ReferenceCode string
-	AU            float64
-	OrbitNum      float64
-	Distance      int //микроAU (1/1000000)
-	Eccentricity  float64
-	MinSeparation float64
-	MaxSeparation float64
-	Period        string
-	AsignedBody   string
+	ReferenceCode string  `json:"ReferenceCode"`
+	AU            float64 `json:"AU"`
+	OrbitNum      float64 `json:"OrbitNum"`
+	Distance      int     `json:"Distance"` //микроAU (1/1000000)
+	Eccentricity  float64 `json:"Eccentricity"`
+	MinSeparation float64 `json:"MinSeparation"`
+	MaxSeparation float64 `json:"MaxSeparation"`
+	Period        string  `json:"Period"`
+	AsignedBody   string  `json:"AsignedBody"`
 }
+
+func (or *OrbitN) MarshalJSON() ([]byte, error) {
+	return json.MarshalIndent(or, "", "  ")
+}
+
+// func (or *OrbitN) Unmarshal() ([]byte, error) {
+// 	return json.MarshalIndent(or, "", "  ")
+// }
 
 func New(fl float64) *OrbitN {
 	orb := OrbitN{}

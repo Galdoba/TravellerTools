@@ -78,24 +78,24 @@ const (
 )
 
 type Star struct {
-	StType          string
-	Class           string
-	SubType         string
-	Specialcase     string
-	Designation     string
-	Determination   string
-	Mass            float64
-	Temperature     int
-	IsPrimary       bool
-	Diameter        float64
-	Luminocity      float64
-	Age             float64 //Gyrs
-	Orbit           *orbitns.OrbitN
-	MAO             float64 //Minimum Allowable Orbit
-	AvailableOrbits *Allowance
-	HZCO            float64 //Habitable Zone Center Orbit
-	AllowedWorlds   int
-	ChildOrbit      map[float64]*orbitns.OrbitN
+	StType          string                     `json:"Star Type"`
+	Class           string                     `json:"Star Class"`
+	SubType         string                     `json:"Star SubType"`
+	Specialcase     string                     `json:"Special Case,omitempty"`
+	Designation     string                     `json:"Star Designation"`
+	Determination   string                     `json:"Star Determination"`
+	Mass            float64                    `json:"Star Mass"`
+	Temperature     int                        `json:"Star Temperature"`
+	IsPrimary       bool                       `json:"Star Is Primary"`
+	Diameter        float64                    `json:"Star Diameter"`
+	Luminocity      float64                    `json:"Star Luminocity"`
+	Age             float64                    `json:"Star Age"` //Gyrs
+	Orbit           *orbitns.OrbitN            `json:"Star Orbit#"`
+	MAO             float64                    `json:"Minimum Allowable Orbit"` //Minimum Allowable Orbit
+	AvailableOrbits *Allowance                 `json:"Available Orbits"`
+	HZCO            float64                    `json:"Habitable Zone Center Orbit"` //Habitable Zone Center Orbit
+	AllowedWorlds   int                        `json:"Allowed Worlds"`
+	ChildOrbit      map[string]*orbitns.OrbitN `json:"Child Orbits"`
 }
 
 func DefineStarPresence(st Star, dice *dice.Dicepool) []string {
@@ -226,7 +226,7 @@ func New(dice *dice.Dicepool, TypeTableVariant, starGenerationMethod int, design
 	st.Diameter = diameterOf(st, dice)
 	st.Luminocity = luminocityOf(st)
 	st.MAO = maoOf(st)
-	st.ChildOrbit = make(map[float64]*orbitns.OrbitN)
+	st.ChildOrbit = make(map[string]*orbitns.OrbitN)
 	return st, nil
 }
 
@@ -468,26 +468,26 @@ func AUof(st Star) float64 {
 }
 
 type Allowance struct {
-	interuption []segment
-	total       float64
-	outermost   float64
+	Interuption []Segment `json:"Segment"`
+	Total       float64   `json:"Total"`
+	Outermost   float64   `json:"Outermost"`
 }
-type segment struct {
-	start float64
-	end   float64
+type Segment struct {
+	Start float64 `json:"Start"`
+	End   float64 `json:"End"`
 }
 
 func (al *Allowance) Sum() float64 {
-	return al.total
+	return al.Total
 }
 
 func (al *Allowance) OutermostOrbit() float64 {
-	return al.outermost
+	return al.Outermost
 }
 
 func (al *Allowance) Approve(orbit float64) bool {
-	for _, segment := range al.interuption {
-		if orbit >= segment.start && orbit <= segment.end {
+	for _, segment := range al.Interuption {
+		if orbit >= segment.Start && orbit <= segment.End {
 			return false
 		}
 	}
@@ -525,47 +525,47 @@ func CalculateAllowableOrbits(starMap map[string]Star) map[string]Star {
 }
 
 func (al *Allowance) normalize() {
-	segments := al.interuption
-	newSegment := []segment{}
+	segments := al.Interuption
+	newSegment := []Segment{}
 	flMap := make(map[float64]float64)
 	lastSegmNum := len(segments) - 1
-	al.total = 20.0
+	al.Total = 20.0
 	for i, s := range segments {
-		segments[i].start = float64(int(s.start*1000)) / 1000
-		segments[i].end = float64(int(s.end*1000)) / 1000
+		segments[i].Start = float64(int(s.Start*1000)) / 1000
+		segments[i].End = float64(int(s.End*1000)) / 1000
 
-		if v, ok := flMap[segments[i].start]; ok {
-			flMap[segments[i].start] = segments[i].end
+		if v, ok := flMap[segments[i].Start]; ok {
+			flMap[segments[i].Start] = segments[i].End
 			next := i + 1
 			if i == lastSegmNum {
 				next = i
 			}
-			if v > flMap[segments[next].start] {
-				flMap[segments[i].start] = v
+			if v > flMap[segments[next].Start] {
+				flMap[segments[i].Start] = v
 			}
 		} else {
-			flMap[segments[i].start] = segments[i].end
+			flMap[segments[i].Start] = segments[i].End
 		}
 	}
 
 	for i := 0; i < 20001; i++ {
 		orbNum := float64(i) / 1000
 		if v, ok := flMap[orbNum]; ok {
-			newSegment = append(newSegment, segment{orbNum, v})
-			al.total -= 0.001
-			al.outermost = orbNum
+			newSegment = append(newSegment, Segment{orbNum, v})
+			al.Total -= 0.001
+			al.Outermost = orbNum
 		}
 	}
-	al.interuption = newSegment
-	al.total = float64(int(al.total*1000)) / 1000
+	al.Interuption = newSegment
+	al.Total = float64(int(al.Total*1000)) / 1000
 }
 
 func condition1(starMap map[string]Star) map[string]Star {
 	for k, v := range starMap {
 		v.AvailableOrbits = &Allowance{}
 
-		segm := segment{0.0, v.MAO}
-		v.AvailableOrbits.interuption = append(v.AvailableOrbits.interuption, segm)
+		segm := Segment{0.0, v.MAO}
+		v.AvailableOrbits.Interuption = append(v.AvailableOrbits.Interuption, segm)
 		starMap[k] = v
 	}
 	return starMap
@@ -576,9 +576,9 @@ func condition2(starMap map[string]Star) map[string]Star {
 		if star, ok := starMap[starCode]; ok {
 			compCode := strings.TrimSuffix(starCode, "a") + "b"
 			if companion, ok := starMap[compCode]; ok {
-				segm := segment{}
-				segm.end = companion.Orbit.OrbitNum + 0.5
-				star.AvailableOrbits.interuption = append(star.AvailableOrbits.interuption, segm)
+				segm := Segment{}
+				segm.End = companion.Orbit.OrbitNum + 0.5
+				star.AvailableOrbits.Interuption = append(star.AvailableOrbits.Interuption, segm)
 				starMap[starCode] = star
 			}
 		}
@@ -588,8 +588,8 @@ func condition2(starMap map[string]Star) map[string]Star {
 
 func condition3(starMap map[string]Star) map[string]Star {
 	for k, v := range starMap {
-		segm := segment{20, 200}
-		v.AvailableOrbits.interuption = append(v.AvailableOrbits.interuption, segm)
+		segm := Segment{20, 200}
+		v.AvailableOrbits.Interuption = append(v.AvailableOrbits.Interuption, segm)
 		starMap[k] = v
 	}
 	return starMap
@@ -610,23 +610,23 @@ func conditions567(starMap map[string]Star) map[string]Star {
 	primary := starMap["Aa"]
 	for _, secondaryCode := range []string{"Ba", "Ca", "Da"} {
 		if secondary, ok := starMap[secondaryCode]; ok {
-			segment := segment{secondary.Orbit.OrbitNum - 1, secondary.Orbit.OrbitNum + 1}
+			segment := Segment{secondary.Orbit.OrbitNum - 1, secondary.Orbit.OrbitNum + 1}
 			if secondary.Orbit.Eccentricity > 0.2 {
-				segment.start = segment.start - 1
-				segment.end = segment.end + 1
+				segment.Start = segment.Start - 1
+				segment.End = segment.End + 1
 			}
 			if secondaryCode != "Da" && secondary.Orbit.Eccentricity > 0.5 {
-				segment.start = segment.start - 1
-				segment.end = segment.end + 1
+				segment.Start = segment.Start - 1
+				segment.End = segment.End + 1
 			}
-			if segment.start < secondary.MAO {
-				segment.start = secondary.MAO
+			if segment.Start < secondary.MAO {
+				segment.Start = secondary.MAO
 			}
-			if segment.end > 20 {
-				segment.end = 20
+			if segment.End > 20 {
+				segment.End = 20
 			}
 
-			primary.AvailableOrbits.interuption = append(primary.AvailableOrbits.interuption, segment)
+			primary.AvailableOrbits.Interuption = append(primary.AvailableOrbits.Interuption, segment)
 		}
 	}
 	starMap["Aa"] = primary
@@ -636,11 +636,11 @@ func conditions567(starMap map[string]Star) map[string]Star {
 func condition8(starMap map[string]Star) map[string]Star {
 	for _, secondaryCode := range []string{"Ba", "Ca", "Da"} {
 		if secondary, ok := starMap[secondaryCode]; ok {
-			for i, interuptio := range secondary.AvailableOrbits.interuption {
-				if interuptio.end == 200 {
-					secondary.AvailableOrbits.interuption[i].start = secondary.Orbit.OrbitNum - 3
-					if secondary.AvailableOrbits.interuption[i].start < 0 {
-						secondary.AvailableOrbits.interuption[i].start = 0
+			for i, interuptio := range secondary.AvailableOrbits.Interuption {
+				if interuptio.End == 200 {
+					secondary.AvailableOrbits.Interuption[i].Start = secondary.Orbit.OrbitNum - 3
+					if secondary.AvailableOrbits.Interuption[i].Start < 0 {
+						secondary.AvailableOrbits.Interuption[i].Start = 0
 					}
 				}
 
@@ -650,12 +650,12 @@ func condition8(starMap map[string]Star) map[string]Star {
 	}
 	st1 := 0
 	for _, v := range starMap {
-		for _, orb := range v.AvailableOrbits.interuption {
-			if orb.start == 0 {
+		for _, orb := range v.AvailableOrbits.Interuption {
+			if orb.Start == 0 {
 				st1 = 1
 				continue
 			}
-			if orb.start == 0 && st1 > 0 {
+			if orb.Start == 0 && st1 > 0 {
 				fmt.Println(orb)
 				panic("step 8")
 			}
@@ -680,11 +680,11 @@ func condition9(starMap map[string]Star) map[string]Star {
 	for key, v := range reduceList {
 		secondary := starMap[key]
 		if v {
-			for i, interuptio := range secondary.AvailableOrbits.interuption {
-				if interuptio.start == 200 {
-					secondary.AvailableOrbits.interuption[i].start = secondary.AvailableOrbits.interuption[i].start - 1
-					if interuptio.start < 0 {
-						secondary.AvailableOrbits.interuption[i].start = 0
+			for i, interuptio := range secondary.AvailableOrbits.Interuption {
+				if interuptio.Start == 200 {
+					secondary.AvailableOrbits.Interuption[i].Start = secondary.AvailableOrbits.Interuption[i].Start - 1
+					if interuptio.Start < 0 {
+						secondary.AvailableOrbits.Interuption[i].Start = 0
 					}
 				}
 
@@ -693,12 +693,12 @@ func condition9(starMap map[string]Star) map[string]Star {
 	}
 	st1 := 0
 	for _, v := range starMap {
-		for _, orb := range v.AvailableOrbits.interuption {
-			if orb.start == 0 {
+		for _, orb := range v.AvailableOrbits.Interuption {
+			if orb.Start == 0 {
 				st1 = 1
 				continue
 			}
-			if orb.start == 0 && st1 > 0 {
+			if orb.Start == 0 && st1 > 0 {
 				fmt.Println(orb)
 				panic("step 9")
 			}
@@ -726,12 +726,12 @@ func condition10(starMap map[string]Star) map[string]Star {
 	for key, v := range reduceList {
 		secondary := starMap[key]
 		if v {
-			for i, interuptio := range secondary.AvailableOrbits.interuption {
-				if interuptio.start == 200 {
-					secondary.AvailableOrbits.interuption[i].start = secondary.AvailableOrbits.interuption[i].start - 1
+			for i, interuptio := range secondary.AvailableOrbits.Interuption {
+				if interuptio.Start == 200 {
+					secondary.AvailableOrbits.Interuption[i].Start = secondary.AvailableOrbits.Interuption[i].Start - 1
 
-					if interuptio.start < 0 {
-						secondary.AvailableOrbits.interuption[i].start = 0
+					if interuptio.Start < 0 {
+						secondary.AvailableOrbits.Interuption[i].Start = 0
 					}
 				}
 
@@ -740,12 +740,12 @@ func condition10(starMap map[string]Star) map[string]Star {
 	}
 	st1 := 0
 	for _, v := range starMap {
-		for _, orb := range v.AvailableOrbits.interuption {
-			if orb.start == 0 {
+		for _, orb := range v.AvailableOrbits.Interuption {
+			if orb.Start == 0 {
 				st1 = 1
 				continue
 			}
-			if orb.start == 0 && st1 > 0 {
+			if orb.Start == 0 && st1 > 0 {
 				fmt.Println(orb)
 				panic("step 10")
 			}
@@ -760,11 +760,11 @@ func condition11(starMap map[string]Star) map[string]Star {
 			if secondary.Orbit.Eccentricity <= 0.5 {
 				continue
 			}
-			for i, interuptio := range secondary.AvailableOrbits.interuption {
-				if interuptio.end == 200 {
-					secondary.AvailableOrbits.interuption[i].start = secondary.Orbit.OrbitNum - 3
-					if interuptio.start < 0 {
-						secondary.AvailableOrbits.interuption[i].start = 0
+			for i, interuptio := range secondary.AvailableOrbits.Interuption {
+				if interuptio.End == 200 {
+					secondary.AvailableOrbits.Interuption[i].Start = secondary.Orbit.OrbitNum - 3
+					if interuptio.Start < 0 {
+						secondary.AvailableOrbits.Interuption[i].Start = 0
 					}
 				}
 
@@ -774,12 +774,12 @@ func condition11(starMap map[string]Star) map[string]Star {
 	}
 	st1 := 0
 	for _, v := range starMap {
-		for _, orb := range v.AvailableOrbits.interuption {
-			if orb.start == 0 {
+		for _, orb := range v.AvailableOrbits.Interuption {
+			if orb.Start == 0 {
 				st1 = 1
 				continue
 			}
-			if orb.start == 0 && st1 > 0 {
+			if orb.Start == 0 && st1 > 0 {
 				fmt.Println(orb)
 				panic("step 11")
 			}
@@ -828,8 +828,8 @@ func (st *Star) AllowanceOrbits() float64 {
 		return 1.0
 	}
 	allowance := 200.0
-	for _, segm := range st.AvailableOrbits.interuption {
-		allowance -= (segm.end - segm.start)
+	for _, segm := range st.AvailableOrbits.Interuption {
+		allowance -= (segm.End - segm.Start)
 	}
 	return allowance
 }
@@ -874,6 +874,7 @@ func AllocateWorldlimitsByStars(totalWorlds int, stars map[string]Star) []int {
 
 func (st *Star) AddApproved(orbit float64) {
 	if st.AvailableOrbits.Approve(orbit) {
-		st.ChildOrbit[orbit] = orbitns.New(orbit)
+		orbObj := orbitns.New(orbit)
+		st.ChildOrbit[fmt.Sprintf("%v", orbit)] = orbObj
 	}
 }

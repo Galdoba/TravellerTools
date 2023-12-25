@@ -59,20 +59,25 @@ const (
 	tableSubtMprim          = "tab_Mprimary"
 )
 
-type star struct {
-	Class        string //Ia Ib ... BD D PSR NS BH --
-	SubType      string //0123456789-
-	Type         string //OBAFGKM+
-	Mass         float64
-	Diameter     float64
-	Luminocity   float64
-	Age          float64
-	Designation  string //A Ab B Bb C Cb D Db
-	Orbit        float64
-	Eccentrisity float64
+type Star struct {
+	Type         string  `json:"Type,omitempty"`     //OBAFGKM+
+	SubType      string  `json:"Sub Type,omitempty"` //0123456789-
+	Class        string  `json:"Class"`              //Ia Ib ... BD D PSR NS BH --
+	Mass         float64 `json:"Mass,omitempty"`
+	Diameter     float64 `json:"Diameter,omitempty"`
+	Luminocity   float64 `json:"Luminocity,omitempty"`
+	Age          float64 `json:"Age,omitempty"`
+	Designation  string  `json:"System Position,omitempty"` //A Ab B Bb C Cb D Db
+	Orbit        float64 `json:"Orbit#,omitempty"`
+	Eccentrisity float64 `json:"Eccentrisity,omitempty"`
+	Companion    *Star   `json:"Companion Star,omitempty"`
 }
 
-func (st *star) Normalize() {
+// func (st *star) Marshal() ([]byte, error) {
+// 	return json.MarshalIndent(st, "", "  ")
+// }
+
+func (st *Star) Normalize() {
 	val := int(st.Mass * 1000)
 	st.Mass = float64(val) / 1000
 	val = int(st.Diameter * 1000)
@@ -88,7 +93,7 @@ func (st *star) Normalize() {
 
 }
 
-func (st *star) Profile() string {
+func (st *Star) Profile() string {
 	t := st.Type + st.SubType
 	c := st.Class
 	tc := t + " " + c
@@ -114,13 +119,67 @@ func (st *star) Profile() string {
 	return ds + o + e + tc + m + d + l + a
 }
 
-func FromProfile(prf string) (*star, error) {
+func PrimaryFromProfile(prf string) (*Star, int, float64, error) {
+	//ds + o + e + tc + m + d + l
+	//             tc + m + d + l + a
+
+	data := strings.Split(prf, "-")
+	qty := 0
+	age := 0.0
+	st := Star{}
+	switch len(data) {
+	default:
+		return nil, 0, 0, fmt.Errorf("bad input: (%v) %v", len(data), data)
+	case 6:
+		for i, prt := range data {
+			switch i {
+			case 0:
+				num, err := strconv.Atoi(prt)
+				if err != nil {
+					return nil, 0, 0, fmt.Errorf("can't parse Profile: star qty unexpected (%v): %v", prt, err.Error())
+				}
+				qty = num
+			case 1:
+				st.Type, st.SubType, st.Class = disassemble(prt)
+			case 2:
+				fl, err := strconv.ParseFloat(prt, 64)
+				if err != nil {
+					return nil, 0, 0, fmt.Errorf("mass: %v", err.Error())
+				}
+				st.Mass = fl
+			case 3:
+				fl, err := strconv.ParseFloat(prt, 64)
+				if err != nil {
+					return nil, 0, 0, fmt.Errorf("diam: %v", err.Error())
+				}
+				st.Diameter = fl
+			case 4:
+				fl, err := strconv.ParseFloat(prt, 64)
+				if err != nil {
+					return nil, 0, 0, fmt.Errorf("luma: %v", err.Error())
+				}
+				st.Luminocity = fl
+			case 5:
+				fl, err := strconv.ParseFloat(prt, 64)
+				if err != nil {
+					return nil, 0, 0, fmt.Errorf("can't parse Profile: starsystem age unexpected (%v):%v", prt, err.Error())
+				}
+				age = fl
+
+			}
+		}
+	}
+
+	return &st, qty, age, nil
+}
+
+func SecondaryFromProfile(prf string) (*Star, error) {
 	//ds + o + e + tc + m + d + l
 	//             tc + m + d + l + a
 
 	data := strings.Split(prf, "-")
 
-	st := star{}
+	st := Star{}
 	switch len(data) {
 	default:
 		return nil, fmt.Errorf("bad input: (%v) %v", len(data), data)

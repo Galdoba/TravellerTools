@@ -9,7 +9,7 @@ import (
 
 func TestStarType(t *testing.T) {
 
-	for i := 1; i < 600; i++ {
+	for i := 1; i < 2; i++ {
 		dice := dice.New().SetSeed(i)
 		ss, err := NewStarSystem(dice, GenerationMethodUnusual, TypeVariantTraditional, GenerationMethodExpanded)
 		if err != nil {

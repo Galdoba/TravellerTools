@@ -32,3 +32,14 @@ type SystemObject struct {
 type Satelite struct {
 	SateliteType string // Planetoid/Ring
 }
+
+///////////////////////////////////////
+
+/*
+
+
+
+
+
+SpaceObject = Planet
+*/

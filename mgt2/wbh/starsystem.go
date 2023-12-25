@@ -1,7 +1,9 @@
 package wbh
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	orbitns "github.com/Galdoba/TravellerTools/mgt2/wbh/orbits"
@@ -36,13 +38,12 @@ const (
 )
 
 type StarSystem struct {
-	starGenerationMethod   int
-	systemGenerationMethod int
-	TypeTableVariant       int
-	//primary              Star
-	Star      map[string]star.Star
-	age       float64
-	WorldType map[string]int
+	starGenerationMethod   int                  `json:"Star Generation Method"`
+	systemGenerationMethod int                  `json:"System Generation Method"`
+	TypeTableVariant       int                  `json:"Type Table Variant"`
+	Star                   map[string]star.Star `json:"Stars"`
+	Age                    float64              `json:"System Age"`
+	WorldType              map[string]int       `json:"World Type map"`
 }
 
 func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant, sysGenMet int) (*StarSystem, error) {
@@ -97,7 +98,12 @@ func NewStarSystem(dice *dice.Dicepool, starGenerationMethod, tableVariant, sysG
 		ss.Star[desig] = st
 	}
 	ss.CalculateOP()
-	ss.PlaceWorlds(dice)
+	bt, err := json.MarshalIndent(ss, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(string(bt))
+	//ss.PlaceWorlds(dice)
 
 	return &ss, nil
 }
@@ -171,7 +177,7 @@ func (ss *StarSystem) ageResetIfRequired(dice *dice.Dicepool) {
 			}
 		}
 	}
-	ss.age = ss.Star["Aa"].Age
+	ss.Age = ss.Star["Aa"].Age
 }
 
 func (ss *StarSystem) String() string {
@@ -343,7 +349,8 @@ func (ss *StarSystem) placeBodyAndConfirm(dice *dice.Dicepool, body string) erro
 		if _, ok := ss.Star[code]; !ok {
 			continue
 		}
-		for k, v := range ss.Star[code].ChildOrbit {
+		for kStr, v := range ss.Star[code].ChildOrbit {
+			k, _ := strconv.ParseFloat(kStr, 64)
 			if v.AsignedBody == "" {
 				if k <= ss.Star[code].HZCO {
 					freeInner[code] = append(freeInner[code], k)
@@ -365,30 +372,41 @@ func (ss *StarSystem) placeBodyAndConfirm(dice *dice.Dicepool, body string) erro
 	if len(freeCodes) == 0 {
 		return fmt.Errorf("must be free orbits to asign body to")
 	}
-	starCode = freeCodes[dice.Sroll(fmt.Sprintf("1d%v-1", len(freeCodes)))]
+	// starCode = freeCodes[dice.Sroll(fmt.Sprintf("1d%v-1", len(freeCodes)))]
 
 	if ss.WorldType["INNER"] > 0 && len(freeInner) > 0 {
-		panic("нужно выбрать случайную звезду исходя из допустимых")
-		l := len(freeInner[starCode])
-		fmt.Println(l)
-		r := dice.Sroll(fmt.Sprintf("1d%v-1", l))
-		fmt.Println(r, freeInner[starCode], freeInner[starCode][r])
-		orbt := freeInner[starCode][dice.Sroll(fmt.Sprintf("1d%v-1", len(freeInner[starCode])))]
-		ss.Star[starCode].ChildOrbit[orbt].AsignedBody = body
-		ss.WorldType["INNER"]--
+		l := 0
+		for l < 1 {
+			starCode = freeCodes[dice.Sroll(fmt.Sprintf("1d%v-1", len(freeCodes)))]
+			l = len(freeInner[starCode])
+			if l < 1 {
+				continue
+
+			}
+			//r := dice.Sroll(fmt.Sprintf("1d%v-1", l))
+			//fmt.Println(r, freeInner[starCode], freeInner[starCode][r], "выбрали")
+			//orbt := freeInner[starCode][dice.Sroll(fmt.Sprintf("1d%v-1", len(freeInner[starCode])))]
+			orbt := freeInner[starCode][dice.Sroll(fmt.Sprintf("1d%v-1", l))]
+			fmt.Println(orbt, "создали")
+			ss.Star[starCode].ChildOrbit[fmt.Sprintf("%v", orbt)].AsignedBody = body
+			fmt.Println(body, "добавили")
+			ss.WorldType["INNER"]--
+			fmt.Println(ss.WorldType["INNER"], "уменьшили")
+		}
+
 		return nil
 
 	}
 	if ss.WorldType["OUTER"] > 0 && len(freeOuter) > 0 {
 		orbt := freeOuter[starCode][dice.Sroll(fmt.Sprintf("1d%v-1", len(freeOuter[starCode])))]
-		ss.Star[starCode].ChildOrbit[orbt].AsignedBody = body
+		ss.Star[starCode].ChildOrbit[fmt.Sprintf("%v", orbt)].AsignedBody = body
 		ss.WorldType["OUTER"]--
 		return nil
 
 	}
 	if len(freeOrbits) > 0 {
 		orbt := freeOrbits[starCode][dice.Sroll(fmt.Sprintf("1d%v-1", len(freeOrbits[starCode])))]
-		ss.Star[starCode].ChildOrbit[orbt].AsignedBody = body
+		ss.Star[starCode].ChildOrbit[fmt.Sprintf("%v", orbt)].AsignedBody = body
 		return nil
 
 	}
