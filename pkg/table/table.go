@@ -1,5 +1,7 @@
 package table
 
+import "fmt"
+
 const (
 	Equal       RelationalOperator = 10
 	NotEqual    RelationalOperator = 11
@@ -31,9 +33,14 @@ type Modifier struct {
 }
 
 func (md *Modifier) Verify(vals ...interface{}) error {
+	md.verified = false
 	switch cmpr := md.Comparator.(type) {
+	default:
+		return fmt.Errorf("unknown comparator type %v", cmpr)
 	case int:
 		switch md.Operator {
+		default:
+			return fmt.Errorf("unknown operator %v", md.Operator)
 		case Equal:
 			for _, v := range vals {
 				if v.(int) == cmpr {
@@ -41,8 +48,45 @@ func (md *Modifier) Verify(vals ...interface{}) error {
 					return nil
 				}
 			}
+		case NotEqual:
+			for _, v := range vals {
+				if v.(int) != cmpr {
+					md.verified = true
+					return nil
+				}
+			}
+
+		case Less:
+			for _, v := range vals {
+				if v.(int) < cmpr {
+					md.verified = true
+					return nil
+				}
+			}
+		case LessOrEqual:
+			for _, v := range vals {
+				if v.(int) <= cmpr {
+					md.verified = true
+					return nil
+				}
+			}
+		case More:
+			for _, v := range vals {
+				if v.(int) > cmpr {
+					md.verified = true
+					return nil
+				}
+			}
+		case MoreOrEqual:
+			for _, v := range vals {
+				if v.(int) >= cmpr {
+					md.verified = true
+					return nil
+				}
+			}
 		}
 	case string:
+		fmt.Errorf("string not implemented")
 	}
 	return nil
 }
