@@ -8,6 +8,7 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/urfave/cli v1.22.12
 	gopkg.in/AlecAivazis/survey.v1 v1.8.8
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -22,12 +23,10 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/fogleman/gg v1.3.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/llgcode/draw2d v0.0.0-20230723155556-e595d7c7e75e
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/urfave/cli/v2 v2.26.0
-	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
 	golang.org/x/sys v0.6.0 // indirect
 )

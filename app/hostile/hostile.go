@@ -59,6 +59,7 @@ func main() {
 				return nil
 			},
 		},
+		cmd.NewCharacter(),
 	}
 
 	//ПО ОКОНЧАНИЮ ДЕЙСТВИЯ
