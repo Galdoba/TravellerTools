@@ -44,6 +44,50 @@ const (
 	Vechicle
 )
 
+func SkillStr(i int) string {
+	switch i {
+		
+	case Administration
+	Agriculture
+	Aircraft
+	Brawling
+	Blade_Combat
+	Bribery
+	Broker
+	Carousing
+	Comms
+	Computer
+	Demolitions
+	Electronics
+	Engineering
+	Forgery
+	Gambling
+	Ground_Vechicle
+	Gun_Combat
+	Gunnery
+	Heavy_Weapons
+	Investigate
+	Jack_of_All_Trades
+	Leader
+	Liason
+	Loader
+	Mechanical
+	Medical
+	Mining
+	Navigation
+	Pilot
+	Recon
+	Security
+	Steward
+	Streetwise
+	Survival
+	Tactics
+	Vacc_Suit
+	Watercraft
+	Vechicle
+	}
+}
+
 type Skill struct {
 	ID          int
 	Name        string
