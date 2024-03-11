@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/Galdoba/TravellerTools/hostile/character/skill"
 )
 
 const (
@@ -60,8 +62,10 @@ type CareerStats struct {
 
 func init() {
 	sklTab := make(map[string][]string)
-	sklTab["1"] = []string{"1", "2", "3", "4", "5", "6"}
-	sklTab["2"] = []string{"1", "2", "3", "4", "5", "6"}
+	sklTab["Personal Development"] = []string{"______", "______", "______", "______", "______", "______"}
+	sklTab["Service Skills"] = []string{"______", "______", "______", "______", "______", "______"}
+	sklTab["Specialist Skills"] = []string{"______", "______", "______", "______", "______", "______"}
+	sklTab["Advanced Education Skills"] = []string{"______", "______", "______", "______", "______", "______"}
 	cr := CareerStats{
 		Name:          "name",
 		Qualification: "STR 6+",
@@ -73,30 +77,30 @@ func init() {
 			Rank{
 				Value:             0,
 				CommisionRequired: false,
-				Position:          "initial",
-				AutoSkill:         "skill 1",
+				Position:          "-----------",
+				AutoSkill:         "___________",
 			},
 			Rank{
 				Value:             1,
 				CommisionRequired: false,
-				Position:          "NCO 1",
-				AutoSkill:         "",
+				Position:          "-----------",
+				AutoSkill:         "___________",
 			},
 			Rank{
 				Value:             1,
 				CommisionRequired: true,
 				Position:          "leitenent",
-				AutoSkill:         "pilot 1",
+				AutoSkill:         skill.SkillStr(skill.Pilot) + " 1",
 			},
 		},
 		MusterOut: []string{
-			"one",
-			"two",
-			"three",
-			"four",
-			"five",
-			"six",
-			"seven",
+			"______",
+			"______",
+			"______",
+			"______",
+			"______",
+			"______",
+			"______",
 		},
 		Branch:     "branch",
 		SkillTable: sklTab,

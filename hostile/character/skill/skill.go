@@ -1,6 +1,10 @@
 package skill
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 const (
 	Undefined = iota
@@ -46,46 +50,85 @@ const (
 
 func SkillStr(i int) string {
 	switch i {
-		
-	case Administration
-	Agriculture
-	Aircraft
-	Brawling
-	Blade_Combat
-	Bribery
-	Broker
-	Carousing
-	Comms
-	Computer
-	Demolitions
-	Electronics
-	Engineering
-	Forgery
-	Gambling
-	Ground_Vechicle
-	Gun_Combat
-	Gunnery
-	Heavy_Weapons
-	Investigate
-	Jack_of_All_Trades
-	Leader
-	Liason
-	Loader
-	Mechanical
-	Medical
-	Mining
-	Navigation
-	Pilot
-	Recon
-	Security
-	Steward
-	Streetwise
-	Survival
-	Tactics
-	Vacc_Suit
-	Watercraft
-	Vechicle
+
+	case Administration:
+		return "Administration"
+	case Agriculture:
+		return "Agriculture"
+	case Aircraft:
+		return "Aircraft"
+	case Brawling:
+		return "Brawling"
+	case Blade_Combat:
+		return "Blade_Combat"
+	case Bribery:
+		return "Bribery"
+	case Broker:
+		return "Broker"
+	case Carousing:
+		return "Carousing"
+	case Comms:
+		return "Comms"
+	case Computer:
+		return "Computer"
+	case Demolitions:
+		return "Demolitions"
+	case Electronics:
+		return "Electronics"
+	case Engineering:
+		return "Engineering"
+	case Forgery:
+		return "Forgery"
+	case Gambling:
+		return "Gambling"
+	case Ground_Vechicle:
+		return "Ground_Vechicle"
+	case Gun_Combat:
+		return "Gun_Combat"
+	case Gunnery:
+		return "Gunnery"
+	case Heavy_Weapons:
+		return "Heavy_Weapons"
+	case Investigate:
+		return "Investigate"
+	case Jack_of_All_Trades:
+		return "Jack_of_All_Trades"
+	case Leader:
+		return "Leader"
+	case Liason:
+		return "Liason"
+	case Loader:
+		return "Loader"
+	case Mechanical:
+		return "Mechanical"
+	case Medical:
+		return "Medical"
+	case Mining:
+		return "Mining"
+	case Navigation:
+		return "Navigation"
+	case Pilot:
+		return "Pilot"
+	case Recon:
+		return "Recon"
+	case Security:
+		return "Security"
+	case Steward:
+		return "Steward"
+	case Streetwise:
+		return "Streetwise"
+	case Survival:
+		return "Survival"
+	case Tactics:
+		return "Tactics"
+	case Vacc_Suit:
+		return "Vacc_Suit"
+	case Watercraft:
+		return "Watercraft"
+	case Vechicle:
+		return "Vechicle"
 	}
+	return ""
 }
 
 type Skill struct {
@@ -131,15 +174,88 @@ func (ss *SkillSet) AddBackGroundSkill(id int) error {
 func (ss *SkillSet) Increase(id int) error {
 	skl := newSkill(id)
 	if skl.Name == "error" {
-		return fmt.Errorf("can't add background skill: %v", skl.Description)
+		return fmt.Errorf("can't add skill: %v", skl.Description)
 	}
 	if val, ok := ss.skillVals[id]; ok {
 		if val >= 5 {
-			return fmt.Errorf("can't add background skill: skill %v already at level %v", skl.Name, val)
+			return fmt.Errorf("can't add skill: skill %v already at level %v", skl.Name, val)
 		}
 		ss.skillVals[id] = val + 1
 	} else {
 		ss.skillVals[id] = 1
+	}
+	return nil
+}
+
+func skillID(s string) int {
+	for i := Undefined; i <= Vechicle; i++ {
+		if SkillStr(i) == s {
+			return i
+		}
+	}
+	return 0
+}
+
+func (ss *SkillSet) Gain(s string) error {
+	if s == "" {
+		return nil
+	}
+	val := -1
+	flds := strings.Fields(s)
+	skill := 0
+	switch len(flds) {
+	default:
+		return fmt.Errorf("can't gain skill: can't parse '%v'", s)
+	case 1:
+		skill = skillID(flds[0])
+		ss.skillVals[skill] = ss.skillVals[skill] + 1
+	case 2:
+		skill = skillID(flds[0])
+		v, err := strconv.Atoi(flds[1])
+		if err != nil {
+			return fmt.Errorf("can't gain skill: can't parse '%v'", s)
+		}
+		val = v
+		if val > -1 && val > ss.skillVals[skill] {
+			ss.skillVals[skill] = val
+		}
+	}
+	return nil
+}
+
+func (ss *SkillSet) ensure(s string) error {
+	data := strings.Fields(s)
+	if len(data) > 2 {
+		return fmt.Errorf("can't ensure skill: can't parse '%v'", s)
+	}
+	skill := Undefined
+	val := -1
+	for i := Undefined; i <= Vechicle; i++ {
+		if SkillStr(i) == data[0] {
+			skill = i
+			break
+		}
+	}
+	if skill == Undefined {
+		return fmt.Errorf("can't ensure skill: unknown skill '%v'", data[0])
+	}
+	switch len(data) {
+	case 2:
+		v, err := strconv.Atoi(data[1])
+		if err != nil {
+			return fmt.Errorf("can't ensure skill: can't parse '%v'", s)
+		}
+		val = v
+	}
+	switch val {
+	default:
+		if ss.skillVals[skill] < val {
+			ss.skillVals[skill] = val
+			return nil
+		}
+	case -1:
+		ss.skillVals[skill] = ss.skillVals[skill] + 1
+		return nil
 	}
 	return nil
 }
