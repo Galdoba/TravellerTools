@@ -28,6 +28,7 @@ const (
 	CommisionPassed             = true
 	CommisionNotPassed          = false
 	Benefit_1STR                = "+1 STR"
+	Benefit_2STR                = "+2 STR"
 	Benefit_1DEX                = "+1 DEX"
 	Benefit_1END                = "+1 END"
 	Benefit_1INT                = "+1 INT"
@@ -40,6 +41,7 @@ const (
 	Benefit_TicketElite         = "Elite Ticket"
 	Benefit_Weapon              = "Weapon"
 	Benefit_Award               = "Award"
+	Benefit_TraumaKit           = "Trauma Kit"
 )
 
 type Career struct {
@@ -681,7 +683,7 @@ func init() {
 				Value:             1,
 				CommisionRequired: true,
 				Position:          "Lieutenant",
-				AutoSkill:         text(skill.Vacc_Suit) + " 1",
+				AutoSkill:         "",
 			},
 			Rank{
 				Value:             2,
@@ -734,6 +736,536 @@ func init() {
 	defer f.Close()
 
 	//MARSHAL
+	phSkills := make(map[string][]string)
+	phSkills["Personal Development"] = []string{"+1 STR", "+1 DEX", "+1 END", "+1 INT", "+1 EDU", "+1 SOC"}
+	phSkills["Service Skills"] = []string{"+1 DEX", text(skill.Electronics), text(skill.Medical), text(skill.Streetwise), text(skill.Medical), text(skill.Investigate)}
+	phSkills["Specialist Skills"] = []string{text(skill.Liason), text(skill.Investigate), text(skill.Mechanical), text(skill.Electronics), text(skill.Computer), text(skill.Administration)}
+	phSkills["Advanced Education Skills"] = []string{text(skill.Liason), text(skill.Medical), text(skill.Administration), text(skill.Computer), "+1 INT", "+1 EDU"}
+	physician := CareerStats{
+		Name:          "Phisician",
+		Qualification: "INT 9+",
+		Survival:      "INT 3+",
+		Commision:     "EDU 6+",
+		Advance:       "EDU 8+",
+		ReEnlist:      4,
+		Ranks: []Rank{
+			Rank{
+				Value:             0,
+				CommisionRequired: false,
+				Position:          "Medical Student",
+				AutoSkill:         text(skill.Medical) + " 1",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
+				Position:          "Intern",
+				AutoSkill:         text(skill.Medical),
+			},
+			Rank{
+				Value:             2,
+				CommisionRequired: true,
+				Position:          "Junior Doctor",
+				AutoSkill:         text(skill.Medical),
+			},
+			Rank{
+				Value:             3,
+				CommisionRequired: true,
+				Position:          "Doctor",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             4,
+				CommisionRequired: true,
+				Position:          "Doctor",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             5,
+				CommisionRequired: true,
+				Position:          "Consultant",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             6,
+				CommisionRequired: true,
+				Position:          "Senior Consultant",
+				AutoSkill:         "",
+			},
+		},
+		MusterOut: []string{
+			Benefit_TicketStandard,
+			Benefit_1EDU,
+			Benefit_1EDU,
+			Benefit_TicketElite,
+			Benefit_TraumaKit,
+			Benefit_TicketElite,
+			Benefit_1SOC,
+		},
+		SkillTable: phSkills,
+	}
+	bt, err = json.MarshalIndent(&physician, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	f, err = os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`physician.json`, os.O_CREATE|os.O_WRONLY, 0770)
+	f.Write(bt)
+	defer f.Close()
+
+	//RANGER
+	rangerSkills := make(map[string][]string)
+	rangerSkills["Personal Development"] = []string{"+1 STR", "+1 DEX", "+1 END", "+1 INT", text(skill.Gun_Combat), text(skill.Blade_Combat)}
+	rangerSkills["Service Skills"] = []string{text(skill.Gun_Combat), text(skill.Agriculture), text(skill.Survival), text(skill.Recon), text(skill.Ground_Vechicle), text(skill.Survival)}
+	rangerSkills["Specialist Skills"] = []string{text(skill.Mechanical), text(skill.Electronics), text(skill.Comms), text(skill.Recon), text(skill.Ground_Vechicle), text(skill.Survival)}
+	rangerSkills["Advanced Education Skills"] = []string{text(skill.Medical), text(skill.Computer), text(skill.Jack_of_All_Trades), text(skill.Leader), text(skill.Medical), text(skill.Mechanical)}
+	ranger := CareerStats{
+		Name:          "Ranger",
+		Qualification: "END 9+",
+		Survival:      "STR 6+",
+		Commision:     "INT 5+",
+		Advance:       "EDU 6+",
+		ReEnlist:      5,
+		Ranks: []Rank{
+			Rank{
+				Value:             0,
+				CommisionRequired: false,
+				Position:          "Ranger",
+				AutoSkill:         text(skill.Survival) + " 1",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
+				Position:          "Assistant Team Leader",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             2,
+				CommisionRequired: true,
+				Position:          "Team Leader",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             3,
+				CommisionRequired: true,
+				Position:          "Deputy Chief Ranger",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             4,
+				CommisionRequired: true,
+				Position:          "Chief Ranger",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             5,
+				CommisionRequired: true,
+				Position:          "Area Commander",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             6,
+				CommisionRequired: true,
+				Position:          "District Commander",
+				AutoSkill:         "",
+			},
+		},
+		MusterOut: []string{
+			Benefit_TicketStandard,
+			Benefit_TicketStandard,
+			Benefit_Weapon,
+			Benefit_Weapon,
+			Benefit_1DEX,
+			Benefit_2STR,
+			Benefit_TicketElite,
+		},
+		SkillTable: rangerSkills,
+	}
+	bt, err = json.MarshalIndent(&ranger, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	f, err = os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`ranger.json`, os.O_CREATE|os.O_WRONLY, 0770)
+	f.Write(bt)
+	defer f.Close()
+
+	//ROGUE
+	rogueSkills := make(map[string][]string)
+	rogueSkills["Personal Development"] = []string{"+1 STR", "+1 DEX", "+1 END", text(skill.Brawling), text(skill.Blade_Combat), text(skill.Carousing)}
+	rogueSkills["Service Skills"] = []string{text(skill.Blade_Combat), text(skill.Gun_Combat), text(skill.Brawling), text(skill.Vechicle), text(skill.Recon), text(skill.Vechicle)}
+	rogueSkills["Specialist Skills"] = []string{text(skill.Streetwise), text(skill.Forgery), text(skill.Bribery), text(skill.Demolitions), text(skill.Security), text(skill.Blade_Combat)}
+	rogueSkills["Advanced Education Skills"] = []string{text(skill.Tactics), text(skill.Bribery), text(skill.Forgery), text(skill.Computer), text(skill.Leader), text(skill.Jack_of_All_Trades)}
+	rogue := CareerStats{
+		Name:          "Rogue",
+		Qualification: "END 6+",
+		Survival:      "INT 6+",
+		Commision:     "STR 8+",
+		Advance:       "INT 6+",
+		ReEnlist:      5,
+		Ranks: []Rank{
+			Rank{
+				Value:             0,
+				CommisionRequired: false,
+				Position:          "Cholo",
+				AutoSkill:         text(skill.Streetwise) + " 1",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
+				Position:          "Soldier",
+				AutoSkill:         text(skill.Blade_Combat) + " 1",
+			},
+			Rank{
+				Value:             2,
+				CommisionRequired: true,
+				Position:          "Veteran",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             3,
+				CommisionRequired: true,
+				Position:          "Lieutenant",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             4,
+				CommisionRequired: true,
+				Position:          "Captain",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             5,
+				CommisionRequired: true,
+				Position:          "Right Hand",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             6,
+				CommisionRequired: true,
+				Position:          "General",
+				AutoSkill:         "",
+			},
+		},
+		MusterOut: []string{
+			Benefit_TicketStandard,
+			Benefit_1SOC,
+			Benefit_Weapon,
+			Benefit_Weapon,
+			Benefit_TicketElite,
+			Benefit_1END,
+			Benefit_StarEnvoyClubMember,
+		},
+		SkillTable: rogueSkills,
+	}
+	bt, err = json.MarshalIndent(&rogue, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	f, err = os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`rogue.json`, os.O_CREATE|os.O_WRONLY, 0770)
+	f.Write(bt)
+	defer f.Close()
+
+	//ROUGHNECK
+	roughneckSkills := make(map[string][]string)
+	roughneckSkills["Personal Development"] = []string{"+1 STR", "+1 DEX", "+1 END", text(skill.Gambling), text(skill.Vacc_Suit), text(skill.Brawling)}
+	roughneckSkills["Service Skills"] = []string{text(skill.Vacc_Suit), text(skill.Mining), text(skill.Loader), text(skill.Demolitions), text(skill.Comms), text(skill.Ground_Vechicle)}
+	roughneckSkills["Specialist Skills"] = []string{text(skill.Streetwise), text(skill.Electronics), text(skill.Ground_Vechicle), text(skill.Mechanical), text(skill.Mining), text(skill.Administration)}
+	roughneckSkills["Advanced Education Skills"] = []string{text(skill.Navigation), text(skill.Medical), text(skill.Electronics), text(skill.Computer), text(skill.Engineering), text(skill.Jack_of_All_Trades)}
+	roughneck := CareerStats{
+		Name:          "Roughneck",
+		Qualification: "DEX 8+",
+		Survival:      "INT 6+",
+		Commision:     "STR 8+",
+		Advance:       "END 7+",
+		ReEnlist:      7,
+		Ranks: []Rank{
+			Rank{
+				Value:             0,
+				CommisionRequired: false,
+				Position:          "Roustabout",
+				AutoSkill:         text(skill.Vacc_Suit) + " 1",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
+				Position:          "Floorhand",
+				AutoSkill:         text(skill.Mining) + " 1",
+			},
+			Rank{
+				Value:             2,
+				CommisionRequired: true,
+				Position:          "Assistant Driller",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             3,
+				CommisionRequired: true,
+				Position:          "Driller",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             4,
+				CommisionRequired: true,
+				Position:          "Toolpusher",
+				AutoSkill:         text(skill.Mechanical),
+			},
+			Rank{
+				Value:             5,
+				CommisionRequired: true,
+				Position:          "Superintendant",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             6,
+				CommisionRequired: true,
+				Position:          "General Manager",
+				AutoSkill:         "",
+			},
+		},
+		MusterOut: []string{
+			Benefit_TicketStandard,
+			Benefit_TicketStandard,
+			Benefit_Weapon,
+			Benefit_TicketElite,
+			Benefit_1EDU,
+			Benefit_1INT,
+			Benefit_TicketElite,
+		},
+		SkillTable: roughneckSkills,
+	}
+	bt, err = json.MarshalIndent(&roughneck, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	f, err = os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`roughneck.json`, os.O_CREATE|os.O_WRONLY, 0770)
+	f.Write(bt)
+	defer f.Close()
+
+	//SCIENTIST
+	scientistSkills := make(map[string][]string)
+	scientistSkills["Personal Development"] = []string{"+1 STR", "+1 DEX", "+1 END", "+1 INT", "+1 EDU", "+1 INT"}
+	scientistSkills["Service Skills"] = []string{text(skill.Gun_Combat), text(skill.Comms), text(skill.Investigate), text(skill.Vechicle), text(skill.Comms), text(skill.Survival)}
+	scientistSkills["Specialist Skills"] = []string{text(skill.Mechanical), text(skill.Electronics), text(skill.Vacc_Suit), text(skill.Computer), text(skill.Investigate), text(skill.Vechicle)}
+	scientistSkills["Advanced Education Skills"] = []string{text(skill.Medical), text(skill.Computer), text(skill.Administration), text(skill.Leader), text(skill.Navigation), text(skill.Jack_of_All_Trades)}
+	scientist := CareerStats{
+		Name:          "Scientist",
+		Qualification: "EDU 6+",
+		Survival:      "INT 3+",
+		Commision:     "EDU 5+",
+		Advance:       "EDU 8+",
+		ReEnlist:      5,
+		Ranks: []Rank{
+			Rank{
+				Value:             0,
+				CommisionRequired: false,
+				Position:          "Researcher",
+				AutoSkill:         text(skill.Investigate) + " 1",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
+				Position:          "Scientist",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             2,
+				CommisionRequired: true,
+				Position:          "Senior Scientist",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             3,
+				CommisionRequired: true,
+				Position:          "Deputy Science Leader",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             4,
+				CommisionRequired: true,
+				Position:          "Science Leader",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             5,
+				CommisionRequired: true,
+				Position:          "Assistant Director",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             6,
+				CommisionRequired: true,
+				Position:          "Director",
+				AutoSkill:         "",
+			},
+		},
+		MusterOut: []string{
+			Benefit_TicketStandard,
+			Benefit_TicketElite,
+			Benefit_TicketElite,
+			Benefit_1END,
+			Benefit_1SOC,
+			Benefit_Weapon,
+			Benefit_StarEnvoyClubMember,
+		},
+		SkillTable: scientistSkills,
+	}
+	bt, err = json.MarshalIndent(&scientist, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	f, err = os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`scientist.json`, os.O_CREATE|os.O_WRONLY, 0770)
+	f.Write(bt)
+	defer f.Close()
+
+	//SURVEY SCOUT
+	surveyScoutSkills := make(map[string][]string)
+	surveyScoutSkills["Personal Development"] = []string{"+1 STR", "+1 DEX", "+1 END", "+1 INT", "+1 EDU", text(skill.Gun_Combat)}
+	surveyScoutSkills["Service Skills"] = []string{text(skill.Vechicle), text(skill.Vacc_Suit), text(skill.Mechanical), text(skill.Vechicle), text(skill.Comms), text(skill.Survival)}
+	surveyScoutSkills["Specialist Skills"] = []string{text(skill.Mechanical), text(skill.Electronics), text(skill.Vacc_Suit), text(skill.Computer), text(skill.Investigate), text(skill.Vechicle)}
+	surveyScoutSkills["Advanced Education Skills"] = []string{text(skill.Medical), text(skill.Computer), text(skill.Administration), text(skill.Leader), text(skill.Navigation), text(skill.Jack_of_All_Trades)}
+	survey_scout := CareerStats{
+		Name:          "Survey Scout",
+		Qualification: "STR 7+",
+		Survival:      "END 7+",
+		Commision:     "INT 4+",
+		Advance:       "END 8+",
+		ReEnlist:      3,
+		Ranks: []Rank{
+			Rank{
+				Value:             0,
+				CommisionRequired: false,
+				Position:          "Scout",
+				AutoSkill:         text(skill.Survival) + " 1",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
+				Position:          "Senior Scout",
+				AutoSkill:         text(skill.Pilot) + " 1",
+			},
+			Rank{
+				Value:             2,
+				CommisionRequired: true,
+				Position:          "Supervisor",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             3,
+				CommisionRequired: true,
+				Position:          "Mission Specialist",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             4,
+				CommisionRequired: true,
+				Position:          "Senior Mission Specialist",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             5,
+				CommisionRequired: true,
+				Position:          "Mission Chief",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             6,
+				CommisionRequired: true,
+				Position:          "Operations Chief",
+				AutoSkill:         "",
+			},
+		},
+		MusterOut: []string{
+			Benefit_TicketStandard,
+			Benefit_2INT,
+			Benefit_1EDU,
+			Benefit_Weapon,
+			Benefit_Weapon,
+			Benefit_TicketElite,
+			Benefit_StarEnvoyClubMember,
+		},
+		SkillTable: surveyScoutSkills,
+	}
+	bt, err = json.MarshalIndent(&survey_scout, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	f, err = os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`survey_scout.json`, os.O_CREATE|os.O_WRONLY, 0770)
+	f.Write(bt)
+	defer f.Close()
+
+	//TECHNICIAN
+	technicianSkills := make(map[string][]string)
+	technicianSkills["Personal Development"] = []string{"+1 STR", "+1 DEX", "+1 END", "+1 INT", text(skill.Brawling), text(skill.Gun_Combat)}
+	technicianSkills["Service Skills"] = []string{text(skill.Vechicle), text(skill.Electronics), text(skill.Mechanical), text(skill.Comms), text(skill.Vacc_Suit), text(skill.Loader)}
+	technicianSkills["Specialist Skills"] = []string{text(skill.Investigate), text(skill.Vechicle), text(skill.Computer), text(skill.Security), text(skill.Engineering), text(skill.Jack_of_All_Trades)}
+	technicianSkills["Advanced Education Skills"] = []string{text(skill.Mechanical), text(skill.Computer), text(skill.Administration), text(skill.Electronics), text(skill.Engineering), text(skill.Jack_of_All_Trades)}
+	technician := CareerStats{
+		Name:          "Technician",
+		Qualification: "EDU 7+",
+		Survival:      "INT 4+",
+		Commision:     "EDU 4+",
+		Advance:       "EDU 8+",
+		ReEnlist:      5,
+		Ranks: []Rank{
+			Rank{
+				Value:             0,
+				CommisionRequired: false,
+				Position:          "Technician",
+				AutoSkill:         text(skill.Electronics) + " 1 OR " + text(skill.Mechanical) + " 1",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
+				Position:          "Team Leader",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             2,
+				CommisionRequired: true,
+				Position:          "Supervisor",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             3,
+				CommisionRequired: true,
+				Position:          "Departament Chief",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             4,
+				CommisionRequired: true,
+				Position:          "Assistant Technical Manager",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             5,
+				CommisionRequired: true,
+				Position:          "Technical Manager",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             6,
+				CommisionRequired: true,
+				Position:          "Administrator",
+				AutoSkill:         "",
+			},
+		},
+		MusterOut: []string{
+			Benefit_TicketStandard,
+			Benefit_TicketElite,
+			Benefit_Weapon,
+			Benefit_1INT,
+			Benefit_1EDU,
+			Benefit_1DEX,
+			Benefit_2EDU,
+		},
+		SkillTable: technicianSkills,
+	}
+	bt, err = json.MarshalIndent(&technician, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	f, err = os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`technician.json`, os.O_CREATE|os.O_WRONLY, 0770)
+	f.Write(bt)
+	defer f.Close()
 
 }
 
