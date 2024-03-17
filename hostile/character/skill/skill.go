@@ -92,7 +92,7 @@ func SkillStr(i int) string {
 	case Investigate:
 		return "Investigate"
 	case Jack_of_All_Trades:
-		return "Jack_of_All_Trades"
+		return "Jack-of-All-Trades"
 	case Leader:
 		return "Leader"
 	case Liason:
@@ -129,6 +129,28 @@ func SkillStr(i int) string {
 		return "Vechicle"
 	}
 	return ""
+}
+
+func FromText(text string) (int, int) {
+	benefitSkill := 0
+	value := -1
+	for i := Administration; i <= Vechicle; i++ {
+		if strings.HasPrefix(text, SkillStr(i)) {
+			benefitSkill = i
+			switch strings.TrimPrefix(text, SkillStr(i)) {
+			case "", " +1":
+				value = 999
+			case " 0":
+				value = 0
+			case " 1":
+				value = 1
+			default:
+				panic("can't get benefit from " + text)
+			}
+			break
+		}
+	}
+	return benefitSkill, value
 }
 
 type Skill struct {

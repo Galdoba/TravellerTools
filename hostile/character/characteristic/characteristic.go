@@ -8,25 +8,28 @@ import (
 )
 
 const (
-	Unknown = iota
-	STR
+	STR = iota
 	DEX
 	END
 	INT
 	EDU
 	SOC
+	INST
+	BASIC
 	max = 100
 )
 
 type CharSet struct {
-	chars map[int]int
+	Chars map[int]*Char
 }
 
 type Char struct {
-	Name    string //STR/DEX/END/INT/EDU/SOC
-	Type    string //Physical/Mental/Social
-	Maximum ehex.Ehex
-	Current int
+	Name       string //STR/DEX/END/INT/EDU/SOC
+	Type       string //Physical/Mental/Social
+	Maximum    ehex.Ehex
+	Current    int
+	RollCode   string
+	UpperLimit int
 }
 
 func New(code int) (*Char, error) {
@@ -46,6 +49,9 @@ func New(code int) (*Char, error) {
 	case INT:
 		chr.Name = "INT"
 		chr.Type = "Mental"
+	case INST:
+		chr.Name = "INST"
+		chr.Type = "Mental"
 	case EDU:
 		chr.Name = "EDU"
 		chr.Type = "Mental"
@@ -53,19 +59,28 @@ func New(code int) (*Char, error) {
 		chr.Name = "SOC"
 		chr.Type = "Social"
 	}
+	chr.RollCode = "2d6"
+	chr.UpperLimit = 15
 	return &chr, nil
 }
 
+func (chr *Char) SetRollCode(code string) {
+	chr.RollCode = code
+}
+
+func (chr *Char) SetUpperLimit(ul int) {
+	chr.UpperLimit = ul
+}
 func (chr *Char) Roll(dice *dice.Dicepool) {
-	r := dice.Sroll("2d6")
+	r := dice.Sroll(chr.RollCode)
 	chr.Maximum = ehex.New().Set(r)
 	chr.Current = r
 }
 
 func (chr *Char) ChangeMaximumBy(i int) {
 	v := chr.Maximum.Value() + i
-	if v > 15 {
-		v = 15
+	if v > chr.UpperLimit {
+		v = chr.UpperLimit
 	}
 	if v < 0 {
 		v = 0
@@ -116,37 +131,57 @@ func charMod(i int) int {
 	return -999
 }
 
-func (cs *CharSet) Strength() int {
-	return cs.chars[STR]
+// func (cs *CharSet) Strength() int {
+// 	return cs.chars[STR]
+// }
+
+// func (cs *CharSet) Dexterity() int {
+// 	return cs.chars[DEX]
+// }
+
+// func (cs *CharSet) Endurance() int {
+// 	return cs.chars[END]
+// }
+
+// func (cs *CharSet) Inteligence() int {
+// 	return cs.chars[INT]
+// }
+
+// func (cs *CharSet) Education() int {
+// 	return cs.chars[EDU]
+// }
+
+// func (cs *CharSet) Social() int {
+// 	return cs.chars[SOC]
+// }
+
+func Human() []int {
+	return []int{STR, DEX, END, INT, EDU, SOC}
 }
 
-func (cs *CharSet) Dexterity() int {
-	return cs.chars[DEX]
-}
-
-func (cs *CharSet) Endurance() int {
-	return cs.chars[END]
-}
-
-func (cs *CharSet) Inteligence() int {
-	return cs.chars[INT]
-}
-
-func (cs *CharSet) Education() int {
-	return cs.chars[EDU]
-}
-
-func (cs *CharSet) Social() int {
-	return cs.chars[SOC]
-}
-
-func NewCharSet(dice *dice.Dicepool) *CharSet {
+func NewCharSet(charCodes ...int) (*CharSet, error) {
 	chrSet := CharSet{}
-	chrSet.chars = make(map[int]int)
-	for i := STR; i <= SOC; i++ {
-		chrSet.chars[i] = dice.Sroll("2d6")
+	chrSet.Chars = make(map[int]*Char)
+	// chrSet.rollCodes = make(map[int]string)
+	for _, code := range charCodes {
+		chr, err := New(code)
+		if err != nil {
+			return nil, err
+		}
+		chrSet.Chars[code] = chr
+		// chrSet.chars[code] = New()
+		// chrSet.rollCodes[code] = "2d6"
 	}
-	return &chrSet
+	return &chrSet, nil
+}
+
+func (cs *CharSet) Roll(dice *dice.Dicepool) error {
+	for i := STR; i <= INST; i++ {
+		if _, ok := cs.Chars[i]; ok {
+			cs.Chars[i].Roll(dice)
+		}
+	}
+	return nil
 }
 
 func (cs *CharSet) Mod(i int) int {
@@ -154,13 +189,24 @@ func (cs *CharSet) Mod(i int) int {
 	default:
 		return -99
 	case STR, DEX, END, INT, EDU, SOC:
-		return (cs.chars[i] / 3) - 2
+		return (cs.Chars[i].Current / 3) - 2
 	}
 	return -3
 }
 
 func (cs *CharSet) SetupMax() {
 	for i := STR; i <= SOC; i++ {
-		cs.chars[max+i] = cs.chars[i]
+		cs.Chars[max+i] = cs.Chars[i]
 	}
+}
+
+func (cs *CharSet) String() string {
+	str := ""
+
+	for i := STR; i <= INST; i++ {
+		if chr, ok := cs.Chars[i]; ok {
+			str += ehex.New().Set(chr.Current).Code()
+		}
+	}
+	return str
 }

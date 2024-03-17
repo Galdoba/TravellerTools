@@ -11,20 +11,20 @@ import (
 
 const (
 	Android                     = "0"
-	CorporateAgent              = "1"
-	CorporateExec               = "2"
-	Colonist                    = "3"
-	CommersialSpacer            = "4"
-	Marine                      = "5"
-	Marshal                     = "6"
-	MilitarySpacer              = "7"
-	Physician                   = "8"
-	Ranger                      = "9"
-	Rogue                       = "A"
-	Roughneck                   = "B"
-	Scientist                   = "C"
-	SurveyScout                 = "D"
-	Technitian                  = "E"
+	CorporateAgent              = "Corporate Agent"
+	CorporateExec               = "Corporate Exec"
+	Colonist                    = "Colonist"
+	CommersialSpacer            = "Commersial Spacer"
+	Marine                      = "Marine"
+	Marshal                     = "Marshal"
+	MilitarySpacer              = "Military Spacer"
+	Physician                   = "Physician"
+	Ranger                      = "Ranger"
+	Rogue                       = "Rogue"
+	Roughneck                   = "Roughneck"
+	Scientist                   = "Scientist"
+	SurveyScout                 = "Survey Scout"
+	Technician                  = "Technician"
 	CommisionPassed             = true
 	CommisionNotPassed          = false
 	Benefit_1STR                = "+1 STR"
@@ -43,25 +43,6 @@ const (
 	Benefit_Award               = "Award"
 	Benefit_TraumaKit           = "Trauma Kit"
 )
-
-type Career struct {
-	Name            string
-	code            string
-	CommissionState bool
-	Rank            int
-	TermsCompleted  int
-}
-
-func New(code string) (*Career, error) {
-	cr := Career{}
-	switch code {
-	default:
-		return nil, fmt.Errorf("can't create career: unknown code '%v'", code)
-	case Android:
-		return nil, fmt.Errorf("Android career is not implemented")
-	}
-	return &cr, nil
-}
 
 type CareerStats struct {
 	Name             string              `json:"Career"`
@@ -1286,4 +1267,14 @@ func GetCareer(name string) CareerStats {
 		return CareerStats{}
 
 	}
+}
+
+func (cs *CareerStats) HasNCO() bool {
+	ncoRanks := -1
+	for _, rank := range cs.Ranks {
+		if !rank.CommisionRequired {
+			ncoRanks++
+		}
+	}
+	return ncoRanks > 0
 }
