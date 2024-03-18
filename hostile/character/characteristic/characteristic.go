@@ -2,6 +2,8 @@ package characteristic
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
@@ -62,6 +64,7 @@ func New(code int) (*Char, error) {
 	chr.RollCode = "2d6"
 	chr.UpperLimit = 15
 	return &chr, nil
+
 }
 
 func (chr *Char) SetRollCode(code string) {
@@ -209,4 +212,34 @@ func (cs *CharSet) String() string {
 		}
 	}
 	return str
+}
+
+func FromText(text string) (int, int) {
+	chrID := -1
+	chrVal := 0
+	data := strings.Split(text, " ")
+	for _, d := range data {
+		switch d {
+		case "STR":
+			chrID = STR
+		case "DEX":
+			chrID = DEX
+		case "END":
+			chrID = END
+		case "INT":
+			chrID = INT
+		case "EDU":
+			chrID = EDU
+		case "SOC":
+			chrID = SOC
+		case "INST":
+			chrID = INST
+		default:
+			v, err := strconv.Atoi(d)
+			if err == nil {
+				chrVal = v
+			}
+		}
+	}
+	return chrID, chrVal
 }

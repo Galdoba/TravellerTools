@@ -132,7 +132,7 @@ func SkillStr(i int) string {
 }
 
 func FromText(text string) (int, int) {
-	benefitSkill := 0
+	benefitSkill := -1
 	value := -1
 	for i := Administration; i <= Vechicle; i++ {
 		if strings.HasPrefix(text, SkillStr(i)) {
@@ -238,7 +238,7 @@ func (ss *SkillSet) Gain(s string) error {
 			return fmt.Errorf("can't gain skill: can't parse '%v'", s)
 		}
 		val = v
-		if val > -1 && val > ss.skillVals[skill] {
+		if val > -1 && val >= ss.skillVals[skill] {
 			ss.skillVals[skill] = val
 		}
 	}

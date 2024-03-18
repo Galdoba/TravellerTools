@@ -26,12 +26,13 @@ type Character struct {
 	Age       int
 	// Career         career.CareerPath
 	CharSet  *characteristic.CharSet
-	SkillSet skill.SkillSet
+	SkillSet *skill.SkillSet
+	Benefits []string
 }
 
 func NewCharacter() *Character {
 	ch := Character{}
-
+	ch.SkillSet = skill.NewSkillSet()
 	return &ch
 }
 
@@ -165,14 +166,67 @@ func (ch *Character) ChooseBackgroundSkills(dice *dice.Dicepool, options map[str
 		skillsChosen, skillPool = decidion.Random_Few_Exclude(n, dice, skillPool...)
 
 	}
+	for i := range skillsChosen {
+		if strings.HasPrefix(skillsChosen[i], skill.SkillStr(skill.Vechicle)) {
+			_, newSkl := ch.chooseCascadSkill(dice)
+			skillsChosen[i] = strings.ReplaceAll(skillsChosen[i], skill.SkillStr(skill.Vechicle), newSkl)
+		}
+		if err := ch.gain(skillsChosen[i]); err != nil {
+			panic(err.Error())
+		}
+	}
 	fmt.Println(skillsChosen)
 	return nil
 }
 
 func (ch *Character) gain(bonus string) error {
+	if strings.Contains(bonus, " OR ") {
+		return fmt.Errorf("can't gain bonus: %v must be splitted by options", bonus)
+	}
+	if strings.Contains(bonus, " AND ") {
+		return fmt.Errorf("can't gain bonus: %v must be concatenated by options", bonus)
+	}
+	if strings.HasPrefix(bonus, skill.SkillStr(skill.Vechicle)) {
+		return fmt.Errorf("cascad skill selected")
+	}
+	id, val := characteristic.FromText(bonus)
+	if id != -1 {
+		//add charactiristics
+		ch.CharSet.Chars[id].ChangeMaximumBy(val)
+		return nil
+	}
+	id, val = skill.FromText(bonus)
+	if id != -1 {
+		if val < 0 {
+			panic(33)
+		}
+		//add skill
+		ch.SkillSet.Gain(bonus)
+		return nil
+	}
+	ch.Benefits = append(ch.Benefits, bonus)
 	return nil
 }
 
 func (ch *Character) RunTerm() error {
 	return nil
+}
+
+func (ch *Character) chooseCascadSkill(dice *dice.Dicepool) (int, string) {
+	str := ""
+	i := 0
+	switch ch.PC {
+	case false:
+		str = decidion.Random_One(dice, skill.SkillStr(skill.Aircraft), skill.SkillStr(skill.Ground_Vechicle), skill.SkillStr(skill.Watercraft))
+	}
+	switch str {
+	case skill.SkillStr(skill.Aircraft):
+		i = skill.Aircraft
+	case skill.SkillStr(skill.Ground_Vechicle):
+		i = skill.Ground_Vechicle
+	case skill.SkillStr(skill.Watercraft):
+		i = skill.Watercraft
+	}
+	fmt.Println("cascad skill chosen:", i, str)
+	return i, str
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/Galdoba/TravellerTools/hostile/character/characteristic"
 	"github.com/Galdoba/TravellerTools/hostile/character/check"
