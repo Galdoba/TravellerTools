@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/Galdoba/TravellerTools/hostile/character/characteristic"
 	"github.com/Galdoba/TravellerTools/hostile/character/check"
+	"github.com/Galdoba/TravellerTools/pkg/decidion"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 )
 
@@ -29,8 +31,10 @@ const (
 )
 
 type CareerState interface {
-	QualificationPassed() bool
-	TrainTable(*dice.Dicepool) string
+	Qualify(*dice.Dicepool, *characteristic.CharSet) bool
+	Survived(*dice.Dicepool, *characteristic.CharSet) bool
+	Report() string
+	Train(*dice.Dicepool, bool) string
 }
 
 type careerState struct {
@@ -51,12 +55,18 @@ func StartCareer(careerName string, dice *dice.Dicepool, charSet *characteristic
 	if byDraft {
 		return &cr, nil
 	}
+	if cr.Qualify(dice, charSet) {
+		return &cr, nil
+	}
 	if _, _, err := check.ParseCode(cs.Qualification); err != nil {
-		return nil, fmt.Errorf("can't start career: %v", err.Error())
+		_, _, err = check.ParseCode(cs.QualificationReq)
+		if err != nil {
+			return nil, fmt.Errorf("can't start career: %v", err.Error())
+		}
 	}
-	if !cr.Qualify(dice, charSet) {
-		return nil, fmt.Errorf("can't start career: failed to qualify")
-	}
+	// if !cr.Qualify(dice, charSet) {
+	// 	return nil, fmt.Errorf("can't start career: failed to qualify")
+	// }
 
 	return &cr, nil
 }
@@ -82,11 +92,28 @@ func (cs *careerState) Qualify(dice *dice.Dicepool, charSet *characteristic.Char
 	return false
 }
 
-func (cs *careerState) BasicTraining() bool {
-	if cs.totalTerms != 0 {
-		return false
+func (cs *careerState) Train(dice *dice.Dicepool, pc bool) string {
+	keys := keysFrom(cs.careerStats.SkillTable)
+	key := ""
+	switch pc {
+	case false:
+		key = decidion.Random_One(dice, keys...)
+	case true:
+		panic(1)
 	}
-	return true
+	fmt.Println("table", key, "selected")
+	bonus := decidion.Random_One(dice, cs.careerStats.SkillTable[key]...)
+	fmt.Println(bonus, "== received")
+	return bonus
+}
+
+func keysFrom(smap map[string][]string) []string {
+	keys := []string{}
+	for k := range smap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func (cs *careerState) Survived(dice *dice.Dicepool, charSet *characteristic.CharSet) bool {
@@ -122,6 +149,11 @@ func (cs *careerState) CommisionReceived(dice *dice.Dicepool, charSet *character
 }
 
 func (cs *careerState) AdvancementReceived(dice *dice.Dicepool, charSet *characteristic.CharSet) bool {
+
+	switch cs.commisionPassed {
+	case true:
+	case false:
+	}
 	return false
 }
 
@@ -188,4 +220,11 @@ func name2file(name string) string {
 	nmap[Technician] = technician
 
 	return nmap[name]
+}
+
+func (cs *careerState) Report() string {
+	str := cs.careerStats.Name
+	// str := fmt.Sprintf("%v", cs.careerStats)
+	// str += fmt.Sprintf("%v", cs)
+	return str
 }

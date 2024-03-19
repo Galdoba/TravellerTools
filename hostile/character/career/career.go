@@ -1278,3 +1278,12 @@ func (cs *CareerStats) HasNCO() bool {
 	}
 	return ncoRanks > 0
 }
+
+func (cs *CareerStats) RankCurrent(r int, comm bool) (Rank, error) {
+	for _, rnk := range cs.Ranks {
+		if rnk.Value == r && comm == rnk.CommisionRequired {
+			return rnk, nil
+		}
+	}
+	return Rank{}, fmt.Errorf("no suitable rank found")
+}

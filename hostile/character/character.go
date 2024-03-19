@@ -2,8 +2,10 @@ package character
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/Galdoba/TravellerTools/hostile/character/career"
 	"github.com/Galdoba/TravellerTools/hostile/character/characteristic"
 	"github.com/Galdoba/TravellerTools/hostile/character/skill"
 	"github.com/Galdoba/TravellerTools/pkg/decidion"
@@ -12,11 +14,12 @@ import (
 )
 
 const (
-	KeyManual = "MANUAL"
-	ValTrue   = "true"
-	ValFalse  = "false"
-	KeySeed   = "SEED"
-	KeyUPP    = "UNIVERSAL PERSONALITY PROFILE"
+	KeyManual                    = "MANUAL"
+	ValTrue                      = "true"
+	ValFalse                     = "false"
+	KeySeed                      = "SEED"
+	KeyUPP                       = "UNIVERSAL PERSONALITY PROFILE"
+	KeyQualificationRetryAllowed = "QUALIFICATION RETRY ATEMPTS ALLOWED"
 )
 
 type Character struct {
@@ -24,10 +27,11 @@ type Character struct {
 	PC        bool
 	Homeworld string
 	Age       int
-	// Career         career.CareerPath
-	CharSet  *characteristic.CharSet
-	SkillSet *skill.SkillSet
-	Benefits []string
+	Career    career.CareerState
+	CharSet   *characteristic.CharSet
+	SkillSet  *skill.SkillSet
+	Benefits  []string
+	drafted   bool
 }
 
 func NewCharacter() *Character {
@@ -72,10 +76,17 @@ func (g *generator) Generate() (*Character, error) {
 	if _, ok := g.options[KeyManual]; ok {
 		ch.setAsPC()
 	}
-	ch.RollCharacteristics(g.dice, g.options)
+	if err := ch.RollCharacteristics(g.dice, g.options); err != nil {
+		return ch, err
+	}
 	ch.DetermineHomeworld(g.dice, g.options)
 	ch.ChooseBackgroundSkills(g.dice, g.options)
-	// ch.CareerCycle(g.dice, g.options)
+	if err := ch.ChooseAndStartCareer(g.dice, g.options); err != nil {
+		return ch, err
+	}
+	if err := ch.CareerCycle(g.dice, g.options); err != nil {
+		return ch, err
+	}
 	// ch.RollCharacteristics(g.dice, g.options)
 	// ch.RollCharacteristics(g.dice, g.options)
 	// ch.RollCharacteristics(g.dice, g.options)
@@ -85,6 +96,7 @@ func (g *generator) Generate() (*Character, error) {
 	// ch.RollCharacteristics(g.dice, g.options)
 	// ch.RollCharacteristics(g.dice, g.options)
 	// ch.RollCharacteristics(g.dice, g.options)
+	fmt.Println(ch.Career.Report())
 	return ch, nil
 }
 
@@ -186,9 +198,9 @@ func (ch *Character) gain(bonus string) error {
 	if strings.Contains(bonus, " AND ") {
 		return fmt.Errorf("can't gain bonus: %v must be concatenated by options", bonus)
 	}
-	if strings.HasPrefix(bonus, skill.SkillStr(skill.Vechicle)) {
-		return fmt.Errorf("cascad skill selected")
-	}
+	// if strings.HasPrefix(bonus, skill.SkillStr(skill.Vechicle)) {
+	// 	return fmt.Errorf("cascad skill selected")
+	// }
 	id, val := characteristic.FromText(bonus)
 	if id != -1 {
 		//add charactiristics
@@ -196,11 +208,15 @@ func (ch *Character) gain(bonus string) error {
 		return nil
 	}
 	id, val = skill.FromText(bonus)
+	if id == skill.Vechicle {
+		id, text := ch.chooseCascadSkill(dice, ch.PC)
+	}
 	if id != -1 {
 		if val < 0 {
 			panic(33)
 		}
 		//add skill
+		fmt.Println("gain", bonus)
 		ch.SkillSet.Gain(bonus)
 		return nil
 	}
@@ -229,4 +245,104 @@ func (ch *Character) chooseCascadSkill(dice *dice.Dicepool) (int, string) {
 	}
 	fmt.Println("cascad skill chosen:", i, str)
 	return i, str
+}
+
+func (ch *Character) ChooseAndStartCareer(dice *dice.Dicepool, options map[string]string) error {
+	careerName := ""
+	careerList := []string{
+		career.Colonist,
+		career.CorporateAgent,
+		career.CorporateExec,
+		career.CommersialSpacer,
+		career.Marine,
+		career.Marshal,
+		career.MilitarySpacer,
+		career.Physician,
+		career.Ranger,
+		career.Rogue,
+		career.Roughneck,
+		career.Scientist,
+		career.SurveyScout,
+		career.Technician,
+	}
+	qra, _ := strconv.Atoi(options[KeyQualificationRetryAllowed])
+	atemptsAllowed := 1 + qra
+	for i := 0; i < atemptsAllowed; i++ {
+		switch ch.PC {
+		case false:
+			careerName, careerList = decidion.Random_One_Exclude(dice, careerList...)
+		}
+		crr, err := career.StartCareer(careerName, dice, ch.CharSet, false)
+		if err != nil {
+			return fmt.Errorf("can't start career: %v", err.Error())
+		}
+		if crr.Qualify(dice, ch.CharSet) {
+			ch.Career = crr
+			return nil
+		}
+	}
+	fmt.Println("Draft")
+	r := dice.Sroll("1d6")
+	switch r {
+	case 1:
+		careerName = career.Ranger
+	case 2, 3, 4:
+		careerName = career.Colonist
+	case 5, 6:
+		careerName = career.Roughneck
+	}
+	fmt.Println("drafted to", careerName)
+	crr, err := career.StartCareer(careerName, dice, ch.CharSet, true)
+	if err != nil {
+		return fmt.Errorf("can't start career by draft: %v", err)
+	}
+	ch.drafted = true
+	ch.Career = crr
+	return nil
+}
+
+func (ch *Character) CareerCycle(dice *dice.Dicepool, options map[string]string) error {
+	career := ch.Career
+	fmt.Println(career.Report())
+	inCareer := true
+	term := 1
+	for inCareer {
+		fmt.Printf("start term %v\n", term)
+		//background
+		if term == 1 {
+			// fmt.Printf("background skill benefits on term %v\n", term)
+			if err := ch.gain(career.Train(dice, ch.PC)); err != nil {
+				return err
+			}
+
+			if err := ch.gain(career.Train(dice, ch.PC)); err != nil {
+				return err
+			}
+		}
+
+		//survival
+		// fmt.Printf("survival on term %v\n", term)
+		if !career.Survived(dice, ch.CharSet) {
+			return fmt.Errorf("not survived on term %v", term)
+		}
+		//sturdy
+		if term != 1 {
+			fmt.Printf("study on term %v\n", term)
+
+			if err := ch.gain(career.Train(dice, ch.PC)); err != nil {
+				return err
+			}
+		}
+		//commision
+		fmt.Printf("commision on term %v\n", term)
+		//advance
+		fmt.Printf("advancement on term %v\n", term)
+		//reenlist
+		fmt.Printf("re-enlist after term %v\n", term)
+		if term == 5 {
+			break
+		}
+		term++
+	}
+	return nil
 }
