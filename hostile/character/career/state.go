@@ -33,6 +33,7 @@ const (
 type CareerState interface {
 	Qualify(*dice.Dicepool, *characteristic.CharSet) bool
 	Survived(*dice.Dicepool, *characteristic.CharSet) bool
+	CommisionReceived(*dice.Dicepool, *characteristic.CharSet) bool
 	Report() string
 	Train(*dice.Dicepool, bool) string
 }
@@ -227,4 +228,8 @@ func (cs *careerState) Report() string {
 	// str := fmt.Sprintf("%v", cs.careerStats)
 	// str += fmt.Sprintf("%v", cs)
 	return str
+}
+
+func (cs *careerState) CanAdvance(nco bool) bool {
+	rnk := cs.
 }
