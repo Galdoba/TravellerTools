@@ -209,8 +209,14 @@ func init() {
 		ReEnlist:         4,
 		Ranks: []Rank{
 			Rank{
-				Value:             1,
+				Value:             0,
 				CommisionRequired: false,
+				Position:          "Genaral Manager",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
 				Position:          "Vice President",
 				AutoSkill:         text(skill.Broker) + " 1",
 			},
@@ -1281,6 +1287,12 @@ func (cs *CareerStats) HasNCO() bool {
 
 func (cs *CareerStats) RankCurrent(r int, comm bool) (Rank, error) {
 	for _, rnk := range cs.Ranks {
+		if rnk.Value == r && comm == rnk.CommisionRequired {
+			return rnk, nil
+		}
+	}
+	for _, rnk := range cs.Ranks {
+		fmt.Println(rnk)
 		if rnk.Value == r && comm == rnk.CommisionRequired {
 			return rnk, nil
 		}

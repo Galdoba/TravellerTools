@@ -199,9 +199,9 @@ func (ss *SkillSet) Increase(id int) error {
 		return fmt.Errorf("can't add skill: %v", skl.Description)
 	}
 	if val, ok := ss.skillVals[id]; ok {
-		if val >= 5 {
-			return fmt.Errorf("can't add skill: skill %v already at level %v", skl.Name, val)
-		}
+		// if val >= 5 {
+		// 	return fmt.Errorf("can't add skill: skill %v already at level %v", skl.Name, val)
+		// }
 		ss.skillVals[id] = val + 1
 	} else {
 		ss.skillVals[id] = 1

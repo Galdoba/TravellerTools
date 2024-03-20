@@ -40,6 +40,7 @@ type CareerState interface {
 	CanAdvance(bool) bool
 	ReEnlisted(*dice.Dicepool, bool) bool
 	MusterOut(*dice.Dicepool, bool, bool) []string
+	RankBonus() string
 }
 
 type careerState struct {
@@ -382,4 +383,12 @@ func money2int(s string) int {
 		return 20000
 	}
 	return 0
+}
+
+func (cs *careerState) RankBonus() string {
+	rnk, err := cs.careerStats.RankCurrent(cs.activeRank, cs.commisionPassed)
+	if err != nil {
+		panic("rank not found")
+	}
+	return rnk.AutoSkill
 }

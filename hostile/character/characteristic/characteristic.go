@@ -318,3 +318,118 @@ func pickCharacteristic(n int, dice *dice.Dicepool, manual bool) []int {
 	}
 	return result
 }
+
+func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
+	r := dice.Sroll("1d6")
+	vals := []int{}
+	chrNames := []string{}
+	msg := ""
+	switch r {
+	case 1:
+		chrNames = append(chrNames, "STR", "DEX", "END")
+		vals = append(vals, dice.Sroll("1d6"), 2, 2)
+		for i := 0; i < 3; i++ {
+			selected := decidion.Random_One(dice, chrNames...)
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+			}
+		}
+	case 2:
+		chrNames = append(chrNames, "STR", "DEX", "END")
+		vals = append(vals, dice.Sroll("1d6"))
+		selected := decidion.Random_One(dice, chrNames...)
+		cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[0])
+		if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+		}
+	case 3:
+		chrNames = append(chrNames, "STR", "DEX")
+		vals = append(vals, 2)
+		for i := 0; i < 1; i++ {
+			selected := decidion.Random_One(dice, chrNames...)
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+			}
+		}
+	case 4:
+		chrNames = append(chrNames, "STR", "DEX", "END")
+		vals = append(vals, 2)
+		for i := 0; i < 1; i++ {
+			selected := decidion.Random_One(dice, chrNames...)
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+			}
+		}
+	case 5:
+		chrNames = append(chrNames, "STR", "DEX", "END")
+		vals = append(vals, 1)
+		for i := 0; i < 1; i++ {
+			selected := decidion.Random_One(dice, chrNames...)
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+			}
+		}
+	case 6:
+
+	}
+	return nil
+}
+
+var Translator *connector
+
+func init() {
+	Translator = newConnector()
+	for _, err := range []error{
+		Translator.add("STR", STR),
+		Translator.add("DEX", DEX),
+		Translator.add("END", END),
+		Translator.add("INT", INT),
+		Translator.add("EDU", EDU),
+		Translator.add("SOC", SOC),
+		Translator.add("INST", INST),
+	} {
+		if err != nil {
+			panic("initiation failed: connector error: " + err.Error())
+		}
+	}
+}
+
+type connector struct {
+	toInt map[string]int
+	toStr map[int]string
+}
+
+func newConnector() *connector {
+	c := connector{}
+	c.toInt = make(map[string]int)
+	c.toStr = make(map[int]string)
+	return &c
+}
+
+func (c *connector) add(s string, i int) error {
+	for k, v := range c.toInt {
+		if k == s || v == i {
+			return fmt.Errorf("can't add pair '%v'/'%v'", s, i)
+		}
+	}
+	for k, v := range c.toStr {
+		if k == i || v == s {
+			return fmt.Errorf("can't add pair '%v'/'%v'", s, i)
+		}
+	}
+	c.toInt[s] = i
+	c.toStr[i] = s
+	return nil
+}
+
+func (c *connector) Int(s string) int {
+	return c.toInt[s]
+}
+
+func (c *connector) Str(i int) string {
+	return c.toStr[i]
+}

@@ -314,7 +314,16 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 		//survival
 		// fmt.Printf("survival on term %v\n", term)
 		if !carr.Survived(DICE, ch.CharSet) {
-			fmt.Printf("Mishap %v in term %v\n", DICE.Sroll("1d6"), term)
+			switch DICE.Sroll("1d6") {
+			case 1, 2:
+				fmt.Printf("Mishap %v with INJURY in term %v\n", DICE.Sroll("1d6"), term)
+				fmt.Println(ch.CharSet)
+				ch.CharSet.InjuryAuto(DICE)
+				fmt.Println(ch.CharSet)
+				panic("INJURY")
+			case 3, 4, 5, 6:
+				fmt.Printf("Mishap %v in term %v\n", DICE.Sroll("1d6"), term)
+			}
 			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
 			return nil
 			// return fmt.Errorf("not survived on term %v", term)
@@ -338,6 +347,7 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 			}
 			if carr.AdvancementReceived(DICE, ch.CharSet, false) {
 				// fmt.Printf("advancement RECEIVED on term %v\n", term)
+				ch.gain(carr.RankBonus())
 				if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
 					return err
 				}
@@ -372,12 +382,13 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 			fmt.Println(msg)
 		}
 		//reenlist
-		fmt.Printf("re-enlist after term %v\n", term)
+		// fmt.Printf("re-enlist after term %v\n", term)
 		term++
 		ch.TotalTerms++
 		if ch.TotalTerms >= 7 { //not realy needed
 			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
-			return fmt.Errorf("not reenlisted after total of 7 terms")
+			// return fmt.Errorf("not reenlisted after total of 7 terms")
+			return nil
 		}
 		if !carr.ReEnlisted(DICE, ch.PC) {
 			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
