@@ -20,6 +20,8 @@ const (
 	KeySeed                      = "SEED"
 	KeyUPP                       = "UNIVERSAL PERSONALITY PROFILE"
 	KeyQualificationRetryAllowed = "QUALIFICATION RETRY ATEMPTS ALLOWED"
+	advanceCO                    = "Advance After Commision"
+	advanceNCO                   = "Advance NCO Ranks"
 )
 
 type Character struct {
@@ -32,12 +34,14 @@ type Character struct {
 	CharSet           *characteristic.CharSet
 	SkillSet          *skill.SkillSet
 	Benefits          []string
+	TotalTerms        int
 	drafted           bool
 }
 
 func NewCharacter() *Character {
 	ch := Character{}
 	ch.SkillSet = skill.NewSkillSet()
+	ch.Age = 18
 	return &ch
 }
 
@@ -89,6 +93,11 @@ func (g *generator) Generate() (*Character, error) {
 	if err := ch.CareerCycle(g.options); err != nil {
 		return ch, err
 	}
+	for _, benefit := range ch.Benefits {
+		if err := ch.gain(benefit); err != nil {
+			return ch, fmt.Errorf("gain benefit: %v", err.Error())
+		}
+	}
 	// ch.RollCharacteristics(g.dice, g.options)
 	// ch.RollCharacteristics(g.dice, g.options)
 	// ch.RollCharacteristics(g.dice, g.options)
@@ -98,7 +107,6 @@ func (g *generator) Generate() (*Character, error) {
 	// ch.RollCharacteristics(g.dice, g.options)
 	// ch.RollCharacteristics(g.dice, g.options)
 	// ch.RollCharacteristics(g.dice, g.options)
-	fmt.Println(ch.Career.Report())
 	return ch, nil
 }
 
@@ -189,7 +197,7 @@ func (ch *Character) ChooseBackgroundSkills(options map[string]string) error {
 			panic(err.Error())
 		}
 	}
-	fmt.Println(skillsChosen)
+	// fmt.Println(skillsChosen)
 	return nil
 }
 
@@ -202,6 +210,7 @@ func (ch *Character) gain(bonus string) error {
 	}
 	bonuses := append([]string{}, bonus)
 	for _, bonus := range bonuses {
+		// fmt.Println("====receive bonus:", bonus)
 		if err := ch.receiveBonus(bonus); err != nil {
 			return err
 		}
@@ -228,7 +237,7 @@ func (ch *Character) chooseCascadSkill() (int, string) {
 	case skill.SkillStr(skill.Watercraft):
 		i = skill.Watercraft
 	}
-	fmt.Println("cascad skill chosen:", i, str)
+	// fmt.Println("cascad skill chosen:", i, str)
 	return i, str
 }
 
@@ -266,7 +275,7 @@ func (ch *Character) ChooseAndStartCareer(options map[string]string) error {
 			return nil
 		}
 	}
-	fmt.Println("Draft")
+	// fmt.Println("Draft")
 	r := DICE.Sroll("1d6")
 	switch r {
 	case 1:
@@ -276,7 +285,7 @@ func (ch *Character) ChooseAndStartCareer(options map[string]string) error {
 	case 5, 6:
 		careerName = career.Roughneck
 	}
-	fmt.Println("drafted to", careerName)
+	// fmt.Println("drafted to", careerName)
 	crr, err := career.StartCareer(careerName, DICE, ch.CharSet, true)
 	if err != nil {
 		return fmt.Errorf("can't start career by draft: %v", err)
@@ -287,8 +296,7 @@ func (ch *Character) ChooseAndStartCareer(options map[string]string) error {
 }
 
 func (ch *Character) CareerCycle(options map[string]string) error {
-	career := ch.Career
-	fmt.Println(career.Report())
+	carr := ch.Career
 	inCareer := true
 	term := 1
 	for inCareer {
@@ -296,46 +304,85 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 		//background
 		if term == 1 {
 			// fmt.Printf("background skill benefits on term %v\n", term)
-			if err := ch.gain(career.Train(DICE, ch.PC)); err != nil {
+			if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
 				return err
 			}
-
-			if err := ch.gain(career.Train(DICE, ch.PC)); err != nil {
+			if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
 				return err
 			}
 		}
-
 		//survival
 		// fmt.Printf("survival on term %v\n", term)
-		if !career.Survived(DICE, ch.CharSet) {
-			return fmt.Errorf("not survived on term %v", term)
+		if !carr.Survived(DICE, ch.CharSet) {
+			fmt.Printf("Mishap %v in term %v\n", DICE.Sroll("1d6"), term)
+			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
+			return nil
+			// return fmt.Errorf("not survived on term %v", term)
 		}
-		//sturdy
-		if term != 1 {
-			fmt.Printf("study on term %v\n", term)
-
-			if err := ch.gain(career.Train(DICE, ch.PC)); err != nil {
-				return err
+		advanceType := advanceCO
+		if carr.CanAdvance(true) {
+			switch ch.PC {
+			case false:
+				advanceType = decidion.Random_One(DICE, advanceCO, advanceNCO)
 			}
 		}
 		//commision
-		if !ch.CommisionReceived && career.CommisionReceived(DICE, ch.CharSet) {
-
-			fmt.Printf("commision RECEIVED on term %v\n", term)
-			ch.CommisionReceived = true
-			if err := ch.gain(career.Train(DICE, ch.PC)); err != nil {
+		switch advanceType {
+		case advanceCO:
+			if !ch.CommisionReceived && carr.CommisionReceived(DICE, ch.CharSet) { //roll commision if needed
+				// fmt.Printf("commision RECEIVED on term %v\n", term)
+				ch.CommisionReceived = true
+				if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+					return err
+				}
+			}
+			if carr.AdvancementReceived(DICE, ch.CharSet, false) {
+				// fmt.Printf("advancement RECEIVED on term %v\n", term)
+				if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+					return err
+				}
+			}
+		case advanceNCO:
+			if carr.AdvancementReceived(DICE, ch.CharSet, false) {
+				// fmt.Printf("advancement RECEIVED on term %v\n", term)
+				if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+					return err
+				}
+			}
+		}
+		//sturdy
+		if term != 1 {
+			// fmt.Printf("study on term %v\n", term)
+			if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
 				return err
 			}
 		}
-		//advance
-		fmt.Printf("advancement on term %v\n", term)
-
+		//age
+		ch.Age += 4
+		agingBorder := 34
+		switch carr.Name() {
+		case career.CorporateExec:
+			agingBorder = 46
+		}
+		if ch.Age >= agingBorder {
+			msg, err := ch.CharSet.AgingRoll(DICE, term, ch.PC)
+			if err != nil {
+				return err
+			}
+			fmt.Println(msg)
+		}
 		//reenlist
 		fmt.Printf("re-enlist after term %v\n", term)
-		if term == 5 {
-			break
-		}
 		term++
+		ch.TotalTerms++
+		if ch.TotalTerms >= 7 { //not realy needed
+			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
+			return fmt.Errorf("not reenlisted after total of 7 terms")
+		}
+		if !carr.ReEnlisted(DICE, ch.PC) {
+			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
+			return nil
+		}
 	}
 	return nil
 }
@@ -345,8 +392,16 @@ func (ch *Character) receiveBonus(bonus string) error {
 	if id == skill.Vechicle {
 		id, _ = ch.chooseCascadSkill()
 	}
-	if id != -1 && val != -1 {
-		return ch.SkillSet.Increase(id)
+	if id != -1 {
+		switch val {
+		case 0, 1:
+			return ch.SkillSet.Gain(bonus)
+		case 999:
+			return ch.SkillSet.Increase(id)
+		default:
+			fmt.Println(val)
+			panic("+++++++" + bonus)
+		}
 	}
 	if id != -1 && (val == 0 || val == 1) {
 		return ch.SkillSet.Gain(fmt.Sprintf("%v %v", skill.SkillStr(id), val))
@@ -357,11 +412,6 @@ func (ch *Character) receiveBonus(bonus string) error {
 		ch.CharSet.Chars[id].ChangeMaximumBy(val)
 		return nil
 	}
-	switch bonus {
-	default:
-		panic("Benefit " + bonus)
-
-	}
-	ch.Benefits = append(ch.Benefits, bonus)
+	// ch.Benefits = append(ch.Benefits, bonus)
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Galdoba/TravellerTools/pkg/decidion"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
 )
@@ -89,6 +90,7 @@ func (chr *Char) ChangeMaximumBy(i int) {
 		v = 0
 	}
 	chr.Maximum = ehex.New().Set(v)
+	chr.Current = chr.Maximum.Value()
 }
 
 func (chr *Char) Damage(i int) int {
@@ -242,4 +244,77 @@ func FromText(text string) (int, int) {
 		}
 	}
 	return chrID, chrVal
+}
+
+func (cs *CharSet) AgingRoll(dice *dice.Dicepool, dm int, manual bool) (string, error) {
+	r := dice.Sroll("2d6") - dm
+	if r > 1 {
+		r = 1
+	}
+	if r < -6 {
+		r = -6
+	}
+	msg := "Aging:"
+	vals := []int{}
+	switch r {
+	case -6:
+		vals = []int{-2, -2, -2, -1}
+	case -5:
+		vals = []int{-2, -2, -2}
+	case -4:
+		vals = []int{-2, -2, -1}
+	case -3:
+		vals = []int{-2, -1, -1}
+	case -2:
+		vals = []int{-1, -1, -1}
+	case -1:
+		vals = []int{-1, -1}
+	case 0:
+		vals = []int{-1}
+	case 1:
+		vals = []int{}
+		msg += " No Effect"
+		return msg, nil
+	}
+	charCodes := pickCharacteristic(len(vals), dice, manual)
+	for i, chCode := range charCodes {
+		cs.Chars[chCode].ChangeMaximumBy(vals[i])
+		msg += fmt.Sprintf(" %v reduced by %v,", cs.Chars[chCode].Name, vals[i]*-1)
+		if cs.Chars[i].Current == 0 {
+			msg = "Character died of old age."
+			return "", fmt.Errorf("Character died of old age")
+		}
+	}
+	msg = strings.TrimSuffix(msg, ",") + "."
+	return msg, nil
+}
+
+func pickCharacteristic(n int, dice *dice.Dicepool, manual bool) []int {
+	options := []string{"STR", "DEX", "END"}
+	picked := ""
+	result := []int{}
+	for i := 0; i < n; i++ {
+		if i == 4 {
+			options = []string{"INT", "EDU"}
+		}
+		switch manual {
+		case false:
+			picked, options = decidion.Random_One_Exclude(dice, options...)
+		case true:
+			panic("not implemented")
+		}
+		switch picked {
+		case "STR":
+			result = append(result, STR)
+		case "DEX":
+			result = append(result, DEX)
+		case "END":
+			result = append(result, END)
+		case "INT":
+			result = append(result, INT)
+		case "EDU":
+			result = append(result, EDU)
+		}
+	}
+	return result
 }
