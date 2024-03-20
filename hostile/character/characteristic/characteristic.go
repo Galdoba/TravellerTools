@@ -326,20 +326,24 @@ func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
 	msg := ""
 	switch r {
 	case 1:
+		msg += "Nearly killed."
 		chrNames = append(chrNames, "STR", "DEX", "END")
 		vals = append(vals, dice.Sroll("1d6"), 2, 2)
 		for i := 0; i < 3; i++ {
 			selected := decidion.Random_One(dice, chrNames...)
 			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
 			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
 				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
 			}
 		}
 	case 2:
+		msg += "Severly injured."
 		chrNames = append(chrNames, "STR", "DEX", "END")
 		vals = append(vals, dice.Sroll("1d6"))
 		selected := decidion.Random_One(dice, chrNames...)
 		cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[0])
+		msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
 		if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
 			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
 		}
@@ -349,6 +353,7 @@ func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
 		for i := 0; i < 1; i++ {
 			selected := decidion.Random_One(dice, chrNames...)
 			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
 			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
 				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
 			}
@@ -359,6 +364,7 @@ func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
 		for i := 0; i < 1; i++ {
 			selected := decidion.Random_One(dice, chrNames...)
 			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
 			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
 				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
 			}
@@ -369,6 +375,7 @@ func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
 		for i := 0; i < 1; i++ {
 			selected := decidion.Random_One(dice, chrNames...)
 			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
 			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
 				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
 			}
