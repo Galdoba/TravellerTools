@@ -343,22 +343,29 @@ func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
 		vals = append(vals, dice.Sroll("1d6"))
 		selected := decidion.Random_One(dice, chrNames...)
 		cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[0])
-		msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
+		msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[0])
 		if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
 			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
 		}
 	case 3:
+		msg += "Missing "
 		chrNames = append(chrNames, "STR", "DEX")
 		vals = append(vals, 2)
 		for i := 0; i < 1; i++ {
 			selected := decidion.Random_One(dice, chrNames...)
 			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
-			msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
+			switch selected {
+			case "STR":
+				msg += "limb. STR reduced by 2"
+			case "DEX":
+				msg += "eye. DEX reduced by 2"
+			}
 			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
 				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
 			}
 		}
 	case 4:
+		msg += "Scarred and injured."
 		chrNames = append(chrNames, "STR", "DEX", "END")
 		vals = append(vals, 2)
 		for i := 0; i < 1; i++ {
@@ -370,6 +377,7 @@ func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
 			}
 		}
 	case 5:
+		msg += "Injured."
 		chrNames = append(chrNames, "STR", "DEX", "END")
 		vals = append(vals, 1)
 		for i := 0; i < 1; i++ {
@@ -381,9 +389,10 @@ func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
 			}
 		}
 	case 6:
-
+		msg += "Lightly injured. No permanent effect"
 	}
-	return nil
+	msg = strings.TrimSuffix(msg, ",") + "."
+	return msg, nil
 }
 
 var Translator *connector

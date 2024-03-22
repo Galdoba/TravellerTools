@@ -265,6 +265,8 @@ func (ch *Character) ChooseAndStartCareer(options map[string]string) error {
 		switch ch.PC {
 		case false:
 			careerName, careerList = decidion.Random_One_Exclude(DICE, careerList...)
+		case true:
+			careerName, careerList = decidion.Manual_One_Exclude("Select Career:", false, careerList...)
 		}
 		crr, err := career.StartCareer(careerName, DICE, ch.CharSet, false)
 		if err != nil {
@@ -314,13 +316,15 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 		//survival
 		// fmt.Printf("survival on term %v\n", term)
 		if !carr.Survived(DICE, ch.CharSet) {
-			switch DICE.Sroll("1d6") {
+			mishap := DICE.Sroll("1d6")
+			switch mishap {
 			case 1, 2:
-				fmt.Printf("Mishap %v with INJURY in term %v\n", DICE.Sroll("1d6"), term)
-				fmt.Println(ch.CharSet)
-				ch.CharSet.InjuryAuto(DICE)
-				fmt.Println(ch.CharSet)
-				panic("INJURY")
+				fmt.Printf("Mishap %v with INJURY in term %v\n", mishap, term)
+				msg, err := ch.CharSet.InjuryAuto(DICE)
+				if err != nil {
+					panic("INJURY: " + err.Error())
+				}
+				fmt.Println(msg)
 			case 3, 4, 5, 6:
 				fmt.Printf("Mishap %v in term %v\n", DICE.Sroll("1d6"), term)
 			}
