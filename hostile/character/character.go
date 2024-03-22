@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Galdoba/TravellerTools/hostile/character/career"
 	"github.com/Galdoba/TravellerTools/hostile/character/characteristic"
@@ -11,6 +12,7 @@ import (
 	"github.com/Galdoba/TravellerTools/pkg/decidion"
 	"github.com/Galdoba/TravellerTools/pkg/dice"
 	"github.com/Galdoba/TravellerTools/pkg/ehex"
+	"github.com/Galdoba/TravellerTools/pkg/terminal"
 )
 
 const (
@@ -34,14 +36,17 @@ type Character struct {
 	CharSet           *characteristic.CharSet
 	SkillSet          *skill.SkillSet
 	Benefits          []string
+	Balance           int
 	TotalTerms        int
 	drafted           bool
+	nextEvent         string
 }
 
 func NewCharacter() *Character {
 	ch := Character{}
 	ch.SkillSet = skill.NewSkillSet()
 	ch.Age = 18
+	ch.nextEvent = EVENT_RollCharacteristics
 	return &ch
 }
 
@@ -93,21 +98,53 @@ func (g *generator) Generate() (*Character, error) {
 	if err := ch.CareerCycle(g.options); err != nil {
 		return ch, err
 	}
+
+	// ch.RollCharacteristics(g.dice, g.options)
+	// ch.RollCharacteristics(g.dice, g.options)
+	// ch.RollCharacteristics(g.dice, g.options)
+	// ch.RollCharacteristics(g.dice, g.options)
+	// ch.RollCharacteristics(g.dice, g.options)
+	// ch.RollCharacteristics(g.dice, g.options)
+	// ch.RollCharacteristics(g.dice, g.options)
+	// ch.RollCharacteristics(g.dice, g.options)
+	// ch.RollCharacteristics(g.dice, g.options)
+	ch.FlushScreen()
+	return ch, nil
+}
+
+func (ch *Character) ConsumeBenefits() error {
 	for _, benefit := range ch.Benefits {
 		if err := ch.gain(benefit); err != nil {
-			return ch, fmt.Errorf("gain benefit: %v", err.Error())
+			return fmt.Errorf("gain benefit: %v", err.Error())
 		}
 	}
-	// ch.RollCharacteristics(g.dice, g.options)
-	// ch.RollCharacteristics(g.dice, g.options)
-	// ch.RollCharacteristics(g.dice, g.options)
-	// ch.RollCharacteristics(g.dice, g.options)
-	// ch.RollCharacteristics(g.dice, g.options)
-	// ch.RollCharacteristics(g.dice, g.options)
-	// ch.RollCharacteristics(g.dice, g.options)
-	// ch.RollCharacteristics(g.dice, g.options)
-	// ch.RollCharacteristics(g.dice, g.options)
-	return ch, nil
+	ch.Benefits, ch.Balance = confirmBenefits(ch.Benefits)
+	ch.nextEvent = EVENT_EndGeneration
+	return nil
+}
+
+func confirmBenefits(bnfts []string) ([]string, int) {
+	newList := []string{}
+	cash := 0
+	for _, b := range bnfts {
+		switch b {
+		default:
+			newList = append(newList, b)
+		case "$500":
+			cash += 500
+		case "$1000":
+			cash += 1000
+		case "$5000":
+			cash += 5000
+		case "$8000":
+			cash += 8000
+		case "$10000":
+			cash += 10000
+		case "$20000":
+			cash += 20000
+		}
+	}
+	return newList, cash
 }
 
 func (ch *Character) RollCharacteristics(options map[string]string) error {
@@ -149,7 +186,21 @@ func (ch *Character) DetermineHomeworld(options map[string]string) error {
 		case 9, 10, 11, 12:
 			ch.Homeworld = "Colony (" + decidion.Random_One(DICE, "Abyss", "Armstrong", "Columbia", "Defiance", "Hamilton") + ")"
 		}
+	case true:
+		selected := decidion.Manual_One("Select Homeworld", []string{"Earth", "Abyss", "Armstrong", "Columbia", "Defiance", "Hamilton", "RANDOM"}...)
+		switch selected {
+		default:
+			ch.Homeworld = selected
+		case "RANDOM":
+			ch.Homeworld = "Earth"
+			switch DICE.Sroll("2d6") {
+			case 9, 10, 11, 12:
+				ch.Homeworld = "Colony (" + decidion.Random_One(DICE, "Abyss", "Armstrong", "Columbia", "Defiance", "Hamilton") + ")"
+			}
+		}
 	}
+	ch.nextEvent = EVENT_CHOOSE_BGSKILLS
+
 	return nil
 }
 
@@ -186,7 +237,8 @@ func (ch *Character) ChooseBackgroundSkills(options map[string]string) error {
 	switch ch.PC {
 	case false:
 		skillsChosen, skillPool = decidion.Random_Few_Exclude(n, DICE, skillPool...)
-
+	case true:
+		skillsChosen, skillPool = decidion.Manual_Few_Exclude(n, fmt.Sprintf("Select %v background skills", n), skillPool...)
 	}
 	for i := range skillsChosen {
 		if strings.HasPrefix(skillsChosen[i], skill.SkillStr(skill.Vechicle)) {
@@ -194,14 +246,16 @@ func (ch *Character) ChooseBackgroundSkills(options map[string]string) error {
 			skillsChosen[i] = strings.ReplaceAll(skillsChosen[i], skill.SkillStr(skill.Vechicle), newSkl)
 		}
 		if err := ch.gain(skillsChosen[i]); err != nil {
-			panic(err.Error())
+			return err
 		}
 	}
 	// fmt.Println(skillsChosen)
+	ch.nextEvent = EVENT_CHOOSE_CAREER
 	return nil
 }
 
 func (ch *Character) gain(bonus string) error {
+	ch.FlushScreen()
 	if strings.Contains(bonus, " OR ") {
 		return fmt.Errorf("can't gain bonus: %v must be splitted by options", bonus)
 	}
@@ -266,18 +320,23 @@ func (ch *Character) ChooseAndStartCareer(options map[string]string) error {
 		case false:
 			careerName, careerList = decidion.Random_One_Exclude(DICE, careerList...)
 		case true:
-			careerName, careerList = decidion.Manual_One_Exclude("Select Career:", false, careerList...)
+			ch.FlushScreen()
+			careerName, careerList = decidion.Manual_One_Exclude("Select career", careerList...)
 		}
 		crr, err := career.StartCareer(careerName, DICE, ch.CharSet, false)
 		if err != nil {
 			return fmt.Errorf("can't start career: %v", err.Error())
 		}
 		if crr.Qualify(DICE, ch.CharSet) {
+			ch.Inform("Qualification Passed")
 			ch.Career = crr
+			ch.nextEvent = EVENT_CAREER_CYCLE
 			return nil
 		}
+
+		ch.Inform("Qualification Failed")
 	}
-	// fmt.Println("Draft")
+	// fmt.Println("Draft"
 	r := DICE.Sroll("1d6")
 	switch r {
 	case 1:
@@ -287,6 +346,7 @@ func (ch *Character) ChooseAndStartCareer(options map[string]string) error {
 	case 5, 6:
 		careerName = career.Roughneck
 	}
+	ch.Inform("Drafted to " + careerName)
 	// fmt.Println("drafted to", careerName)
 	crr, err := career.StartCareer(careerName, DICE, ch.CharSet, true)
 	if err != nil {
@@ -294,11 +354,18 @@ func (ch *Character) ChooseAndStartCareer(options map[string]string) error {
 	}
 	ch.drafted = true
 	ch.Career = crr
+	ch.nextEvent = EVENT_CAREER_CYCLE
 	return nil
 }
 
+func (ch *Character) advancedEducation() bool {
+	return ch.CharSet.Chars[characteristic.EDU].Maximum.Value() >= 8
+
+}
+
 func (ch *Character) CareerCycle(options map[string]string) error {
-	carr := ch.Career
+	ch.FlushScreen()
+	// ch.Career := ch.Career
 	inCareer := true
 	term := 1
 	for inCareer {
@@ -306,34 +373,29 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 		//background
 		if term == 1 {
 			// fmt.Printf("background skill benefits on term %v\n", term)
-			if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+			if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 				return err
 			}
-			if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+			if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 				return err
 			}
 		}
 		//survival
 		// fmt.Printf("survival on term %v\n", term)
-		if !carr.Survived(DICE, ch.CharSet) {
-			mishap := DICE.Sroll("1d6")
-			switch mishap {
+		if !ch.Career.Survived(DICE, ch.CharSet) {
+			ch.Inform("Survival Failed")
+			switch DICE.Sroll("1d6") {
 			case 1, 2:
-				fmt.Printf("Mishap %v with INJURY in term %v\n", mishap, term)
-				msg, err := ch.CharSet.InjuryAuto(DICE)
-				if err != nil {
-					panic("INJURY: " + err.Error())
-				}
-				fmt.Println(msg)
-			case 3, 4, 5, 6:
-				fmt.Printf("Mishap %v in term %v\n", DICE.Sroll("1d6"), term)
+				ch.nextEvent = EVENT_INJURY
+				return nil
 			}
-			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
+			ch.Benefits = ch.Career.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
+			ch.nextEvent = EVENT_BENEFITS
 			return nil
 			// return fmt.Errorf("not survived on term %v", term)
 		}
 		advanceType := advanceCO
-		if carr.CanAdvance(true) {
+		if ch.Career.CanAdvance(true) {
 			switch ch.PC {
 			case false:
 				advanceType = decidion.Random_One(DICE, advanceCO, advanceNCO)
@@ -342,24 +404,25 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 		//commision
 		switch advanceType {
 		case advanceCO:
-			if !ch.CommisionReceived && carr.CommisionReceived(DICE, ch.CharSet) { //roll commision if needed
+			if !ch.CommisionReceived && ch.Career.CommisionReceived(DICE, ch.CharSet) { //roll commision if needed
 				// fmt.Printf("commision RECEIVED on term %v\n", term)
 				ch.CommisionReceived = true
-				if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+				if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 					return err
 				}
 			}
-			if carr.AdvancementReceived(DICE, ch.CharSet, false) {
+			if ch.Career.AdvancementReceived(DICE, ch.CharSet, false) {
+				ch.Inform("Advancement Received")
 				// fmt.Printf("advancement RECEIVED on term %v\n", term)
-				ch.gain(carr.RankBonus())
-				if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+				ch.gain(ch.Career.RankBonus())
+				if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 					return err
 				}
 			}
 		case advanceNCO:
-			if carr.AdvancementReceived(DICE, ch.CharSet, false) {
+			if ch.Career.AdvancementReceived(DICE, ch.CharSet, false) {
 				// fmt.Printf("advancement RECEIVED on term %v\n", term)
-				if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+				if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 					return err
 				}
 			}
@@ -367,14 +430,14 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 		//sturdy
 		if term != 1 {
 			// fmt.Printf("study on term %v\n", term)
-			if err := ch.gain(carr.Train(DICE, ch.PC)); err != nil {
+			if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 				return err
 			}
 		}
 		//age
 		ch.Age += 4
 		agingBorder := 34
-		switch carr.Name() {
+		switch ch.Career.Name() {
 		case career.CorporateExec:
 			agingBorder = 46
 		}
@@ -390,19 +453,26 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 		term++
 		ch.TotalTerms++
 		if ch.TotalTerms >= 7 { //not realy needed
-			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
+			ch.Benefits = ch.Career.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
+
+			ch.nextEvent = EVENT_BENEFITS
 			// return fmt.Errorf("not reenlisted after total of 7 terms")
 			return nil
 		}
-		if !carr.ReEnlisted(DICE, ch.PC) {
-			ch.Benefits = carr.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
+		if !ch.Career.ReEnlisted(DICE, ch.PC) {
+
+			ch.nextEvent = EVENT_BENEFITS
+			ch.Benefits = ch.Career.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
 			return nil
 		}
 	}
+
+	ch.nextEvent = EVENT_BENEFITS
 	return nil
 }
 
 func (ch *Character) receiveBonus(bonus string) error {
+
 	id, val := skill.FromText(bonus)
 	if id == skill.Vechicle {
 		id, _ = ch.chooseCascadSkill()
@@ -410,23 +480,176 @@ func (ch *Character) receiveBonus(bonus string) error {
 	if id != -1 {
 		switch val {
 		case 0, 1:
-			return ch.SkillSet.Gain(bonus)
+			err := ch.SkillSet.Gain(bonus)
+			if err != nil {
+				return err
+			}
 		case 999:
-			return ch.SkillSet.Increase(id)
+			err := ch.SkillSet.Increase(id)
+			if err != nil {
+				return nil
+			}
 		default:
 			fmt.Println(val)
 			panic("+++++++" + bonus)
 		}
 	}
 	if id != -1 && (val == 0 || val == 1) {
-		return ch.SkillSet.Gain(fmt.Sprintf("%v %v", skill.SkillStr(id), val))
+		err := ch.SkillSet.Gain(fmt.Sprintf("%v %v", skill.SkillStr(id), val))
+		if err != nil {
+			return err
+		}
 	}
 	id, val = characteristic.FromText(bonus)
 	switch id {
 	case characteristic.STR, characteristic.DEX, characteristic.END, characteristic.INT, characteristic.EDU, characteristic.SOC, characteristic.INST:
 		ch.CharSet.Chars[id].ChangeMaximumBy(val)
-		return nil
 	}
+	ch.FlushScreen()
+	ch.Inform(fmt.Sprintf("Received: %v", bonus))
 	// ch.Benefits = append(ch.Benefits, bonus)
 	return nil
+}
+
+func (ch *Character) Form() string {
+	form := ""
+	form += fmt.Sprintf("|SUBJECT NAME        : %v\n", ch.Name)
+	form += fmt.Sprintf("|UNIVERSAL PROFILE   : %v\n", ch.CharSet.String())
+	form += fmt.Sprintf("|HOMEWORLD           : %v\n", ch.Homeworld)
+	jobTitle := "NONE"
+	careerName := "NONE"
+	if ch.Career != nil {
+		jobTitle = ch.Career.JobTitle()
+		careerName = ch.Career.Name() + fmt.Sprintf(" %v", ch.TotalTerms)
+	}
+	form += fmt.Sprintf("|JOB TITLE           : %v (%v)\n", jobTitle, careerName)
+	form += fmt.Sprintf("|AGE           : %v\n", ch.Age)
+	list := ch.SkillSet.List()
+	if len(list) > 0 {
+		form += fmt.Sprintf("|TRAINING AND SKILLS :\n")
+		for _, l := range list {
+			form += fmt.Sprintf("|    %v\n", l)
+		}
+	}
+	if len(ch.Benefits) > 0 {
+
+		form += fmt.Sprintf("|LIST OF BENEFITS    :\n")
+		for i := range ch.Benefits {
+			form += fmt.Sprintf("|    %v\n", ch.Benefits[i])
+		}
+	}
+	if ch.Balance != 0 {
+		form += fmt.Sprintf("|BALANCE             : $%v\n", ch.Balance)
+	}
+	return form
+}
+
+func (ch *Character) FlushScreen() {
+	terminal.Clear()
+	fmt.Println(ch.Form())
+}
+
+func (ch *Character) Inform(msg string) {
+	fmt.Println(msg)
+	time.Sleep(time.Second)
+}
+
+func (ch *Character) Injury() error {
+	err := fmt.Errorf("injury not rolled")
+	r := DICE.Sroll("1d6")
+	switch r {
+	default:
+		return fmt.Errorf("func injury%v() not implemented", r)
+	case 1:
+		err = ch.injury1()
+
+	}
+	ch.nextEvent = EVENT_BENEFITS
+	return err
+}
+
+func (ch *Character) injury1() error {
+	charNames := []string{"STR", "DEX", "END"}
+	chrName := ""
+	vals := []int{DICE.Sroll("1d6"), 2, 2}
+	other := []string{}
+	msg := "character injured:"
+	switch ch.PC {
+	case false:
+		for i := 0; i < 3; i++ {
+			switch i {
+			case 0:
+				chrName, other = decidion.Random_One_Exclude(DICE, charNames...)
+			case 1, 2:
+				chrName = decidion.Random_One(DICE, other...)
+			}
+			id, _ := characteristic.FromText(chrName)
+			ch.reduce_characteristic_limited(id, vals[i]*-1)
+			msg += fmt.Sprintf(" %v rediced by %v,", chrName, vals[i])
+		}
+	case true:
+		for i := 0; i < 3; i++ {
+			switch i {
+			case 0:
+				chrName, other = decidion.Manual_One_Exclude(fmt.Sprintf("%v of 3: Choose characteristic to reduce by %v", i+1, vals[0]), charNames...)
+			case 1, 2:
+				chrName = decidion.Manual_One(fmt.Sprintf("%v of 3: Choose characteristic to reduce by %v", i+1, vals[i]), other...)
+			}
+			id, _ := characteristic.FromText(chrName)
+			ch.reduce_characteristic_limited(id, vals[i])
+			msg += fmt.Sprintf(" %v rediced by %v,", chrName, vals[i])
+		}
+	}
+	msg = strings.Trim(msg, ",") + "."
+	return nil
+}
+
+func (ch *Character) injury2() error {
+	charNames := []string{"STR", "DEX", "END"}
+	chrName := ""
+	val := DICE.Sroll("1d6")
+	msg := "character injured:"
+	switch ch.PC {
+	case false:
+		chrName = decidion.Random_One(DICE, charNames...)
+		id, _ := characteristic.FromText(chrName)
+		ch.reduce_characteristic_limited(id, val*-1)
+		msg += fmt.Sprintf(" %v rediced by %v,", chrName, val)
+	case true:
+		chrName = decidion.Manual_One(fmt.Sprintf("Choose characteristic to reduce by %v", val), charNames...)
+		id, _ := characteristic.FromText(chrName)
+		ch.reduce_characteristic_limited(id, val)
+		msg += fmt.Sprintf(" %v rediced by %v,", chrName, val)
+	}
+	msg = strings.Trim(msg, ",") + "."
+	return nil
+}
+
+func (ch *Character) injury3() error {
+	charNames := []string{"STR", "DEX"}
+	chrName := ""
+	val := 2
+	msg := make(map[string]string)
+	msg["STR"] = "Missing limb. STR reduced by 2."
+	msg["DEX"] = "Missing eye. DEX reduced by 2."
+	switch ch.PC {
+	case false:
+		chrName = decidion.Random_One(DICE, charNames...)
+		id, _ := characteristic.FromText(chrName)
+		ch.reduce_characteristic_limited(id, val*-1)
+	case true:
+		chrName = decidion.Manual_One(fmt.Sprintf("Choose characteristic to reduce by %v", val), charNames...)
+		id, _ := characteristic.FromText(chrName)
+		ch.reduce_characteristic_limited(id, val)
+	}
+	fmt.Println("Injury:", msg[chrName])
+
+	return nil
+}
+
+func (ch *Character) reduce_characteristic_limited(id, n int) {
+	ch.CharSet.Chars[id].ChangeMaximumBy(-1 * n)
+	if ch.CharSet.Chars[id].Maximum.Value() == 0 {
+		ch.CharSet.Chars[id].ChangeMaximumBy(1)
+	}
 }

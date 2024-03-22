@@ -22,7 +22,7 @@ func TestDesidio(t *testing.T) {
 
 	// fmt.Println("Random_Few_Exclude:", answers)
 	// fmt.Println("options:", options)
-	answer := Manual_One("label", options...)
+	answer := Manual_One("label", true, options...)
 	fmt.Println("-----")
 	fmt.Println(answer)
 }

@@ -36,11 +36,12 @@ type CareerState interface {
 	CommisionReceived(*dice.Dicepool, *characteristic.CharSet) bool
 	AdvancementReceived(*dice.Dicepool, *characteristic.CharSet, bool) bool
 	Name() string
-	Train(*dice.Dicepool, bool) string
+	Train(*dice.Dicepool, bool, bool) string
 	CanAdvance(bool) bool
 	ReEnlisted(*dice.Dicepool, bool) bool
 	MusterOut(*dice.Dicepool, bool, bool) []string
 	RankBonus() string
+	JobTitle() string
 }
 
 type careerState struct {
@@ -99,14 +100,14 @@ func (cs *careerState) Qualify(dice *dice.Dicepool, charSet *characteristic.Char
 	return false
 }
 
-func (cs *careerState) Train(dice *dice.Dicepool, pc bool) string {
-	keys := keysFrom(cs.careerStats.SkillTable)
+func (cs *careerState) Train(dice *dice.Dicepool, pc bool, advanced bool) string {
+	keys := keysFrom(cs.careerStats.SkillTable, advanced)
 	key := ""
 	switch pc {
 	case false:
 		key = decidion.Random_One(dice, keys...)
 	case true:
-		panic(1)
+		key = decidion.Manual_One("Select skill table", keys...)
 	}
 	// fmt.Println("table", key, "selected")
 	bonus := decidion.Random_One(dice, cs.careerStats.SkillTable[key]...)
@@ -114,9 +115,12 @@ func (cs *careerState) Train(dice *dice.Dicepool, pc bool) string {
 	return bonus
 }
 
-func keysFrom(smap map[string][]string) []string {
+func keysFrom(smap map[string][]string, adv bool) []string {
 	keys := []string{}
 	for k := range smap {
+		if k == "Advanced Education Skills" && !adv {
+			continue
+		}
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -285,6 +289,16 @@ func (cs *careerState) CanAdvance(nco bool) bool {
 	return false
 }
 
+func (cs *careerState) JobTitle() string {
+	rnk, err := cs.careerStats.RankCurrent(cs.activeRank, cs.commisionPassed)
+	if err != nil {
+		fmt.Println(cs.activeRank, cs.commisionPassed, cs.careerStats.Name)
+		panic("GET RANK " + err.Error())
+	}
+
+	return rnk.Position
+}
+
 func (cs *careerState) ReEnlisted(dice *dice.Dicepool, manual bool) bool {
 	tn := cs.careerStats.ReEnlist
 	options := []string{}
@@ -306,7 +320,10 @@ func (cs *careerState) ReEnlisted(dice *dice.Dicepool, manual bool) bool {
 	}
 	switch manual {
 	case true:
-		panic("manual not implemented")
+		switch decidion.Manual_One("ReEnlistment Successful. What next?", options...) {
+		case "continue":
+			return true
+		}
 	case false:
 		switch decidion.Random_One(dice, options...) {
 		case "continue":
@@ -331,7 +348,6 @@ func (cs *careerState) MusterOut(dice *dice.Dicepool, gambler bool, manual bool)
 	if cs.careerStats.Name == CorporateExec || gambler {
 		mdm = 1
 	}
-	fmt.Println("Rolls", rolls, cs.totalTerms, cs.activeRank)
 	for i := 1; i <= rolls; i++ {
 		label := fmt.Sprintf("Mustering Out roll %v (%v left)", i, rolls-i)
 		benefit := ""
@@ -340,15 +356,13 @@ func (cs *careerState) MusterOut(dice *dice.Dicepool, gambler bool, manual bool)
 		if money > 0 {
 			options = append(options, fmt.Sprintf("Money (%v left)", money))
 		}
-		fmt.Println("r", i, label, options)
 
 		switch manual {
 		case true:
-			rollType = decidion.Manual_One(label, false, options...)
+			rollType = decidion.Manual_One(label, options...)
 		case false:
 			rollType = decidion.Random_One(dice, options...)
 		}
-		fmt.Println(rollType)
 		switch rollType {
 		case "Benefit":
 			options = cs.careerStats.MusterOut
@@ -360,30 +374,28 @@ func (cs *careerState) MusterOut(dice *dice.Dicepool, gambler bool, manual bool)
 			r := dice.Sroll("1d6") + mdm - 1
 			benefit = options[r]
 		}
-
-		fmt.Println(benefit)
 		benefits = append(benefits, benefit)
 	}
 	return benefits
 }
 
-func money2int(s string) int {
-	switch s {
-	case "$500":
-		return 500
-	case "$1000":
-		return 1000
-	case "$5000":
-		return 5000
-	case "$8000":
-		return 8000
-	case "$10000":
-		return 10000
-	case "$20000":
-		return 20000
-	}
-	return 0
-}
+// func money2int(s string) int {
+// 	switch s {
+// 	case "$500":
+// 		return 500
+// 	case "$1000":
+// 		return 1000
+// 	case "$5000":
+// 		return 5000
+// 	case "$8000":
+// 		return 8000
+// 	case "$10000":
+// 		return 10000
+// 	case "$20000":
+// 		return 20000
+// 	}
+// 	return 0
+// }
 
 func (cs *careerState) RankBonus() string {
 	rnk, err := cs.careerStats.RankCurrent(cs.activeRank, cs.commisionPassed)

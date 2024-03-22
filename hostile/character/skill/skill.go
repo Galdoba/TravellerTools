@@ -417,3 +417,18 @@ func newSkill(id int) Skill {
 	}
 	return skl
 }
+
+func (ss *SkillSet) List() []string {
+	keys := []string{}
+	for i := 7; i >= 0; i-- {
+		for skill := Administration; skill <= Watercraft; skill++ {
+			if val, ok := ss.skillVals[skill]; ok {
+				if val != i {
+					continue
+				}
+				keys = append(keys, fmt.Sprintf("%v %v", SkillStr(skill), val))
+			}
+		}
+	}
+	return keys
+}
