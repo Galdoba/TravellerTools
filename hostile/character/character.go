@@ -46,6 +46,7 @@ func NewCharacter() *Character {
 	ch := Character{}
 	ch.SkillSet = skill.NewSkillSet()
 	ch.Age = 18
+	ch.Name = "NO NAME"
 	ch.nextEvent = EVENT_RollCharacteristics
 	return &ch
 }
@@ -113,12 +114,12 @@ func (g *generator) Generate() (*Character, error) {
 }
 
 func (ch *Character) ConsumeBenefits() error {
+	ch.Benefits, ch.Balance = confirmBenefits(ch.Benefits)
 	for _, benefit := range ch.Benefits {
 		if err := ch.gain(benefit); err != nil {
 			return fmt.Errorf("gain benefit: %v", err.Error())
 		}
 	}
-	ch.Benefits, ch.Balance = confirmBenefits(ch.Benefits)
 	ch.nextEvent = EVENT_EndGeneration
 	return nil
 }
@@ -142,6 +143,9 @@ func confirmBenefits(bnfts []string) ([]string, int) {
 			cash += 10000
 		case "$20000":
 			cash += 20000
+		case "Award":
+			newList = append(newList, "Award")
+			newList = append(newList, "+1 SOC")
 		}
 	}
 	return newList, cash
@@ -170,8 +174,26 @@ func (ch *Character) RollCharacteristics(options map[string]string) error {
 			ch.CharSet.Chars[i] = chr
 		}
 	} else {
-		for i := range ch.CharSet.Chars {
-			ch.CharSet.Chars[i].Roll(DICE)
+		keep := false
+		for !keep {
+			fmt.Println(" STR  DEX  END  INT  EDU  SOC ")
+			for i := range ch.CharSet.Chars {
+				ch.CharSet.Chars[i].Roll(DICE)
+				fmt.Printf("  %v  ", ch.CharSet.Chars[i].Maximum.Code())
+				if ch.PC {
+					time.Sleep(time.Second)
+				}
+
+			}
+			fmt.Println("")
+			switch ch.PC {
+			case true:
+				if decidion.Manual_One("Keep characteristics?", "Yes", "No") == "Yes" {
+					keep = true
+				}
+			case false:
+				keep = true
+			}
 		}
 
 	}
@@ -187,7 +209,7 @@ func (ch *Character) DetermineHomeworld(options map[string]string) error {
 			ch.Homeworld = "Colony (" + decidion.Random_One(DICE, "Abyss", "Armstrong", "Columbia", "Defiance", "Hamilton") + ")"
 		}
 	case true:
-		selected := decidion.Manual_One("Select Homeworld", []string{"Earth", "Abyss", "Armstrong", "Columbia", "Defiance", "Hamilton", "RANDOM"}...)
+		selected := decidion.Manual_One("Select Homeworld", []string{"Earth", "RANDOM"}...)
 		switch selected {
 		default:
 			ch.Homeworld = selected
@@ -199,6 +221,7 @@ func (ch *Character) DetermineHomeworld(options map[string]string) error {
 			}
 		}
 	}
+	ch.Inform("Homeworld: " + ch.Homeworld)
 	ch.nextEvent = EVENT_CHOOSE_BGSKILLS
 
 	return nil
@@ -255,16 +278,20 @@ func (ch *Character) ChooseBackgroundSkills(options map[string]string) error {
 }
 
 func (ch *Character) gain(bonus string) error {
-	ch.FlushScreen()
 	if strings.Contains(bonus, " OR ") {
-		return fmt.Errorf("can't gain bonus: %v must be splitted by options", bonus)
+		opts := strings.Split(bonus, " OR ")
+		switch ch.PC {
+		case false:
+			bonus = decidion.Random_One(DICE, opts...)
+		case true:
+			bonus = decidion.Manual_One("Select bonus", opts...)
+		}
 	}
 	if strings.Contains(bonus, " AND ") {
 		return fmt.Errorf("can't gain bonus: %v must be concatenated by options", bonus)
 	}
 	bonuses := append([]string{}, bonus)
 	for _, bonus := range bonuses {
-		// fmt.Println("====receive bonus:", bonus)
 		if err := ch.receiveBonus(bonus); err != nil {
 			return err
 		}
@@ -364,48 +391,53 @@ func (ch *Character) advancedEducation() bool {
 }
 
 func (ch *Character) CareerCycle(options map[string]string) error {
-	ch.FlushScreen()
 	// ch.Career := ch.Career
 	inCareer := true
 	term := 1
+	if err := ch.gain(ch.Career.RankBonus()); err != nil {
+		return err
+	}
 	for inCareer {
-		fmt.Printf("start term %v\n", term)
+		ch.FlushScreen()
+		fmt.Printf("Career: %v term %v\n", ch.Career.Name(), term)
 		//background
 		if term == 1 {
-			// fmt.Printf("background skill benefits on term %v\n", term)
+			ch.Inform("Basic Training:")
 			if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 				return err
 			}
 			if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 				return err
 			}
+			ch.FlushScreen()
 		}
-		//survival
-		// fmt.Printf("survival on term %v\n", term)
+		ch.Inform("Survival Roll:")
 		if !ch.Career.Survived(DICE, ch.CharSet) {
-			ch.Inform("Survival Failed")
+			ch.Inform("Failed")
 			switch DICE.Sroll("1d6") {
 			case 1, 2:
+				ch.Inform("Injury Roll:")
 				ch.nextEvent = EVENT_INJURY
 				return nil
 			}
-			ch.Benefits = ch.Career.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
-			ch.nextEvent = EVENT_BENEFITS
-			return nil
-			// return fmt.Errorf("not survived on term %v", term)
+			break
 		}
+		ch.Inform("Success!!")
+		ch.FlushScreen()
 		advanceType := advanceCO
-		if ch.Career.CanAdvance(true) {
+		if ch.Career.CanAdvance(true) && (ch.Career.Name() == career.MilitarySpacer || ch.Career.Name() == career.Marine) {
 			switch ch.PC {
 			case false:
 				advanceType = decidion.Random_One(DICE, advanceCO, advanceNCO)
+			case true:
+				advanceType = decidion.Manual_One("Select advancment type:", advanceCO, advanceNCO)
 			}
 		}
-		//commision
+		//CommisionReceived
 		switch advanceType {
 		case advanceCO:
 			if !ch.CommisionReceived && ch.Career.CommisionReceived(DICE, ch.CharSet) { //roll commision if needed
-				// fmt.Printf("commision RECEIVED on term %v\n", term)
+				ch.Inform("Commision Received:")
 				ch.CommisionReceived = true
 				if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 					return err
@@ -420,8 +452,10 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 				}
 			}
 		case advanceNCO:
-			if ch.Career.AdvancementReceived(DICE, ch.CharSet, false) {
+			if ch.Career.AdvancementReceived(DICE, ch.CharSet, true) {
 				// fmt.Printf("advancement RECEIVED on term %v\n", term)
+				ch.gain(ch.Career.RankBonus())
+				ch.Inform("Advancement Received (NCO)")
 				if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 					return err
 				}
@@ -429,50 +463,59 @@ func (ch *Character) CareerCycle(options map[string]string) error {
 		}
 		//sturdy
 		if term != 1 {
-			// fmt.Printf("study on term %v\n", term)
+			ch.Inform("Training:")
 			if err := ch.gain(ch.Career.Train(DICE, ch.PC, ch.advancedEducation())); err != nil {
 				return err
 			}
 		}
 		//age
 		ch.Age += 4
+
+		ch.FlushScreen()
+		ch.Inform(fmt.Sprintf("Character Age = %v", ch.Age))
 		agingBorder := 34
 		switch ch.Career.Name() {
 		case career.CorporateExec:
 			agingBorder = 46
 		}
 		if ch.Age >= agingBorder {
+			ch.Inform("Aging:")
 			msg, err := ch.CharSet.AgingRoll(DICE, term, ch.PC)
 			if err != nil {
 				return err
 			}
-			fmt.Println(msg)
+			ch.Inform(msg)
 		}
 		//reenlist
 		// fmt.Printf("re-enlist after term %v\n", term)
 		term++
 		ch.TotalTerms++
 		if ch.TotalTerms >= 7 { //not realy needed
-			ch.Benefits = ch.Career.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
-
-			ch.nextEvent = EVENT_BENEFITS
-			// return fmt.Errorf("not reenlisted after total of 7 terms")
-			return nil
+			break
 		}
 		if !ch.Career.ReEnlisted(DICE, ch.PC) {
-
-			ch.nextEvent = EVENT_BENEFITS
-			ch.Benefits = ch.Career.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
-			return nil
+			ch.Inform("Re-enlitment Failed")
+			break
 		}
 	}
+	ch.FlushScreen()
+	ch.nextEvent = EVENT_MUSTER_OUT
+	return nil
+}
 
+func (ch *Character) MusterOut(options map[string]string) error {
+	if len(ch.Benefits) != 0 {
+		return fmt.Errorf("Benefits are not NIL")
+	}
+	ch.Benefits = ch.Career.MusterOut(DICE, ch.SkillSet.SkillVal(skill.Gambling) >= 0, ch.PC)
 	ch.nextEvent = EVENT_BENEFITS
 	return nil
 }
 
 func (ch *Character) receiveBonus(bonus string) error {
-
+	if bonus == "" {
+		return nil
+	}
 	id, val := skill.FromText(bonus)
 	if id == skill.Vechicle {
 		id, _ = ch.chooseCascadSkill()
@@ -505,7 +548,7 @@ func (ch *Character) receiveBonus(bonus string) error {
 	case characteristic.STR, characteristic.DEX, characteristic.END, characteristic.INT, characteristic.EDU, characteristic.SOC, characteristic.INST:
 		ch.CharSet.Chars[id].ChangeMaximumBy(val)
 	}
-	ch.FlushScreen()
+	// ch.FlushScreen()
 	ch.Inform(fmt.Sprintf("Received: %v", bonus))
 	// ch.Benefits = append(ch.Benefits, bonus)
 	return nil
@@ -557,18 +600,29 @@ func (ch *Character) Inform(msg string) {
 func (ch *Character) Injury() error {
 	err := fmt.Errorf("injury not rolled")
 	r := DICE.Sroll("1d6")
+	msg := ""
 	switch r {
 	default:
 		return fmt.Errorf("func injury%v() not implemented", r)
 	case 1:
-		err = ch.injury1()
-
+		msg, err = ch.injury1()
+	case 2:
+		msg, err = ch.injury2()
+	case 3:
+		msg, err = ch.injury3()
+	case 4:
+		msg, err = ch.injury4()
+	case 5:
+		msg, err = ch.injury5()
+	case 6:
+		msg, err = ch.injury6()
 	}
-	ch.nextEvent = EVENT_BENEFITS
+	ch.Inform(msg)
+	ch.nextEvent = EVENT_MUSTER_OUT
 	return err
 }
 
-func (ch *Character) injury1() error {
+func (ch *Character) injury1() (string, error) {
 	charNames := []string{"STR", "DEX", "END"}
 	chrName := ""
 	vals := []int{DICE.Sroll("1d6"), 2, 2}
@@ -601,10 +655,10 @@ func (ch *Character) injury1() error {
 		}
 	}
 	msg = strings.Trim(msg, ",") + "."
-	return nil
+	return msg, nil
 }
 
-func (ch *Character) injury2() error {
+func (ch *Character) injury2() (string, error) {
 	charNames := []string{"STR", "DEX", "END"}
 	chrName := ""
 	val := DICE.Sroll("1d6")
@@ -622,10 +676,10 @@ func (ch *Character) injury2() error {
 		msg += fmt.Sprintf(" %v rediced by %v,", chrName, val)
 	}
 	msg = strings.Trim(msg, ",") + "."
-	return nil
+	return msg, nil
 }
 
-func (ch *Character) injury3() error {
+func (ch *Character) injury3() (string, error) {
 	charNames := []string{"STR", "DEX"}
 	chrName := ""
 	val := 2
@@ -642,9 +696,54 @@ func (ch *Character) injury3() error {
 		id, _ := characteristic.FromText(chrName)
 		ch.reduce_characteristic_limited(id, val)
 	}
-	fmt.Println("Injury:", msg[chrName])
+	return msg[chrName], nil
+}
 
-	return nil
+func (ch *Character) injury4() (string, error) {
+	charNames := []string{"STR", "DEX", "END"}
+	chrName := ""
+	val := 2
+	msg := "Scarred and injured:"
+	switch ch.PC {
+	case false:
+		chrName = decidion.Random_One(DICE, charNames...)
+		id, _ := characteristic.FromText(chrName)
+		ch.reduce_characteristic_limited(id, val*-1)
+		msg += fmt.Sprintf(" %v rediced by %v,", chrName, val)
+	case true:
+		chrName = decidion.Manual_One(fmt.Sprintf("Choose characteristic to reduce by %v", val), charNames...)
+		id, _ := characteristic.FromText(chrName)
+		ch.reduce_characteristic_limited(id, val)
+		msg += fmt.Sprintf(" %v rediced by %v,", chrName, val)
+	}
+	msg = strings.Trim(msg, ",") + "."
+	return msg, nil
+}
+
+func (ch *Character) injury5() (string, error) {
+	charNames := []string{"STR", "DEX", "END"}
+	chrName := ""
+	val := 1
+	msg := "Injured:"
+	switch ch.PC {
+	case false:
+		chrName = decidion.Random_One(DICE, charNames...)
+		id, _ := characteristic.FromText(chrName)
+		ch.reduce_characteristic_limited(id, val*-1)
+		msg += fmt.Sprintf(" %v rediced by %v,", chrName, val)
+	case true:
+		chrName = decidion.Manual_One(fmt.Sprintf("Choose characteristic to reduce by %v", val), charNames...)
+		id, _ := characteristic.FromText(chrName)
+		ch.reduce_characteristic_limited(id, val)
+		msg += fmt.Sprintf(" %v rediced by %v,", chrName, val)
+	}
+	msg = strings.Trim(msg, ",") + "."
+	return msg, nil
+}
+
+func (ch *Character) injury6() (string, error) {
+	msg := "Lightly injured: No permanent effect"
+	return msg, nil
 }
 
 func (ch *Character) reduce_characteristic_limited(id, n int) {

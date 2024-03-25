@@ -14,7 +14,7 @@ const (
 	CorporateAgent              = "Corporate Agent"
 	CorporateExec               = "Corporate Exec"
 	Colonist                    = "Colonist"
-	CommersialSpacer            = "Commersial Spacer"
+	CommersialSpacer            = "Commercial Spacer"
 	Marine                      = "Marine"
 	Marshal                     = "Marshal"
 	MilitarySpacer              = "Military Spacer"

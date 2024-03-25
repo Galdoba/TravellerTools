@@ -14,5 +14,5 @@ func main() {
 		fmt.Errorf("%v", err)
 	}
 	fmt.Println("=========")
-	fmt.Println(chr)
+	chr.FlushScreen()
 }

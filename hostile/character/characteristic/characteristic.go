@@ -254,7 +254,7 @@ func (cs *CharSet) AgingRoll(dice *dice.Dicepool, dm int, manual bool) (string, 
 	if r < -6 {
 		r = -6
 	}
-	msg := "Aging:"
+	msg := ""
 	vals := []int{}
 	switch r {
 	case -6:
@@ -301,7 +301,7 @@ func pickCharacteristic(n int, dice *dice.Dicepool, manual bool) []int {
 		case false:
 			picked, options = decidion.Random_One_Exclude(dice, options...)
 		case true:
-			panic("not implemented")
+			picked, options = decidion.Manual_One_Exclude("Select characteristic", options...)
 		}
 		switch picked {
 		case "STR":

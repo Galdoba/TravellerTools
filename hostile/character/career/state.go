@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/Galdoba/TravellerTools/hostile/character/characteristic"
 	"github.com/Galdoba/TravellerTools/hostile/character/check"
@@ -125,6 +126,17 @@ func keysFrom(smap map[string][]string, adv bool) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func formatSkillTable(k string, vals []string) string {
+	s := k
+	for len(s) < 27 {
+		s += " "
+	}
+	s += "["
+	s += strings.Join(vals, " -- ")
+	s += "]"
+	return s
 }
 
 func (cs *careerState) Survived(dice *dice.Dicepool, charSet *characteristic.CharSet) bool {
@@ -349,7 +361,7 @@ func (cs *careerState) MusterOut(dice *dice.Dicepool, gambler bool, manual bool)
 		mdm = 1
 	}
 	for i := 1; i <= rolls; i++ {
-		label := fmt.Sprintf("Mustering Out roll %v (%v left)", i, rolls-i)
+		label := fmt.Sprintf("Mustering Out (%v/%v)", i, rolls)
 		benefit := ""
 		rollType := ""
 		options := []string{"Benefit"}
