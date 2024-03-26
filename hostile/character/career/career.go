@@ -115,6 +115,7 @@ func init() {
 	// path := usrHome + sep + `TabletopGames` + sep + `HOSTILE` + sep + `careers` + sep + `template.json`
 	// fmt.Println(path)
 
+	os.MkdirAll(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep, 0777)
 	f, err := os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`template.json`, os.O_CREATE|os.O_WRONLY, 0770)
 	f.Write(bt)
 	defer f.Close()

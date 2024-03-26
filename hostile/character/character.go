@@ -26,11 +26,18 @@ const (
 	advanceNCO                   = "Advance NCO Ranks"
 )
 
+/*
+RANK NAME UPP AGE [PSYHO]
+SKILLS
+
+*/
+
 type Character struct {
-	Name              string
+	Name              string `json:"Name"`
+	UWP               string `json:"Universal Personality Profile"`
 	PC                bool
 	Homeworld         string
-	Age               int
+	Age               int `json:"Age"`
 	CommisionReceived bool
 	Career            career.CareerState
 	CharSet           *characteristic.CharSet
