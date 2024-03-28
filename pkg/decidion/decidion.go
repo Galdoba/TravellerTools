@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Galdoba/TravellerTools/pkg/dice"
-	"github.com/manifoldco/promptui"
+	"github.com/charmbracelet/huh"
 )
 
 /*
@@ -57,65 +57,89 @@ func Random_Few_Exclude(n int, dice *dice.Dicepool, options ...string) ([]string
 	return answers, options
 }
 
-func Manual_One(label string, silent bool, options ...string) string {
-	prompt := promptui.Select{
-		Label:        label,
-		Items:        append([]string{}, options...),
-		Size:         20,
-		HideSelected: true,
+func Manual_One(label string, options ...string) string {
+	if len(options) == 1 {
+		return options[0]
 	}
-	_, result, err := prompt.Run()
+	answer := -1
+	selectComponent := huh.NewSelect[int]()
+	selectComponent = selectComponent.Title(label)
+	opts := []huh.Option[int]{}
+	for i, opt := range options {
+		opts = append(opts, huh.NewOption(opt, i))
+	}
+	selectComponent = selectComponent.Options(opts...)
+	selectComponent = selectComponent.Value(&answer)
+	form := huh.NewForm(huh.NewGroup(selectComponent))
+	err := form.Run()
 	if err != nil {
-		fmt.Printf("prompt failed: %v\n", err)
-		return ""
+		panic(err.Error())
 	}
-	if !silent {
-		fmt.Printf("%v: %v\n", label, result)
-	}
-	return result
+	return options[answer]
 }
 
-func Manual_One_Exclude(label string, silent bool, options ...string) (string, []string) {
-	prompt := promptui.Select{
-		Label:        label,
-		Items:        append([]string{}, options...),
-		Size:         20,
-		HideSelected: true,
-	}
-	i, result, err := prompt.Run()
-	if err != nil {
-		fmt.Printf("prompt failed: %v\n", err)
-		return "", options
-	}
-	options = exclude(options, i)
-	if !silent {
-		fmt.Printf("%v: %v\n", label, result)
-	}
-	return result, options
-}
 func Manual_Few(n int, label string, options ...string) []string {
 	answers := []string{}
-	fmt.Printf("%v\r", label)
+	currentLabel := label
 	for i := 0; i < n; i++ {
-		answer := Manual_One(label, true, options...)
-		answers = append(answers, answer)
-		fmt.Printf("%v %v of %v: %v\n", label, i+1, n, answer)
+		currentAnswer := Manual_One(currentLabel, options...)
+		answers = append(answers, currentAnswer)
+		currentLabel = ""
+		if len(answers) > 0 {
+			for _, a := range answers {
+				currentLabel += fmt.Sprintf("%v\n", a)
+			}
+		}
+		currentLabel = fmt.Sprintf("%v%v", currentLabel, label)
 	}
-
 	return answers
 }
 
 func Manual_Few_Exclude(n int, label string, options ...string) ([]string, []string) {
 	answers := []string{}
-	answer := ""
-	fmt.Printf("%v\r", label)
+	validOptions := options
+	currentLabel := label
+	currentAnswer := ""
 	for i := 0; i < n; i++ {
-		answer, options = Manual_One_Exclude(label, true, options...)
-		answers = append(answers, answer)
-		fmt.Printf("%v %v of %v: %v\n", label, i+1, n, answer)
+		currentAnswer, validOptions = Manual_One_Exclude(currentLabel, validOptions...)
+		answers = append(answers, currentAnswer)
+		currentLabel = ""
+		if len(answers) > 0 {
+			for _, a := range answers {
+				currentLabel += fmt.Sprintf("%v\n", a)
+			}
+		}
+		currentLabel = fmt.Sprintf("%v%v", currentLabel, label)
 	}
+	return answers, validOptions
+}
 
-	return answers, options
+func Manual_One_Exclude(label string, options ...string) (string, []string) {
+	answer := -1
+	if len(options) == 1 {
+		return options[0], nil
+	}
+	notSelected := []string{}
+	selectComponent := huh.NewSelect[int]()
+	selectComponent = selectComponent.Title(label)
+	opts := []huh.Option[int]{}
+	for i, opt := range options {
+		opts = append(opts, huh.NewOption(opt, i))
+	}
+	selectComponent = selectComponent.Options(opts...)
+	selectComponent = selectComponent.Value(&answer)
+	form := huh.NewForm(huh.NewGroup(selectComponent))
+	err := form.Run()
+	if err != nil {
+		panic(err.Error())
+	}
+	for i := range options {
+		if i == answer {
+			continue
+		}
+		notSelected = append(notSelected, options[i])
+	}
+	return options[answer], notSelected
 }
 
 ////////////////////////////////////

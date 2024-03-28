@@ -199,9 +199,9 @@ func (ss *SkillSet) Increase(id int) error {
 		return fmt.Errorf("can't add skill: %v", skl.Description)
 	}
 	if val, ok := ss.skillVals[id]; ok {
-		if val >= 5 {
-			return fmt.Errorf("can't add skill: skill %v already at level %v", skl.Name, val)
-		}
+		// if val >= 5 {
+		// 	return fmt.Errorf("can't add skill: skill %v already at level %v", skl.Name, val)
+		// }
 		ss.skillVals[id] = val + 1
 	} else {
 		ss.skillVals[id] = 1
@@ -416,4 +416,19 @@ func newSkill(id int) Skill {
 		skl.Description = "The various specialties of this skill cover different types of planetary transportation. When this skill is received, the character must immediately select one of the following: Aircraft, Ground Vehicle or Watercraft."
 	}
 	return skl
+}
+
+func (ss *SkillSet) List() []string {
+	keys := []string{}
+	for i := 7; i >= 0; i-- {
+		for skill := Administration; skill <= Watercraft; skill++ {
+			if val, ok := ss.skillVals[skill]; ok {
+				if val != i {
+					continue
+				}
+				keys = append(keys, fmt.Sprintf("%v %v", SkillStr(skill), val))
+			}
+		}
+	}
+	return keys
 }

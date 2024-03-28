@@ -254,7 +254,7 @@ func (cs *CharSet) AgingRoll(dice *dice.Dicepool, dm int, manual bool) (string, 
 	if r < -6 {
 		r = -6
 	}
-	msg := "Aging:"
+	msg := ""
 	vals := []int{}
 	switch r {
 	case -6:
@@ -301,7 +301,7 @@ func pickCharacteristic(n int, dice *dice.Dicepool, manual bool) []int {
 		case false:
 			picked, options = decidion.Random_One_Exclude(dice, options...)
 		case true:
-			panic("not implemented")
+			picked, options = decidion.Manual_One_Exclude("Select characteristic", options...)
 		}
 		switch picked {
 		case "STR":
@@ -317,4 +317,135 @@ func pickCharacteristic(n int, dice *dice.Dicepool, manual bool) []int {
 		}
 	}
 	return result
+}
+
+func (cs *CharSet) InjuryAuto(dice *dice.Dicepool) (string, error) {
+	r := dice.Sroll("1d6")
+	vals := []int{}
+	chrNames := []string{}
+	msg := ""
+	switch r {
+	case 1:
+		msg += "Nearly killed."
+		chrNames = append(chrNames, "STR", "DEX", "END")
+		vals = append(vals, dice.Sroll("1d6"), 2, 2)
+		for i := 0; i < 3; i++ {
+			selected := decidion.Random_One(dice, chrNames...)
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
+			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+			}
+		}
+	case 2:
+		msg += "Severly injured."
+		chrNames = append(chrNames, "STR", "DEX", "END")
+		vals = append(vals, dice.Sroll("1d6"))
+		selected := decidion.Random_One(dice, chrNames...)
+		cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[0])
+		msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[0])
+		if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+		}
+	case 3:
+		msg += "Missing "
+		chrNames = append(chrNames, "STR", "DEX")
+		vals = append(vals, 2)
+		for i := 0; i < 1; i++ {
+			selected := decidion.Random_One(dice, chrNames...)
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			switch selected {
+			case "STR":
+				msg += "limb. STR reduced by 2"
+			case "DEX":
+				msg += "eye. DEX reduced by 2"
+			}
+			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+			}
+		}
+	case 4:
+		msg += "Scarred and injured."
+		chrNames = append(chrNames, "STR", "DEX", "END")
+		vals = append(vals, 2)
+		for i := 0; i < 1; i++ {
+			selected := decidion.Random_One(dice, chrNames...)
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
+			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+			}
+		}
+	case 5:
+		msg += "Injured."
+		chrNames = append(chrNames, "STR", "DEX", "END")
+		vals = append(vals, 1)
+		for i := 0; i < 1; i++ {
+			selected := decidion.Random_One(dice, chrNames...)
+			cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(-1 * vals[i])
+			msg += fmt.Sprintf(" %v reduced by %v,", selected, vals[i])
+			if cs.Chars[Translator.toInt[selected]].Maximum.Value() <= 0 {
+				cs.Chars[Translator.toInt[selected]].ChangeMaximumBy(1)
+			}
+		}
+	case 6:
+		msg += "Lightly injured. No permanent effect"
+	}
+	msg = strings.TrimSuffix(msg, ",") + "."
+	return msg, nil
+}
+
+var Translator *connector
+
+func init() {
+	Translator = newConnector()
+	for _, err := range []error{
+		Translator.add("STR", STR),
+		Translator.add("DEX", DEX),
+		Translator.add("END", END),
+		Translator.add("INT", INT),
+		Translator.add("EDU", EDU),
+		Translator.add("SOC", SOC),
+		Translator.add("INST", INST),
+	} {
+		if err != nil {
+			panic("initiation failed: connector error: " + err.Error())
+		}
+	}
+}
+
+type connector struct {
+	toInt map[string]int
+	toStr map[int]string
+}
+
+func newConnector() *connector {
+	c := connector{}
+	c.toInt = make(map[string]int)
+	c.toStr = make(map[int]string)
+	return &c
+}
+
+func (c *connector) add(s string, i int) error {
+	for k, v := range c.toInt {
+		if k == s || v == i {
+			return fmt.Errorf("can't add pair '%v'/'%v'", s, i)
+		}
+	}
+	for k, v := range c.toStr {
+		if k == i || v == s {
+			return fmt.Errorf("can't add pair '%v'/'%v'", s, i)
+		}
+	}
+	c.toInt[s] = i
+	c.toStr[i] = s
+	return nil
+}
+
+func (c *connector) Int(s string) int {
+	return c.toInt[s]
+}
+
+func (c *connector) Str(i int) string {
+	return c.toStr[i]
 }

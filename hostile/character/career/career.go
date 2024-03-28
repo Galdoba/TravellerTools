@@ -14,7 +14,7 @@ const (
 	CorporateAgent              = "Corporate Agent"
 	CorporateExec               = "Corporate Exec"
 	Colonist                    = "Colonist"
-	CommersialSpacer            = "Commersial Spacer"
+	CommersialSpacer            = "Commercial Spacer"
 	Marine                      = "Marine"
 	Marshal                     = "Marshal"
 	MilitarySpacer              = "Military Spacer"
@@ -115,6 +115,7 @@ func init() {
 	// path := usrHome + sep + `TabletopGames` + sep + `HOSTILE` + sep + `careers` + sep + `template.json`
 	// fmt.Println(path)
 
+	os.MkdirAll(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep, 0777)
 	f, err := os.OpenFile(usrHome+sep+`TabletopGames`+sep+`HOSTILE`+sep+`careers`+sep+`template.json`, os.O_CREATE|os.O_WRONLY, 0770)
 	f.Write(bt)
 	defer f.Close()
@@ -209,8 +210,14 @@ func init() {
 		ReEnlist:         4,
 		Ranks: []Rank{
 			Rank{
-				Value:             1,
+				Value:             0,
 				CommisionRequired: false,
+				Position:          "Genaral Manager",
+				AutoSkill:         "",
+			},
+			Rank{
+				Value:             1,
+				CommisionRequired: true,
 				Position:          "Vice President",
 				AutoSkill:         text(skill.Broker) + " 1",
 			},
@@ -1281,6 +1288,12 @@ func (cs *CareerStats) HasNCO() bool {
 
 func (cs *CareerStats) RankCurrent(r int, comm bool) (Rank, error) {
 	for _, rnk := range cs.Ranks {
+		if rnk.Value == r && comm == rnk.CommisionRequired {
+			return rnk, nil
+		}
+	}
+	for _, rnk := range cs.Ranks {
+		fmt.Println(rnk)
 		if rnk.Value == r && comm == rnk.CommisionRequired {
 			return rnk, nil
 		}
