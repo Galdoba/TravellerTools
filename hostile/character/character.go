@@ -184,7 +184,8 @@ func (ch *Character) RollCharacteristics(options map[string]string) error {
 		keep := false
 		for !keep {
 			fmt.Println(" STR  DEX  END  INT  EDU  SOC ")
-			for i := range ch.CharSet.Chars {
+
+			for _, i := range []int{characteristic.STR, characteristic.DEX, characteristic.END, characteristic.INT, characteristic.EDU, characteristic.SOC} {
 				ch.CharSet.Chars[i].Roll(DICE)
 				fmt.Printf("  %v  ", ch.CharSet.Chars[i].Maximum.Code())
 				if ch.PC {
